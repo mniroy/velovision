@@ -213,33 +213,6 @@ velovision/
 
 ---
 
----
-
-## Publishing to Docker Hub
-
-To publish your own version of Velo Vision to Docker Hub, follow these steps:
-
-1. **Login to Docker Hub:**
-   ```bash
-   docker login
-   ```
-
-2. **Build the image:**
-   Replace `yourusername` with your actual Docker Hub username.
-   ```bash
-   docker build -t yourusername/velovision:latest .
-   ```
-
-3. **Push the image:**
-   ```bash
-   docker push yourusername/velovision:latest
-   ```
-
-4. **Verify on Docker Hub:**
-   Go to [hub.docker.com](https://hub.docker.com) to see your repository.
-
----
-
 ## License
 
 This project is private and not licensed for public distribution.
