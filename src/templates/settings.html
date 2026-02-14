@@ -459,8 +459,16 @@ background: rgba(223, 255, 173, 0.05);
             const res = await fetch('/api/backup/restore', { method: 'POST', body: formData });
             const result = await res.json();
             if (res.ok && result.status === 'ok') {
-                status.innerHTML = '<span class="text-[#dfffad]">✓ Files restored! System re-initializing...</span>';
-                setTimeout(() => window.location.reload(), 5000);
+                status.innerHTML = '<div class="mt-4 p-4 bg-[#dfffad]/10 rounded-xl border border-[#dfffad]/20 scale-in">' +
+                    '<p class="text-[#dfffad] font-bold mb-1">✓ Files Restored Successfully</p>' +
+                    '<p class="text-[10px] text-gray-400">System is rebooting with 8 cameras. Please wait 12 seconds...</p>' +
+                    '</div>';
+
+                // Wait longer for the 8-camera re-init to settle
+                setTimeout(() => {
+                    status.innerHTML = '<span class="text-[#dfffad] animate-pulse">Reconnecting...</span>';
+                    window.location.reload();
+                }, 12000);
             } else {
                 throw new Error(result.detail || result.message || 'Server error');
             }

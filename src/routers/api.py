@@ -775,6 +775,8 @@ async def restore_backup(background_tasks: BackgroundTasks, file: UploadFile = F
         # We handle the entire extraction and re-initialization in a background task
         def perform_full_restore():
             try:
+                import time
+                time.sleep(2) # Give the response time to finish
                 logger.info("Starting background restore process...")
                 
                 # 1. Stop all cameras
