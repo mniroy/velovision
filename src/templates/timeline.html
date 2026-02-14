@@ -6,30 +6,30 @@
 <div class="p-8 text-gray-200">
     <header class="flex justify-between items-center mb-10">
         <div>
-            <h2 class="text-3xl font-semibold">Event Timeline</h2>
-            <p class="text-gray-400 text-sm mt-1">Review activity history</p>
+            <h2 class="text-h1 font-black tracking-tight">Event Timeline</h2>
+            <p class="text-gray-400 text-body mt-1">Review activity history</p>
         </div>
         <div class="flex gap-3">
             <div class="relative">
-                <select
-                    class="appearance-none bg-[#262626] border border-gray-700 text-white py-2 px-4 pr-8 rounded-lg focus:outline-none focus:border-gray-500">
-                    <option>All Cameras</option>
+                <select id="camera-select" onchange="loadEvents()"
+                    class="appearance-none bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 pr-8 rounded-xl focus:outline-none focus:border-[#dfffad]">
+                    <option value="all">All Cameras</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                     <i class="fa-solid fa-chevron-down text-xs"></i>
                 </div>
             </div>
             <div class="relative">
-                <input type="date"
-                    class="bg-[#262626] border border-gray-700 text-white py-2 px-4 rounded-lg focus:outline-none focus:border-gray-500">
+                <input type="date" id="date-picker" onchange="loadEvents()"
+                    class="bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 rounded-xl focus:outline-none focus:border-[#dfffad]">
             </div>
         </div>
     </header>
 
     <div id="timeline-container" class="space-y-6 max-w-5xl mx-auto">
-        <div class="text-center py-8">
-            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-gray-500"></i>
-            <p class="text-gray-500 mt-2">Loading events...</p>
+        <div class="text-center py-20">
+            <i class="fa-solid fa-circle-notch fa-spin text-2xl text-gray-700 mb-2"></i>
+            <p class="text-gray-500 font-black uppercase text-caption tracking-widest">Scanning History...</p>
         </div>
     </div>
 </div>
@@ -39,13 +39,21 @@
 <script>
     async function loadEvents() {
         const container = document.getElementById('timeline-container');
+        const cameraFilter = document.getElementById('camera-select').value;
+        const dateFilter = document.getElementById('date-picker').value;
+
         try {
-            const response = await fetch('/api/events?limit=20');
+            const url = new URL('/api/events', window.location.origin);
+            url.searchParams.append('limit', 30);
+            if (cameraFilter !== 'all') url.searchParams.append('camera_id', cameraFilter);
+            if (dateFilter) url.searchParams.append('date', dateFilter);
+
+            const response = await fetch(url);
             const events = await response.json();
             container.innerHTML = '';
 
             if (events.length === 0) {
-                container.innerHTML = `<div class="text-center py-12 text-gray-400">No events found.</div>`;
+                container.innerHTML = `<div class="text-center py-20 text-gray-600 font-black uppercase text-caption tracking-widest">No activity found matching filters</div>`;
                 return;
             }
 
@@ -57,47 +65,72 @@
 
                 if (dateStr !== lastDate) {
                     const dateHeader = document.createElement('div');
-                    dateHeader.className = 'flex items-center gap-4 pt-4';
-                    dateHeader.innerHTML = `<div class="h-px bg-gray-800 flex-1"></div><span class="text-gray-500 text-sm font-medium">${dateStr}</span><div class="h-px bg-gray-800 flex-1"></div>`;
+                    dateHeader.className = 'flex items-center gap-4 pt-8 mb-4';
+                    dateHeader.innerHTML = `<div class="h-px bg-white/5 flex-1"></div><span class="text-gray-500 text-caption font-black uppercase tracking-widest">${dateStr}</span><div class="h-px bg-white/5 flex-1"></div>`;
                     container.appendChild(dateHeader);
                     lastDate = dateStr;
                 }
 
                 const card = document.createElement('div');
-                card.className = 'card rounded-2xl p-4 flex gap-6 hover:shadow-lg transition-all group border border-transparent hover:border-gray-700';
+                card.className = 'card rounded-[2rem] p-5 flex gap-8 hover:bg-[#2d2d2d] transition-all group border border-white/5 hover:border-[#dfffad]/20';
                 card.innerHTML = `
-                    <div class="relative w-48 h-32 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800">
-                        <img src="${event.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="handleImageError(this)">
-                        <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white">${timeStr}</div>
+                    <div class="relative w-56 h-36 rounded-2xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]">
+                        <img src="${event.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" onerror="handleImageError(this)">
+                        <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-caption font-black text-white uppercase tracking-widest border border-white/10">${timeStr}</div>
                     </div>
-                    <div class="flex-1 flex flex-col justify-between">
+                    <div class="flex-1 flex flex-col justify-between py-1">
                         <div>
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-lg font-semibold text-white">Event on ${event.camera_id}</h3>
-                                <span class="${event.faces.length > 0 ? 'bg-[#dfffad] text-[#1a1a1a]' : 'bg-gray-700 text-gray-300'} text-xs font-bold px-2 py-1 rounded">
-                                    ${event.faces.length > 0 ? 'FACE DETECTED' : 'MOTION'}
-                                </span>
+                            <div class="flex justify-between items-start mb-2">
+                                <h3 class="text-h2 font-black text-white uppercase tracking-tighter leading-tight">Event @ ${event.camera_id}</h3>
+                                <div class="flex gap-2">
+                                    <span class="bg-[#dfffad]/10 text-[#dfffad] text-caption font-black px-3 py-1 rounded-full tracking-widest uppercase border border-[#dfffad]/20">
+                                        ${event.faces && event.faces.length > 0 ? 'PERSON' : 'MOTION'}
+                                    </span>
+                                </div>
                             </div>
-                            <p class="text-gray-400 text-sm mt-1 italic">"${event.analysis_text || 'No description available.'}"</p>
+                            <p class="text-gray-400 text-body leading-relaxed line-clamp-2 italic">"${event.analysis_text || 'System capture: Motion detected and recorded.'}"</p>
                         </div>
-                        <div class="flex items-center gap-4 mt-4">
-                            <div class="flex gap-2 ml-auto">
-                                <button onclick="deleteEvent(${event.id})" class="text-gray-400 hover:text-red-400 p-2 transition-colors"><i class="fa-solid fa-trash"></i></button>
-                                <a href="${event.image_url}" download class="text-gray-400 hover:text-white p-2 transition-colors"><i class="fa-solid fa-download"></i></a>
+                        <div class="flex items-center justify-between mt-4">
+                            <div id="faces-list-${event.id}" class="flex -space-x-2">
+                                ${(event.faces || []).map(f => `<img src="/api/faces/${f}/image" class="w-8 h-8 rounded-full border-2 border-[#262626] object-cover" title="${f}">`).join('')}
+                            </div>
+                            <div class="flex gap-3">
+                                <a href="${event.image_url}" download class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-download"></i></a>
+                                <button onclick="deleteEvent(${event.id})" class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
                     </div>`;
                 container.appendChild(card);
             });
-        } catch (e) { container.innerHTML = '<div class="text-center py-12 text-red-500 font-bold">Failed to load events</div>'; }
+        } catch (e) {
+            console.error(e);
+            container.innerHTML = '<div class="text-center py-20 text-red-500 font-black uppercase text-caption tracking-widest">Sync Failure: Check Network</div>';
+        }
     }
 
     async function deleteEvent(id) {
-        if (confirm("Delete this event?")) {
+        if (confirm("Permanently remove this event from history?")) {
             await fetch(`/api/events/${id}`, { method: 'DELETE' });
             loadEvents();
         }
     }
-    loadEvents();
+
+    // Populate camera list
+    async function init() {
+        try {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            const select = document.getElementById('camera-select');
+            Object.keys(data.cameras).forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.innerText = data.cameras[id].name;
+                select.appendChild(opt);
+            });
+        } catch (e) { }
+        loadEvents();
+    }
+
+    init();
 </script>
 {% endblock %}

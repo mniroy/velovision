@@ -9,14 +9,19 @@ class Camera:
     def __init__(self, source=0, name="Camera"):
         self.source = source
         self.name = name
-        self.video = cv2.VideoCapture(self.source)
-        if not self.video.isOpened():
-            logger.error(f"Could not open video source {source}")
-            # Fallback to 0 if string source fails? No.
-        
         self.last_frame = None
         self.lock = threading.Lock()
         self.running = True
+        self.error_count = 0
+        self.max_errors = 50  # Stop retrying after this many consecutive failures
+        
+        try:
+            self.video = cv2.VideoCapture(self.source)
+            if not self.video.isOpened():
+                logger.error(f"Could not open video source {source}")
+        except Exception as e:
+            logger.error(f"Failed to create VideoCapture for {source}: {e}")
+            self.video = None
         
         self.thread = threading.Thread(target=self._update, args=())
         self.thread.daemon = True
@@ -32,32 +37,60 @@ class Camera:
 
     def _update(self):
         while self.running:
-            success, frame = self.video.read()
-            if success:
-                with self.lock:
-                    self.last_frame = frame
-            else:
-                # Retry logic for network streams?
-                time.sleep(1.0)
-                if not self.video.isOpened():
-                     self.video.open(self.source)
+            try:
+                if self.video is None or not self.video.isOpened():
+                    self.error_count += 1
+                    if self.error_count > self.max_errors:
+                        logger.error(f"Camera {self.name}: Max errors reached. Stopping retry loop.")
+                        self.running = False
+                        break
+                    time.sleep(5.0)  # Wait before retry
+                    try:
+                        self.video = cv2.VideoCapture(self.source)
+                    except Exception:
+                        pass
+                    continue
                 
-            time.sleep(0.01)
+                success, frame = self.video.read()
+                if success:
+                    self.error_count = 0  # Reset on success
+                    with self.lock:
+                        self.last_frame = frame
+                else:
+                    self.error_count += 1
+                    time.sleep(2.0)
+                    
+            except Exception as e:
+                logger.error(f"Camera {self.name} update error: {e}")
+                self.error_count += 1
+                time.sleep(2.0)
+                
+            time.sleep(0.03)
 
     def get_frame(self):
         with self.lock:
-            if self.last_frame is not None:
-                ret, jpeg = cv2.imencode('.jpg', self.last_frame)
-                return jpeg.tobytes()
+            if self.last_frame is not None and self.last_frame.size > 0:
+                try:
+                    ret, jpeg = cv2.imencode('.jpg', self.last_frame)
+                    if ret:
+                        return jpeg.tobytes()
+                except Exception as e:
+                    logger.error(f"Frame encoding error: {e}")
             return None
 
 def generate_frames(camera):
+    empty_count = 0
+    max_empty = 300  # ~30 seconds of no frames
     while True:
         frame = camera.get_frame()
         if frame is not None:
+            empty_count = 0
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n\r\n')
         else:
+            empty_count += 1
+            if empty_count > max_empty:
+                break  # Stop streaming if camera is dead
             time.sleep(0.1)
 
 # Global Manager

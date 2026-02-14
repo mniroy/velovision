@@ -10,10 +10,49 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+        :root {
+            --text-h1: 2.25rem;
+            /* 36px */
+            --text-h2: 1.5rem;
+            /* 24px */
+            --text-h3: 1.125rem;
+            /* 18px */
+            --text-body: 0.875rem;
+            /* 14px */
+            --text-caption: 0.625rem;
+            /* 10px */
+        }
+
+        .text-h1 {
+            font-size: var(--text-h1);
+            line-height: 1.1;
+        }
+
+        .text-h2 {
+            font-size: var(--text-h2);
+            line-height: 1.2;
+        }
+
+        .text-h3 {
+            font-size: var(--text-h3);
+            line-height: 1.4;
+        }
+
+        .text-body {
+            font-size: var(--text-body);
+            line-height: 1.5;
+        }
+
+        .text-caption {
+            font-size: var(--text-caption);
+            line-height: 1.6;
+        }
+
         body {
             font-family: 'Outfit', sans-serif;
             background-color: #1a1a1a;
             color: #ffffff;
+            font-size: var(--text-body);
         }
 
         .card {
@@ -51,8 +90,8 @@
 
         .nav-link.active {
             background-color: #2d2d2d;
-            color: white;
-            font-weight: 500;
+            color: #dfffad;
+            font-weight: 700;
         }
 
         .notification-panel {
@@ -60,7 +99,6 @@
             top: 0;
             right: 0;
             width: 20rem;
-            /* w-80 */
             height: 100%;
             background-color: #1a1a1a;
             border-left: 1px solid rgba(31, 41, 55, 0.5);
@@ -97,11 +135,6 @@
             cursor: pointer;
         }
 
-        .cat-pill:hover {
-            color: #ffffff;
-            background-color: #333;
-        }
-
         .cat-pill.active {
             background-color: #dfffad;
             color: #1a1a1a;
@@ -122,7 +155,7 @@
     <!-- Sidebar -->
     <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
         <div class="mb-10 flex items-center gap-3">
-            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+            <h1 class="text-h2 font-black tracking-tight text-white">Velo Vision</h1>
         </div>
         <nav class="flex-1 space-y-2">
             <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
@@ -153,22 +186,22 @@
 
         <div class="mt-auto pb-8 space-y-4">
             <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
-                <p class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">Engine Status</p>
+                <p class="text-caption uppercase tracking-[0.2em] text-gray-500 font-black mb-2">Engine Status</p>
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_#10b981]"></div>
-                    <span class="text-xs font-semibold">Vision Core Active</span>
+                    <div class="w-2 h-2 bg-[#dfffad] rounded-full animate-pulse shadow-[0_0_8px_#dfffad]"></div>
+                    <span class="text-body font-black text-white">Vision Core Active</span>
                 </div>
             </div>
 
             <div class="px-1 space-y-2 opacity-40 hover:opacity-100 transition-opacity">
                 <div
-                    class="flex items-center justify-between text-[8px] font-black uppercase tracking-[0.2em] text-gray-500">
+                    class="flex items-center justify-between text-caption font-black uppercase tracking-[0.2em] text-gray-500">
                     <span>Version</span>
-                    <span class="text-gray-400">v1.5.2</span>
+                    <span class="text-gray-400">v1.5.5</span>
                 </div>
                 <a href="https://github.com/mniroy/velovision" target="_blank"
-                    class="flex items-center gap-2 text-[8px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-[#dfffad] transition-all">
-                    <i class="fa-brands fa-github text-[10px]"></i>
+                    class="flex items-center gap-2 text-caption font-black uppercase tracking-[0.2em] text-gray-500 hover:text-[#dfffad] transition-all">
+                    <i class="fa-brands fa-github text-sm"></i>
                     <span>mniroy/velovision</span>
                 </a>
             </div>
@@ -184,13 +217,9 @@
     <script>
         function toggleNotifications() {
             const panel = document.getElementById('notifPanel');
-            if (panel) {
-                panel.classList.toggle('open');
-            }
+            if (panel) panel.classList.toggle('open');
             const dot = document.getElementById('notif-dot');
-            if (dot) {
-                dot.classList.add('hidden');
-            }
+            if (dot) dot.classList.add('hidden');
         }
 
         function enlargeCamera(id, name) {
@@ -211,7 +240,6 @@
             if (img) img.src = '';
         }
 
-        // Handle broken camera snapshots
         function handleImageError(img) {
             if (img.dataset.retry === undefined) img.dataset.retry = 0;
             const retryCount = parseInt(img.dataset.retry);
@@ -220,20 +248,17 @@
                 img.dataset.retry = retryCount + 1;
                 const src = img.src;
                 const baseSrc = src.split('&t=')[0];
-                setTimeout(() => {
-                    img.src = baseSrc + '&t=' + Date.now();
-                }, 3000);
+                setTimeout(() => { img.src = baseSrc + '&t=' + Date.now(); }, 3000);
             } else {
                 const container = img.parentElement;
                 img.classList.add('hidden');
-
                 if (!container.querySelector('.error-label')) {
                     const errorDiv = document.createElement('div');
                     errorDiv.className = "error-label absolute inset-0 flex flex-col items-center justify-center bg-[#1a1a1a]/80 backdrop-blur-sm z-10 p-4 text-center transition-all";
                     errorDiv.innerHTML = `
                         <i class="fa-solid fa-video-slash text-gray-600 text-xl mb-2"></i>
-                        <span class="text-[9px] font-black uppercase tracking-widest text-gray-500">Connection Issue</span>
-                        <button onclick="event.stopPropagation(); retryImage(this)" class="mt-3 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-[8px] font-bold text-[#dfffad] uppercase tracking-widest transition-all">Retry</button>
+                        <span class="text-caption font-black uppercase tracking-widest text-gray-500">Connection Issue</span>
+                        <button onclick="event.stopPropagation(); retryImage(this)" class="mt-3 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-caption font-black text-[#dfffad] uppercase tracking-widest transition-all">Retry</button>
                     `;
                     container.appendChild(errorDiv);
                 }
@@ -253,36 +278,6 @@
             }
         }
     </script>
-    <!-- Enlarge Modal -->
-    <div id="enlargeModal"
-        class="fixed inset-0 bg-black/95 z-[500] hidden flex items-center justify-center p-4 md:p-12 backdrop-blur-xl">
-        <button onclick="closeEnlarge()"
-            class="absolute top-6 right-6 md:top-10 md:right-10 text-white/50 hover:text-white text-3xl transition-all z-[510]">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-        <div class="w-full h-full max-w-7xl flex flex-col items-center justify-center relative">
-            <div
-                class="w-full aspect-video bg-black rounded-[2rem] overflow-hidden shadow-2xl border border-white/5 relative group">
-                <img id="enlargedImg" src="" class="w-full h-full object-contain">
-
-                <!-- Meta Overlay -->
-                <div
-                    class="absolute bottom-8 left-8 right-8 flex items-end justify-between translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                    <div class="bg-black/60 backdrop-blur-xl px-6 py-4 rounded-3xl border border-white/10 shadow-2xl">
-                        <div class="flex items-center gap-3 mb-1">
-                            <div class="w-2 h-2 bg-[#dfffad] rounded-full animate-pulse shadow-[0_0_10px_#dfffad]">
-                            </div>
-                            <h3 id="enlargedTitle" class="text-xl font-bold text-white uppercase tracking-wider">Camera
-                            </h3>
-                        </div>
-                        <p class="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em] leading-none">Live
-                            Host
-                            Stream</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
     {% block extra_scripts %}{% endblock %}
 </body>
 

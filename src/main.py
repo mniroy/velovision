@@ -11,20 +11,31 @@ app = FastAPI(title="Velo Vision")
 
 @app.on_event("startup")
 async def startup_event():
-    # Ensure directories exist
     try:
-        os.makedirs("/data/faces", exist_ok=True)
-        os.makedirs("/data/events", exist_ok=True)
         init_db()
-        # Initialize heavy components in a way that doesn't block the main thread
-        from src import triggers
-        triggers.start_scheduler()
+        
+        # Initialize heavy components in a background thread
+        import threading
+        def background_init():
+            try:
+                from src import triggers
+                triggers.start_scheduler()
+            except Exception as thread_e:
+                print(f"BACKGROUND INIT ERROR: {thread_e}")
+        
+        threading.Thread(target=background_init, daemon=True).start()
+        
     except Exception as e:
         print(f"CRITICAL STARTUP ERROR: {e}")
+# Ensure directories exist at module level so StaticFiles can mount them securely checks
+try:
+    os.makedirs("/data/faces", exist_ok=True)
+    os.makedirs("/data/events", exist_ok=True)
+except Exception as e:
+    print(f"Directory creation error: {e}")
 
-# Mount events if they exist
-if os.path.exists("/data/events"):
-    app.mount("/events", StaticFiles(directory="/data/events"), name="events")
+# Mount events directory unconditionally (it's created above)
+app.mount("/events", StaticFiles(directory="/data/events"), name="events")
 
 # Mount Routers
 app.include_router(api.router, prefix="/api", tags=["API"])

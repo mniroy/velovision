@@ -22,6 +22,14 @@ def start_scheduler():
     if not scheduler.running:
         scheduler.start()
     sync_schedules()
+    
+    # Initialize cameras (deferred from module load for safety)
+    try:
+        from src.routers.api import _ensure_cameras_initialized
+        _ensure_cameras_initialized()
+    except Exception as e:
+        logger.error(f"Camera initialization error: {e}")
+    
     logger.info("Scheduler started.")
 
 @router.on_event("shutdown")
@@ -276,6 +284,7 @@ def patrol_summarize():
 def perform_home_patrol():
     logger.info("Executing HOME PATROL...")
     images_data = []
+    images_by_cam_id = {}
     
     for cam_id, cam_config in config.get("cameras", {}).items():
         if not cam_config.get("enabled", True):
@@ -285,10 +294,13 @@ def perform_home_patrol():
         if camera:
             frame_bytes = camera.get_frame()
             if frame_bytes:
-                images_data.append({
+                entry = {
                     "image_bytes": frame_bytes,
-                    "camera_name": cam_config.get("name", cam_id)
-                })
+                    "camera_name": cam_config.get("name", cam_id),
+                    "camera_id": cam_id
+                }
+                images_data.append(entry)
+                images_by_cam_id[cam_id] = frame_bytes
     
     if not images_data:
         return {"status": "error", "message": "No active cameras to capture"}
@@ -300,8 +312,25 @@ def perform_home_patrol():
     if msg_instruction:
         prompt = f"{prompt}\nInstruction for delivery: {msg_instruction}"
 
-    summary = analysis.ai_analyzer.analyze_multi_images(images_data, prompt)
-    logger.info(f"Home Patrol Summary: {summary}")
+    # Get known faces for person recognition
+    known_faces = analysis.face_manager.get_known_faces()
+
+    summary, primary_camera_id, detections_by_camera = analysis.ai_analyzer.analyze_multi_images(
+        images_data, prompt, known_faces=known_faces
+    )
+    
+    # Collect recognized names across all cameras
+    all_recognized = []
+    all_unknown_count = 0
+    for cam_id, people in detections_by_camera.items():
+        for person in people:
+            if person.get('status') == 'Known' and person.get('name', 'Unknown') != 'Unknown':
+                all_recognized.append(person['name'])
+            else:
+                all_unknown_count += 1
+
+    logger.info(f"Home Patrol Summary: primary_camera={primary_camera_id}, recognized={all_recognized}, unknown={all_unknown_count}")
+    logger.info(f"Patrol Result: {summary}")
     
     # Send to global recipients
     whatsapp_status = {"sent": False, "recipients": 0}
@@ -311,10 +340,25 @@ def perform_home_patrol():
         recipients = patrol_config.get("recipients")
             
         if recipients:
-            caption = f"🛡️ *Home Patrol Summary*\n\n{summary}"
-            # Use the first camera image as representative or just send text?
-            # Let's send without image for multi-summary for now, or use first one.
-            results = whatsapp.client.send_alert(recipients, images_data[0]["image_bytes"], caption)
+            # Build caption with people info
+            people_line = ""
+            if all_recognized:
+                people_line += f"\n👤 Recognized: {', '.join(set(all_recognized))}"
+            if all_unknown_count > 0:
+                people_line += f"\n⚠️ Unknown persons: {all_unknown_count}"
+            
+            caption = f"🛡️ *Home Patrol Summary*{people_line}\n\n{summary}"
+            
+            # Select image from primary activity camera, fallback to first camera
+            selected_image = None
+            if primary_camera_id and primary_camera_id in images_by_cam_id:
+                selected_image = images_by_cam_id[primary_camera_id]
+                logger.info(f"WhatsApp image: using primary activity camera '{primary_camera_id}'")
+            else:
+                selected_image = images_data[0]["image_bytes"]
+                logger.info(f"WhatsApp image: fallback to first camera '{images_data[0]['camera_id']}'")
+            
+            results = whatsapp.client.send_alert(recipients, selected_image, caption)
             whatsapp_status["sent"] = True
             whatsapp_status["recipients"] = len(results)
             
@@ -322,6 +366,9 @@ def perform_home_patrol():
         "status": "success",
         "timestamp": datetime.now().isoformat(),
         "summary": summary,
+        "primary_camera": primary_camera_id,
+        "recognized": list(set(all_recognized)),
+        "unknown_count": all_unknown_count,
         "whatsapp": whatsapp_status
     }
 
@@ -342,3 +389,85 @@ def schedule_analysis(camera_id: str, interval_minutes: int):
         id=job_id
     )
     return {"status": "Scheduled", "job_id": job_id, "interval_minutes": interval_minutes}
+
+@router.post("/patrol/find")
+def person_finder(data: dict):
+    """
+    Person Finder: Search for specific people across all cameras.
+    data: {"names": ["Alice", "Bob"], "prompt": "optional custom instructions"}
+    """
+    names = data.get("names", [])
+    custom_prompt = data.get("prompt", "")
+    
+    if not names:
+        return {"status": "error", "message": "No persons selected"}
+    
+    return perform_person_finder(names, custom_prompt)
+
+def perform_person_finder(target_names, custom_prompt=""):
+    logger.info(f"PERSON FINDER: Searching for {target_names}...")
+    
+    # 1. Resolve target faces from known faces
+    all_known = analysis.face_manager.get_known_faces()
+    target_faces = [f for f in all_known if f['name'] in target_names]
+    
+    if not target_faces:
+        return {"status": "error", "message": f"None of the requested people have registered face images: {target_names}"}
+    
+    # 2. Capture frames from all cameras
+    images_data = []
+    images_by_cam_id = {}
+    
+    for cam_id, cam_config in config.get("cameras", {}).items():
+        if not cam_config.get("enabled", True):
+            continue
+            
+        camera = camera_manager.get_camera(cam_id)
+        if camera:
+            frame_bytes = camera.get_frame()
+            if frame_bytes:
+                entry = {
+                    "image_bytes": frame_bytes,
+                    "camera_name": cam_config.get("name", cam_id),
+                    "camera_id": cam_id
+                }
+                images_data.append(entry)
+                images_by_cam_id[cam_id] = frame_bytes
+    
+    if not images_data:
+        return {"status": "error", "message": "No active cameras to scan"}
+    
+    # 3. Run AI Person Finder
+    summary, results_by_camera = analysis.ai_analyzer.find_persons(
+        target_faces, images_data, custom_prompt=custom_prompt
+    )
+    
+    # 4. Build human-friendly results
+    found_locations = {}  # {person_name: [{camera, activity, confidence}]}
+    not_found = set(target_names)
+    
+    for cam_id, cam_results in results_by_camera.items():
+        cam_name = cam_results.get("camera_name", cam_id)
+        for person in cam_results.get("found", []):
+            name = person.get("name", "Unknown")
+            not_found.discard(name)
+            if name not in found_locations:
+                found_locations[name] = []
+            found_locations[name].append({
+                "camera_id": cam_id,
+                "camera_name": cam_name,
+                "activity": person.get("activity", ""),
+                "confidence": person.get("confidence", "medium")
+            })
+    
+    logger.info(f"Person Finder Results: found={list(found_locations.keys())}, not_found={list(not_found)}")
+    
+    return {
+        "status": "success",
+        "timestamp": datetime.now().isoformat(),
+        "summary": summary,
+        "found": found_locations,
+        "not_found": list(not_found),
+        "cameras_scanned": len(images_data),
+        "results_by_camera": results_by_camera
+    }

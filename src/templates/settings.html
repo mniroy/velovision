@@ -56,11 +56,11 @@ background: rgba(223, 255, 173, 0.05);
 <div class="p-8">
     <header class="flex justify-between items-center mb-10">
         <div>
-            <h2 class="text-3xl font-semibold">Settings</h2>
-            <p class="text-gray-400 text-sm mt-1">System configuration, AI management, and backups</p>
+            <h2 class="text-h1 font-black tracking-tight">Settings</h2>
+            <p class="text-gray-400 text-body mt-1">System configuration, AI management, and backups</p>
         </div>
         <button id="saveBtn" onclick="saveSettings()"
-            class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20">
+            class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-full text-body font-black hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20 uppercase tracking-widest">
             Save Configuration
         </button>
     </header>
@@ -69,13 +69,13 @@ background: rgba(223, 255, 173, 0.05);
         <div class="lg:col-span-2 space-y-8">
             <!-- General Configuration -->
             <section class="card rounded-3xl p-8">
-                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                <h3 class="text-h2 font-black tracking-tight mb-6 flex items-center gap-3"><i
                         class="fa-solid fa-gear text-[#dfffad]"></i> General Configuration</h3>
                 <div class="max-w-md">
-                    <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">System
+                    <label class="block text-caption text-gray-500 mb-2 uppercase font-black tracking-widest">System
                         Timezone</label>
                     <select id="timezone"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-body text-white focus:border-[#dfffad] focus:outline-none">
                         <!-- Populated via JS -->
                     </select>
                 </div>
@@ -83,40 +83,40 @@ background: rgba(223, 255, 173, 0.05);
 
             <!-- Service Provider -->
             <section class="card rounded-3xl p-8">
-                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                <h3 class="text-h2 font-black tracking-tight mb-6 flex items-center gap-3"><i
                         class="fa-solid fa-microchip text-[#dfffad]"></i> Service Provider</h3>
                 <div class="space-y-6">
                     <div>
                         <label
-                            class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Provider</label>
+                            class="block text-caption text-gray-500 mb-2 uppercase font-black tracking-widest">Provider</label>
                         <select id="provider"
-                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-body text-white focus:border-[#dfffad] focus:outline-none">
                             <option value="gemini">Google Gemini AI</option>
                             <option value="openai" disabled>OpenAI (Soon)</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">API
+                        <label class="block text-caption text-gray-500 mb-2 uppercase font-black tracking-widest">API
                             Key</label>
                         <div class="relative">
                             <input type="password" id="apiKey" placeholder="sk-..."
-                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono pr-12">
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-body text-white focus:border-[#dfffad] focus:outline-none font-mono pr-12">
                             <button onclick="toggleKey()"
                                 class="absolute right-4 top-3 text-gray-500 hover:text-white transition-colors"><i
                                     class="fa-solid fa-eye"></i></button>
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Model
+                        <label class="block text-caption text-gray-500 mb-2 uppercase font-black tracking-widest">Model
                             ID</label>
                         <div class="flex gap-3">
                             <select id="modelName"
-                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-body text-white focus:border-[#dfffad] focus:outline-none font-mono">
                                 <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                             </select>
                             <button onclick="fetchModels()" id="fetchBtn"
-                                class="bg-[#333] hover:bg-[#444] px-5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
-                                <i class="fa-solid fa-arrows-rotate"></i> Sync
+                                class="bg-[#333] hover:bg-[#444] px-5 py-3 rounded-xl text-body font-bold transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-arrows-rotate"></i> Load Model Name
                             </button>
                         </div>
                     </div>
@@ -125,7 +125,7 @@ background: rgba(223, 255, 173, 0.05);
 
             <!-- Engine Parameters -->
             <section class="card rounded-3xl p-8">
-                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                <h3 class="text-h2 font-black tracking-tight mb-6 flex items-center gap-3"><i
                         class="fa-solid fa-sliders text-blue-400"></i> Engine Parameters</h3>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div>
@@ -401,6 +401,7 @@ background: rgba(223, 255, 173, 0.05);
                 { icon: 'fa-video', label: 'Cameras', value: data.cameras || 0, color: '#dfffad' },
                 { icon: 'fa-brain', label: 'AI Provider', value: data.ai_provider || 'None', color: '#818cf8' },
                 { icon: 'fa-users', label: 'Known Faces', value: data.faces || 0, color: '#f59e0b' },
+                { icon: 'fa-wand-magic-sparkles', label: 'Discoveries', value: data.discoveries || 0, color: '#ec4899' },
                 { icon: 'fa-clock', label: 'Events', value: data.events || 0, color: '#06b6d4' },
             ];
             items.forEach(item => {
@@ -431,7 +432,15 @@ background: rgba(223, 255, 173, 0.05);
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'velovision_backup.zip';
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const timestamp = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+            a.download = `velovision_backup_${timestamp}.zip`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);

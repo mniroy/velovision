@@ -9,18 +9,18 @@
             <i
                 class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
             <input type="text" placeholder="Search events..."
-                class="w-full bg-[#262626] rounded-full py-3 pl-12 pr-4 text-sm focus:outline-none focus:ring-1 focus:ring-gray-600">
+                class="w-full bg-[#262626] rounded-full py-3 pl-12 pr-4 text-body focus:outline-none focus:ring-1 focus:ring-gray-600">
         </div>
         <div class="flex items-center gap-6 ml-4">
+            <div class="text-right hidden sm:block">
+                <p id="clock" class="text-h3 font-black text-white leading-none"></p>
+                <p id="date" class="text-caption text-gray-500 uppercase tracking-widest mt-1 font-bold"></p>
+            </div>
             <button onclick="toggleNotifications()"
                 class="relative w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center hover:bg-[#333] transition-colors">
                 <i class="fa-regular fa-bell text-gray-400"></i>
                 <span id="notif-dot" class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
             </button>
-            <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-700">
-                <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Profile"
-                    class="w-full h-full object-cover">
-            </div>
         </div>
     </header>
 
@@ -29,8 +29,9 @@
         <section class="col-span-12">
             <div class="flex justify-between items-end mb-6">
                 <div>
-                    <h2 class="text-2xl font-semibold mb-1">Live Feeds</h2>
-                    <span id="camera-count" class="text-gray-400 text-sm">Syncing...</span>
+                    <h2 class="text-h2 font-black mb-1">Live Feeds</h2>
+                    <span id="camera-count"
+                        class="text-gray-400 text-caption uppercase tracking-wider">Syncing...</span>
                 </div>
             </div>
             <div id="cameras-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -42,27 +43,27 @@
         <div class="col-span-12 lg:col-span-8 card rounded-3xl p-6 flex flex-col h-full">
             <div class="flex justify-between items-start mb-4">
                 <div>
-                    <h3 class="text-xl font-medium">Activity Log</h3>
-                    <p id="activity-subtitle" class="text-gray-400 text-sm mt-1">Detections this week</p>
+                    <h3 class="text-h2 font-bold tracking-tight">Activity Log</h3>
+                    <p id="activity-subtitle" class="text-gray-500 text-body mt-1">Detections this week</p>
                 </div>
                 <div class="text-right">
-                    <span id="total-events-count" class="text-2xl font-semibold">0</span>
-                    <p class="text-xs text-gray-400 uppercase tracking-widest">Events</p>
+                    <span id="total-events-count" class="text-h1 font-black text-white leading-none">0</span>
+                    <p class="text-caption text-gray-500 uppercase font-black tracking-widest mt-1">Total Events</p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center gap-3 mb-5">
                 <div id="period-pills" class="flex bg-[#262626] rounded-full p-1 gap-1">
                     <button onclick="setPeriod('week')" data-period="week"
-                        class="period-pill active px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">Week</button>
+                        class="period-pill active px-4 py-1.5 rounded-full text-caption font-black uppercase tracking-widest transition-all">Week</button>
                     <button onclick="setPeriod('month')" data-period="month"
-                        class="period-pill px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">Month</button>
+                        class="period-pill px-4 py-1.5 rounded-full text-caption font-black uppercase tracking-widest transition-all">Month</button>
                     <button onclick="setPeriod('ytd')" data-period="ytd"
-                        class="period-pill px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">YTD</button>
+                        class="period-pill px-4 py-1.5 rounded-full text-caption font-black uppercase tracking-widest transition-all">YTD</button>
                     <button onclick="setPeriod('all')" data-period="all"
-                        class="period-pill px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">All</button>
+                        class="period-pill px-4 py-1.5 rounded-full text-caption font-black uppercase tracking-widest transition-all">All</button>
                 </div>
                 <select id="category-filter" onchange="loadActivity()"
-                    class="bg-[#262626] border border-gray-700 rounded-full px-4 py-1.5 text-xs font-bold text-gray-300 focus:outline-none focus:border-[#dfffad] cursor-pointer appearance-none pr-8"
+                    class="bg-[#262626] border border-gray-700 rounded-full px-4 py-1.5 text-caption font-black uppercase tracking-widest text-gray-300 focus:outline-none focus:border-[#dfffad] cursor-pointer appearance-none pr-8"
                     style="background-image: url('data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%239ca3af%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>'); background-repeat: no-repeat; background-position: right 12px center;">
                     <option value="all">All Categories</option>
                 </select>
@@ -75,7 +76,7 @@
         <div class="col-span-12 lg:col-span-4 h-full">
             <div id="latest-event-card"
                 class="card rounded-3xl p-6 flex flex-col h-full relative overflow-hidden group">
-                <h3 class="text-xl font-medium mb-4">Latest Detection</h3>
+                <h3 class="text-h2 font-bold mb-4">Latest Detection</h3>
                 <div id="latest-content" class="flex-1 flex flex-col items-center justify-center">
                     <i class="fa-solid fa-video-slash text-gray-600 text-3xl"></i>
                 </div>
@@ -154,9 +155,9 @@
                     div.className = "flex flex-col items-center justify-end gap-2 flex-1 h-full group cursor-pointer";
                     div.innerHTML = `
                         <div class="relative w-full ${barColor} ${glow} rounded-t-lg transition-all" style="height: ${Math.max(height, 5)}%">
-                             <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">${d.count || 0}</div>
+                             <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-caption px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">${d.count || 0}</div>
                         </div>
-                        <span class="text-[10px] ${d.is_today ? 'text-white font-bold' : 'text-gray-500'} whitespace-nowrap">${d.label}</span>
+                        <span class="text-caption ${d.is_today ? 'text-white font-bold' : 'text-gray-500'} whitespace-nowrap">${d.label}</span>
                     `;
                     barContainer.appendChild(div);
                 });
@@ -190,9 +191,9 @@
                     item.innerHTML = `
                         <img src="${ev.image_url}" class="w-12 h-12 rounded-full object-cover border border-gray-700">
                         <div>
-                            <p class="text-xs font-bold text-white uppercase tracking-tighter">${ev.camera_id}</p>
-                            <p class="text-[10px] text-gray-500">${new Date(ev.timestamp).toLocaleTimeString()}</p>
-                            <p class="text-[10px] text-[#dfffad] mt-1 line-clamp-1">${ev.faces && ev.faces.length > 0 ? ev.faces.join(', ') : 'Motion Detected'}</p>
+                            <p class="text-caption font-bold text-white uppercase tracking-tighter">${ev.camera_id}</p>
+                            <p class="text-caption text-gray-500">${new Date(ev.timestamp).toLocaleTimeString()}</p>
+                            <p class="text-caption text-[#dfffad] mt-1 line-clamp-1">${ev.faces && ev.faces.length > 0 ? ev.faces.join(', ') : 'Motion Detected'}</p>
                         </div>
                     `;
                     notifList.appendChild(item);
@@ -212,7 +213,7 @@
                     div.onclick = () => enlargeCamera(id, cam.name);
                     div.innerHTML = `
                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" onerror="handleImageError(this)">
-                        <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-[10px] font-black tracking-widest text-white border border-white/10 uppercase">${cam.name}</div>
+                        <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-caption font-black tracking-widest text-white border border-white/10 uppercase">${cam.name}</div>
                         <div class="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
                             <i class="fa-solid fa-expand text-[10px]"></i>
                         </div>
@@ -234,14 +235,14 @@
                         <div class="w-full space-y-3">
                             <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5">
                                 <img src="${latest.image_url}" class="w-full h-full object-cover transition-transform group-hover:scale-105" onerror="handleImageError(this)">
-                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest text-white border border-white/10 uppercase">${latest.camera_id}</div>
+                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-caption font-black tracking-widest text-white border border-white/10 uppercase">${latest.camera_id}</div>
                             </div>
                             <div>
                                 <div class="flex items-center justify-between mb-1">
-                                    <p class="text-sm font-bold text-white capitalize">${faceLabel}</p>
-                                    <p class="text-[10px] text-gray-500 italic">${new Date(latest.timestamp).toLocaleTimeString()}</p>
+                                    <p class="text-body font-bold text-white capitalize">${faceLabel}</p>
+                                    <p class="text-caption text-gray-500 italic">${new Date(latest.timestamp).toLocaleTimeString()}</p>
                                 </div>
-                                ${truncated ? `<p class="text-xs text-gray-400 leading-relaxed">${truncated}</p>` : ''}
+                                ${truncated ? `<p class="text-body text-gray-400 leading-relaxed">${truncated}</p>` : ''}
                             </div>
                         </div>
                     `;
@@ -249,6 +250,21 @@
             }
         } catch (e) { console.error("Dashboard Load Error:", e); }
     }
+    function updateClock() {
+        const now = new Date();
+        const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+        const dateOptions = { weekday: 'short', month: 'short', day: 'numeric' };
+
+        const clockEl = document.getElementById('clock');
+        const dateEl = document.getElementById('date');
+
+        if (clockEl) clockEl.innerText = now.toLocaleTimeString(undefined, timeOptions);
+        if (dateEl) dateEl.innerText = now.toLocaleDateString(undefined, dateOptions);
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
+
     loadCategories();
     loadActivity();
     loadDashboard();

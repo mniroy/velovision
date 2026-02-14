@@ -14,13 +14,25 @@ import cv2
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# Initialize cameras from config on module load
-for cam_id, cam_config in config.get("cameras", {}).items():
-    if cam_config.get("enabled", True):
-        source = cam_config.get("source", 0)
-        name = cam_config.get("name", cam_id)
-        logger.info(f"Adding camera: {cam_id} (source: {source})")
-        camera_manager.add_camera(cam_id, source, name=name)
+# Camera initialization moved to startup event (triggers.start_scheduler handles it)
+_cameras_initialized = False
+
+def _ensure_cameras_initialized():
+    """Initialize cameras from config. Safe to call multiple times."""
+    global _cameras_initialized
+    if _cameras_initialized:
+        return
+    _cameras_initialized = True
+    
+    for cam_id, cam_cfg in config.get("cameras", {}).items():
+        if cam_cfg.get("enabled", True):
+            source = cam_cfg.get("source", 0)
+            name = cam_cfg.get("name", cam_id)
+            logger.info(f"Initializing camera: {cam_id} (source: {source})")
+            try:
+                camera_manager.add_camera(cam_id, source, name=name)
+            except Exception as e:
+                logger.error(f"Failed to add camera {cam_id}: {e}")
 
 @router.get("/video_feed")
 def video_feed(camera_id: str = "default"):
@@ -232,16 +244,28 @@ async def label_person(id: int, name: str = Form(...), category: str = Form("Unc
     with open(person.image_path, "rb") as f:
         content = f.read()
     
-    # 1. Add to FaceManager (disk storage)
-    success, message = analysis.face_manager.add_face(name, content)
-    if not success:
-        raise HTTPException(status_code=400, detail=message)
+    # 1. Save the image to the faces directory (always succeeds)
+    faces_dir = "/data/faces"
+    os.makedirs(faces_dir, exist_ok=True)
+    face_image_path = os.path.join(faces_dir, f"{name}.jpg")
+    with open(face_image_path, "wb") as f:
+        f.write(content)
     
-    # 2. Add to database
+    # 2. Register in FaceManager's known list (lightweight, no face_recognition needed)
+    #    The image is already saved to disk above. Gemini handles recognition via reference images.
+    try:
+        if analysis.face_manager:
+            if name not in analysis.face_manager.known_face_names:
+                analysis.face_manager.known_face_names.append(name)
+                logger.info(f"Registered face name: {name}")
+    except Exception as e:
+        logger.warning(f"Face registration error for {name}: {e}")
+    
+    # 3. Add to database
     new_face = Face(
         name=name,
         category=category,
-        image_path=os.path.join("/data/faces", f"{name}.jpg"),
+        image_path=face_image_path,
         last_seen=person.timestamp,
         sighting_count=0
     )
@@ -256,7 +280,7 @@ async def label_person(id: int, name: str = Form(...), category: str = Form("Unc
             
     db.add(new_face)
     
-    # 3. Cleanup: Remove the unlabeled record (and others if we want to deduplicate? No, just this one)
+    # 4. Cleanup: Remove the unlabeled record
     db.delete(person)
     db.commit()
     
@@ -850,25 +874,23 @@ def backup_info():
     cameras_count = len(config.get("cameras", {}))
     ai_provider = config.get("ai", {}).get("provider", "None")
     
-    # Count faces
-    faces_dir = os.path.join(DATA_DIR, "faces")
-    faces_count = 0
-    if os.path.isdir(faces_dir):
-        faces_count = len([d for d in os.listdir(faces_dir) if os.path.isdir(os.path.join(faces_dir, d))])
-    
-    # Count events
-    events_count = 0
+    # Count faces & Discoveries
     try:
         db = SessionLocal()
+        faces_count = db.query(Face).count()
+        unlabeled_count = db.query(UnlabeledPerson).count()
         events_count = db.query(Event).count()
         db.close()
     except:
-        pass
+        faces_count = 0
+        unlabeled_count = 0
+        events_count = 0
     
     return {
         "cameras": cameras_count,
         "ai_provider": ai_provider.upper() if ai_provider else "None",
         "faces": faces_count,
+        "discoveries": unlabeled_count,
         "events": events_count,
     }
 
@@ -946,47 +968,52 @@ async def restore_backup(background_tasks: BackgroundTasks, file: UploadFile = F
                 # 3. Dispose DB to release file locks
                 try:
                     engine.dispose()
+                    import gc
+                    gc.collect() # Force cleanup of connections
                 except:
                     pass
 
                 # 4. Extract Zip
                 import zipfile
+                # Ensure target directories exist before extraction
+                if not os.path.exists(DATA_DIR):
+                     os.makedirs(DATA_DIR, exist_ok=True)
+                
                 with zipfile.ZipFile(temp_zip, 'r') as zf:
                     for member in zf.infolist():
                         try:
+                            # Sanitize paths
+                            if '..' in member.filename: continue
+                            if member.filename.startswith('__MACOSX') or '/.' in member.filename or member.filename.startswith('.'):
+                                continue
+                                
                             zf.extract(member, DATA_DIR)
                         except Exception as e:
                             logger.error(f"Extraction error ({member.filename}): {e}")
 
-                # 5. Reload system
-                new_config = reload_config()
-                from src.database import init_db
-                init_db()
-
-                for cam_id, cam_cfg in new_config.get("cameras", {}).items():
-                    if cam_cfg.get("enabled", True):
-                        source = cam_cfg.get("source", 0)
-                        try:
-                            camera_manager.add_camera(cam_id, source, name=cam_cfg.get("name", cam_id))
-                        except:
-                            pass
+                # 5. Clean Exit (Let Docker Restart)
+                logger.info("Backup restored. Triggering application restart...")
                 
-                triggers.sync_schedules()
-                analysis.init_analysis()
-                whatsapp.init_whatsapp()
+                # Small delay to ensure logs are flushed
+                import time
+                time.sleep(1)
                 
-                # 6. Cleanup
+                # Cleanup temp file
                 if os.path.exists(temp_zip):
-                    os.remove(temp_zip)
-                
-                logger.info("BACKGROUND RESTORE COMPLETE.")
+                    try:
+                        os.remove(temp_zip)
+                    except: pass
+
+                # Exit the process. With restart: unless-stopped in Docker, this will reboot the app cleanly.
+                os._exit(0)
+
             except Exception as bge:
                 logger.error(f"Background restore failed: {bge}", exc_info=True)
 
         background_tasks.add_task(perform_full_restore)
         
         logger.info(f"Restore request accepted for {file.filename}")
-        return {"status": "ok", "message": "Restore started in background. Page will refresh shortly."}
+        return {"status": "ok", "message": "Restore in progress. Application will restart in a few seconds."}
     
     except HTTPException:
         raise

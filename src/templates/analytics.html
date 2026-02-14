@@ -6,15 +6,15 @@
 <div class="p-8 pb-12">
     <header class="flex justify-between items-center mb-10">
         <div>
-            <h2 class="text-3xl font-semibold">System Analytics</h2>
-            <p class="text-gray-400 text-sm mt-1">Detection trends and system health</p>
+            <h2 class="text-h1 font-black tracking-tight">System Analytics</h2>
+            <p class="text-gray-400 text-body mt-1">Detection trends and system health</p>
         </div>
         <div class="bg-[#262626] rounded-xl p-1 flex items-center border border-white/5">
             <button id="btn-24h" onclick="setView('24h')"
-                class="bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">24h
+                class="bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-caption font-black uppercase tracking-widest shadow-sm transition-all">24h
                 View</button>
             <button id="btn-hist" onclick="setView('hist')"
-                class="text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Historical</button>
+                class="text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-caption font-black uppercase tracking-widest transition-all">Historical</button>
         </div>
     </header>
 
@@ -28,14 +28,14 @@
                         <i class="fa-solid fa-bolt"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-[10px] uppercase font-black tracking-widest">Total Events</p>
-                        <h3 id="stat-events" class="text-2xl font-black text-white">0</h3>
+                        <p class="text-gray-500 text-caption uppercase font-black tracking-widest">Total Events</p>
+                        <h3 id="stat-events" class="text-h1 font-black text-white">0</h3>
                     </div>
                 </div>
                 <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                     <div class="bg-[#dfffad] h-full w-[65%] shadow-[0_0_8px_rgba(223,255,173,0.3)]"></div>
                 </div>
-                <p class="text-[10px] text-gray-600 mt-2 uppercase font-bold tracking-wider">System-wide detections</p>
+                <p class="text-caption text-gray-600 mt-2 uppercase font-bold tracking-wider">System-wide detections</p>
             </div>
 
             <!-- Metric 2: AI Detections -->
@@ -46,14 +46,14 @@
                         <i class="fa-solid fa-brain"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-[10px] uppercase font-black tracking-widest">AI Operations</p>
-                        <h3 id="stat-ai" class="text-2xl font-black text-white">0</h3>
+                        <p class="text-gray-500 text-caption uppercase font-black tracking-widest">AI Operations</p>
+                        <h3 id="stat-ai" class="text-h1 font-black text-white">0</h3>
                     </div>
                 </div>
                 <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                     <div class="bg-[#dfffad] h-full w-[85%] shadow-[0_0_8px_rgba(223,255,173,0.5)]"></div>
                 </div>
-                <p class="text-[10px] text-gray-600 mt-2 uppercase font-bold tracking-wider">Neural Engine Activity</p>
+                <p class="text-caption text-gray-600 mt-2 uppercase font-bold tracking-wider">Neural Engine Activity</p>
             </div>
 
             <!-- Metric 3: Active Cameras -->
@@ -64,14 +64,14 @@
                         <i class="fa-solid fa-video"></i>
                     </div>
                     <div>
-                        <p class="text-gray-500 text-[10px] uppercase font-black tracking-widest">Connected</p>
-                        <h3 id="stat-cams" class="text-2xl font-black text-white">0</h3>
+                        <p class="text-gray-500 text-caption uppercase font-black tracking-widest">Connected</p>
+                        <h3 id="stat-cams" class="text-h1 font-black text-white">0</h3>
                     </div>
                 </div>
                 <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
                     <div class="bg-[#dfffad] h-full w-[100%] shadow-[0_0_8px_rgba(223,255,173,0.3)]"></div>
                 </div>
-                <p class="text-[10px] text-gray-600 mt-2 uppercase font-bold tracking-wider">Active Stream Nodes</p>
+                <p class="text-caption text-gray-600 mt-2 uppercase font-bold tracking-wider">Active Stream Nodes</p>
             </div>
         </div>
 
@@ -80,17 +80,18 @@
             <!-- Chart: Activity by Hour -->
             <div class="card rounded-3xl p-8 lg:col-span-2 flex flex-col h-[400px]">
                 <div class="flex justify-between items-center mb-8">
-                    <h3 class="text-lg font-bold flex items-center gap-2"><i
+                    <h3 class="text-h2 font-bold flex items-center gap-2"><i
                             class="fa-solid fa-clock-rotate-left text-[#dfffad]"></i> <span id="chart-title">Activity by
                             Hour</span></h3>
-                    <span id="chart-subtitle" class="text-[9px] text-gray-600 uppercase font-black tracking-widest">Last
+                    <span id="chart-subtitle"
+                        class="text-caption text-gray-600 uppercase font-black tracking-widest">Last
                         24 Hours</span>
                 </div>
                 <div id="hourly-chart" class="flex-1 flex items-end gap-1.5 justify-between pb-2">
                     <!-- Bars injected by JS -->
                 </div>
                 <div
-                    class="flex justify-between text-[8px] text-gray-500 mt-4 px-1 font-black uppercase tracking-widest border-t border-white/5 pt-4">
+                    class="flex justify-between text-caption text-gray-500 mt-4 px-1 font-black uppercase tracking-widest border-t border-white/5 pt-4">
                     <span>-24h</span>
                     <span>-12h</span>
                     <span>Now</span>
@@ -99,7 +100,7 @@
 
             <!-- Distribution: Events by Camera -->
             <div class="card rounded-3xl p-8 flex flex-col h-[400px]">
-                <h3 class="text-lg font-bold mb-8 flex items-center gap-2"><i
+                <h3 class="text-h2 font-bold mb-8 flex items-center gap-2"><i
                         class="fa-solid fa-layer-group text-[#dfffad]"></i> Event Layout</h3>
                 <div id="camera-list" class="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- Progress bars injected by JS -->
@@ -111,7 +112,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Common Objects -->
             <div class="card rounded-3xl p-8 h-72">
-                <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
+                <h3 class="text-h2 font-bold mb-6 flex items-center gap-2"><i
                         class="fa-solid fa-cube text-[#dfffad]"></i> Detected Objects</h3>
                 <div id="object-cloud"
                     class="flex flex-wrap gap-2 content-start overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
@@ -121,7 +122,7 @@
 
             <!-- Top Visitors -->
             <div class="card rounded-3xl p-8 h-72">
-                <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
+                <h3 class="text-h2 font-bold mb-6 flex items-center gap-2"><i
                         class="fa-solid fa-users text-orange-400"></i> Recognition</h3>
                 <div id="top-faces" class="space-y-3 overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
                     <!-- Faces injected by JS -->
@@ -130,12 +131,12 @@
 
             <!-- Detected Health -->
             <div class="card rounded-3xl p-8 h-72">
-                <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
+                <h3 class="text-h2 font-bold mb-6 flex items-center gap-2"><i
                         class="fa-solid fa-heart-pulse text-[#dfffad]"></i> System Health</h3>
                 <div class="space-y-4">
                     <div>
                         <div
-                            class="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                            class="flex justify-between text-caption font-black uppercase tracking-widest text-gray-500 mb-2">
                             <span>CPU Processor</span>
                             <span id="health-cpu" class="text-white">0%</span>
                         </div>
@@ -146,7 +147,7 @@
                     </div>
                     <div>
                         <div
-                            class="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                            class="flex justify-between text-caption font-black uppercase tracking-widest text-gray-500 mb-2">
                             <span>Memory Pool</span>
                             <span id="health-mem" class="text-white">0%</span>
                         </div>
@@ -157,7 +158,7 @@
                     </div>
                     <div>
                         <div
-                            class="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                            class="flex justify-between text-caption font-black uppercase tracking-widest text-gray-500 mb-2">
                             <span>Storage Volume</span>
                             <span id="health-storage" class="text-white">0%</span>
                         </div>
@@ -271,7 +272,7 @@
                 bar.innerHTML = `
                     <div class="w-full bg-white/5 hover:bg-[#dfffad]/80 rounded-t-lg transition-all duration-500 relative" style="height: ${hPercent}%">
                         <div class="absolute inset-0 bg-[#dfffad] opacity-0 group-hover:opacity-20 transition-opacity rounded-t-lg"></div>
-                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#2d2d2d] border border-white/10 px-2 py-1 rounded text-[8px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
+                        <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#2d2d2d] border border-white/10 px-2 py-1 rounded text-caption font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
                             ${hour.count} Events @ ${hour.label}
                         </div>
                     </div>
@@ -285,7 +286,7 @@
             summary.cameras.forEach(cam => {
                 const div = document.createElement('div');
                 div.innerHTML = `
-                    <div class="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                    <div class="flex justify-between text-caption font-black uppercase tracking-widest text-gray-500 mb-2">
                         <span>${cam.id}</span>
                         <span class="text-white">${cam.percent}%</span>
                     </div>
@@ -300,12 +301,12 @@
             const objectCloud = document.getElementById('object-cloud');
             objectCloud.innerHTML = '';
             if (summary.objects.length === 0) {
-                objectCloud.innerHTML = '<p class="text-gray-600 text-[10px] text-center w-full py-8 italic uppercase font-black tracking-widest">Awaiting classifications</p>';
+                objectCloud.innerHTML = '<p class="text-gray-600 text-caption text-center w-full py-8 italic uppercase font-black tracking-widest">Awaiting classifications</p>';
             } else {
                 summary.objects.forEach((obj, idx) => {
                     const tag = document.createElement('span');
-                    tag.className = `px-3 py-1.5 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#dfffad]`;
-                    tag.innerHTML = `${obj.label} <span class="text-[8px] opacity-30 ml-1 font-mono">${obj.count}</span>`;
+                    tag.className = `px-3 py-1.5 bg-white/5 rounded-xl border border-white/10 text-caption font-black uppercase tracking-widest text-[#dfffad]`;
+                    tag.innerHTML = `${obj.label} <span class="text-caption opacity-30 ml-1 font-mono">${obj.count}</span>`;
                     objectCloud.appendChild(tag);
                 });
             }
@@ -314,7 +315,7 @@
             const faceList = document.getElementById('top-faces');
             faceList.innerHTML = '';
             if (summary.faces.length === 0) {
-                faceList.innerHTML = '<p class="text-gray-600 text-[10px] text-center w-full py-8 italic uppercase font-black tracking-widest">No face recognitions yet</p>';
+                faceList.innerHTML = '<p class="text-gray-600 text-caption text-center w-full py-8 italic uppercase font-black tracking-widest">No face recognitions yet</p>';
             } else {
                 summary.faces.forEach(face => {
                     const row = document.createElement('div');
@@ -322,9 +323,9 @@
                     row.innerHTML = `
                         <img src="/api/faces/${face.name}/image" class="w-8 h-8 rounded-full object-cover grayscale" onerror="this.src='https://ui-avatars.com/api/?name=${face.name}&background=random'">
                         <div class="flex-1">
-                            <p class="text-xs font-bold text-white uppercase tracking-wider">${face.name}</p>
+                            <p class="text-body font-bold text-white uppercase tracking-wider">${face.name}</p>
                         </div>
-                        <div class="bg-[#dfffad]/10 text-[#dfffad] px-2 py-1 rounded-lg text-[9px] font-black">${face.count}x</div>
+                        <div class="bg-[#dfffad]/10 text-[#dfffad] px-2 py-1 rounded-lg text-caption font-black">${face.count}x</div>
                     `;
                     faceList.appendChild(row);
                 });

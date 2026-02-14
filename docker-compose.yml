@@ -11,6 +11,7 @@ services:
       - TZ=Asia/Jakarta
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    shm_size: 2gb
     volumes:
       - ./data:/data
       - ./src:/app/src

@@ -14,6 +14,16 @@
 70% { box-shadow: 0 0 0 10px rgba(223, 255, 173, 0); }
 100% { box-shadow: 0 0 0 0 rgba(223, 255, 173, 0); }
 }
+.finder-face { transition: all 0.2s; cursor: pointer; }
+.finder-face:hover { transform: scale(1.05); }
+.finder-face.selected { ring: 2px solid #dfffad; }
+.finder-face.selected .face-ring { border-color: #dfffad; box-shadow: 0 0 12px rgba(223,255,173,0.4); }
+.finder-face .face-ring { border: 2px solid #444; transition: all 0.2s; }
+@keyframes scan-pulse {
+0%,100% { opacity: 0.5; }
+50% { opacity: 1; }
+}
+.scanning { animation: scan-pulse 1.5s ease-in-out infinite; }
 {% endblock %}
 
 {% block content %}
@@ -103,6 +113,60 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Person Finder -->
+            <div class="card rounded-3xl p-6 space-y-5">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-sm font-black uppercase tracking-widest text-gray-500">
+                        <i class="fa-solid fa-crosshairs mr-1.5 text-[#dfffad]"></i> Person Finder
+                    </h3>
+                    <span id="finder-selected-count"
+                        class="text-[10px] font-bold bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">0
+                        selected</span>
+                </div>
+
+                <!-- Face Selection Grid -->
+                <div>
+                    <label
+                        class="block text-[10px] text-gray-500 mb-3 font-black uppercase tracking-widest leading-none">Select
+                        People to Find</label>
+                    <div id="finder-faces-grid" class="grid grid-cols-4 gap-2.5">
+                        <div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">Loading faces...</div>
+                    </div>
+                    <button onclick="toggleAllFinderFaces()"
+                        class="mt-2 text-[9px] font-bold text-gray-500 hover:text-[#dfffad] transition-colors uppercase tracking-widest">
+                        <i class="fa-solid fa-check-double mr-1"></i> Toggle All
+                    </button>
+                </div>
+
+                <!-- Custom Prompt -->
+                <div>
+                    <label
+                        class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Custom
+                        Instructions</label>
+                    <textarea id="finder-prompt" rows="2"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar"
+                        placeholder="e.g. Describe what they are wearing and their mood..."></textarea>
+                </div>
+
+                <!-- Run Button -->
+                <button id="finder-run-btn" onclick="runPersonFinder()"
+                    class="w-full bg-[#1a1a1a] border border-[#dfffad]/50 text-[#dfffad] py-3.5 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-crosshairs"></i> Scan All Cameras
+                </button>
+
+                <!-- Results Area -->
+                <div id="finder-results" class="hidden space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Results</label>
+                        <span id="finder-cameras-scanned" class="text-[9px] text-gray-600 font-mono"></span>
+                    </div>
+                    <div id="finder-results-content" class="space-y-2"></div>
+                    <div id="finder-summary"
+                        class="mt-3 p-4 bg-white/5 rounded-2xl border border-white/5 text-xs text-gray-300 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar">
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Main: Per-Camera Config -->
@@ -149,6 +213,8 @@
     let allRecipients = [];
     let currentTargetCam = null;
     let patrolConfig = { prompt: '', recipients: [] };
+    let allFaces = [];
+    let finderSelectedNames = new Set();
 
     function showToast(msg) {
         const t = document.getElementById('toast');
@@ -401,6 +467,168 @@
             }
         } catch (e) { showToast("Error starting Home Patrol."); }
     }
+    // ─── Person Finder ────────────────────────────────────────────────
+    async function loadFinderFaces() {
+        try {
+            const res = await fetch('/api/faces');
+            allFaces = await res.json();
+            renderFinderGrid();
+        } catch (e) { console.error('Failed to load faces', e); }
+    }
+
+    function renderFinderGrid() {
+        const grid = document.getElementById('finder-faces-grid');
+        if (!allFaces.length) {
+            grid.innerHTML = `<div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">No known faces registered. Add faces in the Faces page first.</div>`;
+            return;
+        }
+        grid.innerHTML = allFaces.map(f => {
+            const selected = finderSelectedNames.has(f.name);
+            return `
+                <div class="finder-face flex flex-col items-center gap-1.5 p-2 rounded-2xl ${selected ? 'selected bg-[#dfffad]/10' : 'bg-white/5 hover:bg-white/10'}" onclick="toggleFinderFace('${f.name}')">
+                    <div class="face-ring w-12 h-12 rounded-full overflow-hidden ${selected ? '' : ''}">
+                        <img src="/api/faces/${encodeURIComponent(f.name)}/image" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2224%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2216%22>${f.name[0]}</text></svg>'">
+                    </div>
+                    <span class="text-[9px] font-bold ${selected ? 'text-[#dfffad]' : 'text-gray-400'} truncate w-full text-center leading-tight">${f.name}</span>
+                </div>
+            `;
+        }).join('');
+        updateFinderCount();
+    }
+
+    function toggleFinderFace(name) {
+        if (finderSelectedNames.has(name)) {
+            finderSelectedNames.delete(name);
+        } else {
+            finderSelectedNames.add(name);
+        }
+        renderFinderGrid();
+    }
+
+    function toggleAllFinderFaces() {
+        if (finderSelectedNames.size === allFaces.length) {
+            finderSelectedNames.clear();
+        } else {
+            allFaces.forEach(f => finderSelectedNames.add(f.name));
+        }
+        renderFinderGrid();
+    }
+
+    function updateFinderCount() {
+        const el = document.getElementById('finder-selected-count');
+        const count = finderSelectedNames.size;
+        el.innerText = `${count} selected`;
+        if (count > 0) {
+            el.className = 'text-[10px] font-bold bg-[#dfffad] text-[#1a1a1a] px-2 py-0.5 rounded-full';
+        } else {
+            el.className = 'text-[10px] font-bold bg-white/10 text-gray-400 px-2 py-0.5 rounded-full';
+        }
+    }
+
+    async function runPersonFinder() {
+        if (finderSelectedNames.size === 0) {
+            showToast('Select at least one person to find.');
+            return;
+        }
+
+        const btn = document.getElementById('finder-run-btn');
+        const resultsArea = document.getElementById('finder-results');
+        const resultsContent = document.getElementById('finder-results-content');
+        const summaryEl = document.getElementById('finder-summary');
+        const scannedEl = document.getElementById('finder-cameras-scanned');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-radar scanning"></i> Scanning cameras...';
+        btn.classList.add('opacity-60');
+
+        resultsArea.classList.remove('hidden');
+        resultsContent.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs scanning"><i class="fa-solid fa-crosshairs mr-2"></i>Searching for ${finderSelectedNames.size} person(s) across all cameras...</div>`;
+        summaryEl.innerHTML = '';
+
+        try {
+            const res = await fetch('/api/patrol/find', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    names: Array.from(finderSelectedNames),
+                    prompt: document.getElementById('finder-prompt').value
+                })
+            });
+            const data = await res.json();
+
+            if (data.status === 'success') {
+                scannedEl.innerText = `${data.cameras_scanned} cameras scanned`;
+                renderFinderResults(data);
+                showToast('Person Finder complete!');
+            } else {
+                resultsContent.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">${data.message || 'Search failed'}</div>`;
+                showToast('Person Finder failed: ' + (data.message || 'Unknown error'));
+            }
+        } catch (e) {
+            resultsContent.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Connection error</div>`;
+            showToast('Error running Person Finder.');
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Scan All Cameras';
+            btn.classList.remove('opacity-60');
+        }
+    }
+
+    function renderFinderResults(data) {
+        const resultsContent = document.getElementById('finder-results-content');
+        const summaryEl = document.getElementById('finder-summary');
+        let html = '';
+
+        // Found persons
+        const found = data.found || {};
+        for (const [name, locations] of Object.entries(found)) {
+            for (const loc of locations) {
+                const confColor = loc.confidence === 'high' ? 'text-green-400 bg-green-400/10 border-green-400/20' :
+                    loc.confidence === 'medium' ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' :
+                        'text-orange-400 bg-orange-400/10 border-orange-400/20';
+                html += `
+                    <div class="flex items-start gap-3 p-3.5 bg-[#dfffad]/5 border border-[#dfffad]/15 rounded-2xl">
+                        <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-[#dfffad]/40">
+                            <img src="/api/faces/${encodeURIComponent(name)}/image" class="w-full h-full object-cover">
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-xs font-bold text-[#dfffad]">${name}</span>
+                                <span class="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${confColor}">${loc.confidence}</span>
+                            </div>
+                            <p class="text-[10px] text-gray-400 mt-0.5"><i class="fa-solid fa-video mr-1 text-gray-600"></i>${loc.camera_name}</p>
+                            <p class="text-[11px] text-gray-300 mt-1 leading-relaxed">${loc.activity}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Not found persons
+        const notFound = data.not_found || [];
+        for (const name of notFound) {
+            html += `
+                <div class="flex items-center gap-3 p-3.5 bg-white/5 border border-white/5 rounded-2xl opacity-60">
+                    <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-gray-700">
+                        <img src="/api/faces/${encodeURIComponent(name)}/image" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1">
+                        <span class="text-xs font-bold text-gray-400">${name}</span>
+                        <p class="text-[10px] text-red-400/70 mt-0.5"><i class="fa-solid fa-eye-slash mr-1"></i>Not found in any camera</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        if (!html) {
+            html = '<div class="text-center py-4 text-gray-500 text-xs">No results to display</div>';
+        }
+
+        resultsContent.innerHTML = html;
+        summaryEl.innerHTML = (data.summary || '').replace(/\n/g, '<br>');
+    }
+
     loadData();
+    loadFinderFaces();
 </script>
 {% endblock %}
