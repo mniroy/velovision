@@ -224,7 +224,7 @@ input[type="checkbox"] { accent-color: #dfffad; }
                 card.className = "card rounded-2xl p-4 flex flex-col gap-4 hover:border-gray-600 transition-all bg-[#1a1a1a] border border-gray-800 group";
                 card.innerHTML = `
                      <div class="w-full aspect-video bg-black rounded-xl overflow-hidden relative cursor-pointer border border-white/5" onclick="enlargeCamera('${id}', '${cam.name}')">
-                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="if(!this.dataset.retry) this.dataset.retry=0; if(this.dataset.retry<3){this.dataset.retry++;setTimeout(()=>{this.src='/api/snapshot?camera_id=${id}&t='+Date.now()},2000)}">
+                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="handleImageError(this)">
                          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
                          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <div class="bg-black/60 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center border border-white/10">

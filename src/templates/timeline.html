@@ -67,7 +67,7 @@
                 card.className = 'card rounded-2xl p-4 flex gap-6 hover:shadow-lg transition-all group border border-transparent hover:border-gray-700';
                 card.innerHTML = `
                     <div class="relative w-48 h-32 rounded-xl overflow-hidden flex-shrink-0 bg-gray-800">
-                        <img src="${event.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                        <img src="${event.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500" onerror="handleImageError(this)">
                         <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white">${timeStr}</div>
                     </div>
                     <div class="flex-1 flex flex-col justify-between">
