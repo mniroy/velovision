@@ -240,13 +240,13 @@ background: rgba(223, 255, 173, 0.05);
             <!-- Usage Metrics -->
             <div class="card rounded-3xl p-8 border-l-4 border-l-[#dfffad]">
                 <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
-                        class="fa-solid fa-chart-line text-purple-400"></i> AI Usage</h3>
+                        class="fa-solid fa-chart-line text-purple-400"></i> AI Engagement</h3>
                 <div class="space-y-8">
                     <div class="text-center py-6 border-b border-gray-800">
-                        <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Today's
-                            Inferences</span>
-                        <span class="block text-5xl font-black text-white">0</span>
-                        <span class="text-xs text-gray-600 mt-2 block">AI Analysis Calls</span>
+                        <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Total
+                            System Detections</span>
+                        <span id="ai-total-count" class="block text-5xl font-black text-white">0</span>
+                        <span class="text-xs text-gray-600 mt-2 block">AI Analysis Events</span>
                     </div>
                 </div>
             </div>
@@ -318,6 +318,33 @@ background: rgba(223, 255, 173, 0.05);
 
         await loadSettings();
         await loadInventory();
+        await loadStats();
+        loadLocalActivity();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            document.getElementById('ai-total-count').innerText = data.total_events || 0;
+        } catch (e) { }
+    }
+
+    function loadLocalActivity() {
+        const log = document.getElementById('activityLog');
+        const tasks = JSON.parse(localStorage.getItem('setting_activity') || '[]');
+        if (tasks.length > 0) {
+            log.innerHTML = '';
+            tasks.forEach(task => {
+                const el = document.createElement('div');
+                el.className = 'flex items-center gap-3 bg-[#1a1a1a] rounded-xl px-3 py-2 border border-gray-800/50 mb-2';
+                const icon = task.type === 'save' ? '<i class="fa-solid fa-gear text-blue-400"></i>' :
+                    task.type === 'backup' ? '<i class="fa-solid fa-cloud-arrow-down text-[#dfffad]"></i>' :
+                        '<i class="fa-solid fa-cloud-arrow-up text-orange-400"></i>';
+                el.innerHTML = `${icon}<span class="text-[11px] text-gray-300 flex-1">${task.message}</span><span class="text-[9px] text-gray-600 font-mono">${task.time}</span>`;
+                log.appendChild(el);
+            });
+        }
     }
 
     async function loadSettings() {
@@ -489,9 +516,14 @@ background: rgba(223, 255, 173, 0.05);
             type === 'backup' ? '<i class="fa-solid fa-cloud-arrow-down text-[#dfffad]"></i>' :
                 '<i class="fa-solid fa-cloud-arrow-up text-orange-400"></i>';
         const el = document.createElement('div');
-        el.className = 'flex items-center gap-3 bg-[#1a1a1a] rounded-xl px-3 py-2 border border-gray-800/50';
+        el.className = 'flex items-center gap-3 bg-[#1a1a1a] rounded-xl px-3 py-2 border border-gray-800/50 mb-2';
         el.innerHTML = `${icon}<span class="text-[11px] text-gray-300 flex-1">${message}</span><span class="text-[9px] text-gray-600 font-mono">${now}</span>`;
         log.prepend(el);
+
+        // Save to local storage
+        const tasks = JSON.parse(localStorage.getItem('setting_activity') || '[]');
+        tasks.unshift({ type, message, time: now });
+        localStorage.setItem('setting_activity', JSON.stringify(tasks.slice(0, 10)));
     }
 
     initPage();
