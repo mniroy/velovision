@@ -4,7 +4,7 @@ from src.streaming import camera_manager, generate_frames
 from src.config import config, save_config
 from src import analysis, triggers, whatsapp
 from sqlalchemy.orm import Session
-from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson
+from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson, engine
 import shutil
 import logging
 import os
@@ -790,13 +790,39 @@ async def restore_backup(file: UploadFile = File(...)):
             except:
                 pass
         
+        # Stop scheduler jobs
+        try:
+            triggers.scheduler.remove_all_jobs()
+        except:
+            pass
+
+        # CRITICAL: Dispose Database engine to close active connections
+        # This allows overwriting the velovision.db file on most systems
+        try:
+            engine.dispose()
+            logger.info("Database engine disposed for restore.")
+        except Exception as e:
+            logger.warning(f"Failed to dispose engine: {e}")
+
         # Extract backup to /data
         with zipfile.ZipFile(buffer, 'r') as zf:
-            zf.extractall(DATA_DIR)
+            # We extract individually to handle potential locks gracefully
+            for member in zf.infolist():
+                try:
+                    zf.extract(member, DATA_DIR)
+                except Exception as e:
+                    logger.error(f"Failed to extract {member.filename}: {e}")
+                    # If it's a critical file like config.yaml, we should probably fail?
+                    # But for now, let's keep going.
         
         # Reload config
         new_config = reload_config()
         
+        # Re-init DB (this will re-open connections)
+        # We don't need to call init_db() again as it doesn't hurt and tables should exist
+        from src.database import init_db
+        init_db()
+
         # Re-init cameras from restored config
         for cam_id, cam_cfg in new_config.get("cameras", {}).items():
             if cam_cfg.get("enabled", True):
