@@ -365,11 +365,17 @@
     async function triggerSingle(id) {
         showToast(`Running diagnostic analysis for ${id}...`);
         try {
-            const res = await fetch(`/api/trigger/${id}`, { method: 'POST' });
+            const res = await fetch(`/api/trigger/${encodeURIComponent(id)}`, { method: 'POST' });
             const data = await res.json();
-            if (data.status === 'success') showToast("Analysis complete. Check logs.");
-            else showToast("Analysis failed.");
-        } catch (e) { showToast("Error triggering analysis."); }
+            if (res.ok && data.status === 'success') {
+                showToast("Analysis complete. Check logs.");
+            } else {
+                showToast("Analysis failed: " + (data.message || data.error || "Server error"));
+            }
+        } catch (e) {
+            console.error("Trigger Error:", e);
+            showToast("Error triggering analysis. Check console.");
+        }
     }
 
     async function runHomePatrol() {

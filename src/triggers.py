@@ -86,13 +86,13 @@ def perform_analysis(camera_id="default"):
         camera = camera_manager.get_camera(camera_id)
         if not camera:
              logger.error(f"Camera {camera_id} not found.")
-             return {"error": "Camera not found"}
+             return {"status": "error", "message": "Camera not found"}
         
         frame_bytes = camera.get_frame()
 
         if not frame_bytes:
             logger.error("Failed to capture frame.")
-            return {"error": "Failed to capture frame"}
+            return {"status": "error", "message": "Failed to capture frame"}
 
         # Decode for processing
         nparr = np.frombuffer(frame_bytes, np.uint8)
