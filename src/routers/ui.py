@@ -33,13 +33,10 @@ async def analytics(request: Request):
 async def messages(request: Request):
     return templates.TemplateResponse("messages.html", {"request": request, "active_page": "messages"})
 
-@router.get("/ai-settings", response_class=HTMLResponse)
-async def ai_settings(request: Request):
-    return templates.TemplateResponse("ai_settings.html", {"request": request, "active_page": "ai_settings"})
+@router.get("/settings", response_class=HTMLResponse)
+async def settings(request: Request):
+    return templates.TemplateResponse("settings.html", {"request": request, "active_page": "settings"})
 
-@router.get("/backup", response_class=HTMLResponse)
-async def backup(request: Request):
-    return templates.TemplateResponse("backup.html", {"request": request, "active_page": "backup"})
 # Legacy redirects for .html extensions
 @router.get("/index.html")
 async def redirect_index():

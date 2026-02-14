@@ -56,15 +56,35 @@ def get_default_config():
             "webhook_enabled": False,
             "schedule_enabled": False,
             "schedule_interval_hrs": 6
+        },
+        "general": {
+            "timezone": "Asia/Jakarta"
         }
     }
 
 # Global config instance
 config = load_config()
 
+def apply_timezone():
+    """Apply the configured timezone to the process."""
+    tz = config.get("general", {}).get("timezone", "Asia/Jakarta")
+    import os
+    import time
+    os.environ['TZ'] = tz
+    try:
+        time.tzset()
+        logger.info(f"System timezone set to: {tz}")
+    except AttributeError:
+        # Windows doesn't have tzset
+        logger.warning("time.tzset() not available on this platform.")
+
+# Initial apply
+apply_timezone()
+
 def reload_config():
     global config
     config = load_config()
+    apply_timezone() # Re-apply on reload
     logger.info("Configuration reloaded.")
     return config
 
@@ -74,6 +94,9 @@ def save_config(updates):
     try:
         # Use deep merge to avoid wiping nested keys (like whatsapp secret vs recipients)
         deep_merge(config, updates)
+        
+        # Apply any general setting changes (like timezone)
+        apply_timezone()
         
         with open(CONFIG_PATH, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)

@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Velo Vision{% endblock %}
+
+{% block extra_style %}
+.toast {
+position: fixed;
+bottom: 2rem;
+right: 2rem;
+padding: 1rem 1.5rem;
+border-radius: 1rem;
+background: #dfffad;
+color: #1a1a1a;
+font-weight: bold;
+transform: translateY(100px);
+transition: transform 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+z-index: 1000;
+}
+.toast.show { transform: translateY(0); }
+
+/* Backup styles */
+.backup-card {
+background: linear-gradient(135deg, #262626 0%, #1f1f1f 100%);
+border: 1px solid rgba(255,255,255,0.05);
+transition: all 0.3s ease;
+}
+.backup-card:hover {
+border-color: rgba(223, 255, 173, 0.2);
+transform: translateY(-2px);
+box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.action-btn {
+transition: all 0.3s ease;
+position: relative;
+overflow: hidden;
+}
+.inventory-item {
+border-left: 3px solid transparent;
+transition: all 0.2s;
+}
+.inventory-item:hover {
+border-left-color: #dfffad;
+background: rgba(255,255,255,0.02);
+}
+.restore-zone {
+border: 2px dashed rgba(255,255,255,0.1);
+transition: all 0.3s;
+}
+.restore-zone.dragover {
+border-color: #dfffad;
+background: rgba(223, 255, 173, 0.05);
+}
+{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <header class="flex justify-between items-center mb-10">
+        <div>
+            <h2 class="text-3xl font-semibold">Settings</h2>
+            <p class="text-gray-400 text-sm mt-1">System configuration, AI management, and backups</p>
+        </div>
+        <button id="saveBtn" onclick="saveSettings()"
+            class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20">
+            Save Configuration
+        </button>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-8">
+            <!-- General Configuration -->
+            <section class="card rounded-3xl p-8">
+                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                        class="fa-solid fa-gear text-[#dfffad]"></i> General Configuration</h3>
+                <div class="max-w-md">
+                    <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">System
+                        Timezone</label>
+                    <select id="timezone"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                        <!-- Populated via JS -->
+                    </select>
+                </div>
+            </section>
+
+            <!-- Service Provider -->
+            <section class="card rounded-3xl p-8">
+                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                        class="fa-solid fa-microchip text-[#dfffad]"></i> Service Provider</h3>
+                <div class="space-y-6">
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Provider</label>
+                        <select id="provider"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                            <option value="gemini">Google Gemini AI</option>
+                            <option value="openai" disabled>OpenAI (Soon)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">API
+                            Key</label>
+                        <div class="relative">
+                            <input type="password" id="apiKey" placeholder="sk-..."
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono pr-12">
+                            <button onclick="toggleKey()"
+                                class="absolute right-4 top-3 text-gray-500 hover:text-white transition-colors"><i
+                                    class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Model
+                            ID</label>
+                        <div class="flex gap-3">
+                            <select id="modelName"
+                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                            </select>
+                            <button onclick="fetchModels()" id="fetchBtn"
+                                class="bg-[#333] hover:bg-[#444] px-5 py-3 rounded-xl text-xs font-bold transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-arrows-rotate"></i> Sync
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Engine Parameters -->
+            <section class="card rounded-3xl p-8">
+                <h3 class="text-xl font-medium mb-6 flex items-center gap-3"><i
+                        class="fa-solid fa-sliders text-blue-400"></i> Engine Parameters</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Max
+                            Tokens</label>
+                        <input type="number" id="maxTokens" value="512"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-2 uppercase font-black tracking-widest">Temperature</label>
+                        <input type="number" step="0.1" id="temperature" value="0.7"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    </div>
+                </div>
+            </section>
+
+            <hr class="border-gray-800 my-8">
+
+            <!-- Backup and Restore Section -->
+            <section class="space-y-8">
+                <h3 class="text-2xl font-bold flex items-center gap-3">
+                    <i class="fa-solid fa-hard-drive text-orange-400"></i> Backup & Recovery
+                </h3>
+
+                <!-- Data Inventory -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="inventoryGrid">
+                    <!-- Populated by JS -->
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Backup Card -->
+                    <div class="backup-card rounded-2xl p-6 flex flex-col">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 rounded-xl bg-[#dfffad]/10 flex items-center justify-center">
+                                <i class="fa-solid fa-cloud-arrow-down text-[#dfffad] text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Create Backup</h4>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Download current state
+                                </p>
+                            </div>
+                        </div>
+                        <div class="space-y-3 mb-8 text-[10px] text-gray-500">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[#dfffad]"></i> System
+                                configurations & credentials</div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[#dfffad]"></i> AI
+                                model parameters & API keys</div>
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-check text-[#dfffad]"></i> Known
+                                faces & event database</div>
+                        </div>
+                        <div class="mt-auto">
+                            <button id="backupBtn" onclick="createBackup()"
+                                class="action-btn w-full bg-[#dfffad] text-black font-bold py-3 rounded-xl hover:bg-[#c8f080] text-xs uppercase tracking-widest">
+                                <span id="backupBtnText"><i class="fa-solid fa-download mr-2"></i> Download Zip</span>
+                            </button>
+                            <p id="backupStatus" class="text-[10px] text-gray-500 text-center mt-3"></p>
+                        </div>
+                    </div>
+
+                    <!-- Restore Card -->
+                    <div class="backup-card rounded-2xl p-6 flex flex-col">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-12 h-12 rounded-xl bg-orange-500/10 flex items-center justify-center">
+                                <i class="fa-solid fa-cloud-arrow-up text-orange-400 text-lg"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold">Restore System</h4>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Upload .zip backup</p>
+                            </div>
+                        </div>
+                        <div id="restoreZone"
+                            class="restore-zone rounded-xl p-6 text-center mb-6 cursor-pointer border-2 border-dashed border-gray-800 hover:border-[#dfffad] transition-colors"
+                            onclick="document.getElementById('restoreFile').click()"
+                            ondragover="event.preventDefault(); this.classList.add('dragover')"
+                            ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+                            <input type="file" id="restoreFile" accept=".zip" class="hidden"
+                                onchange="handleFileSelect(event)">
+                            <div id="dropContent">
+                                <i class="fa-solid fa-file-zipper text-xl text-gray-600 mb-2"></i>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Click or drag
+                                    zip</p>
+                            </div>
+                            <div id="fileInfo" class="hidden">
+                                <i class="fa-solid fa-file-circle-check text-xl text-[#dfffad] mb-2"></i>
+                                <p id="fileName" class="text-xs text-white font-bold truncate"></p>
+                            </div>
+                        </div>
+                        <div class="mt-auto">
+                            <button id="restoreBtn" onclick="restoreBackup()" disabled
+                                class="action-btn w-full bg-orange-500 text-white font-bold py-3 rounded-xl hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed text-xs uppercase tracking-widest">
+                                <span id="restoreBtnText"><i class="fa-solid fa-upload mr-2"></i> Restore Now</span>
+                            </button>
+                            <p id="restoreStatus" class="text-[10px] text-gray-500 text-center mt-3"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning -->
+                <div class="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 flex items-start gap-4">
+                    <i class="fa-solid fa-triangle-exclamation text-red-400 mt-1"></i>
+                    <p class="text-xs text-gray-500 leading-relaxed">
+                        <strong class="text-red-400">Warning:</strong> Restoring will overwrite all settings and restart
+                        the application.
+                    </p>
+                </div>
+            </section>
+        </div>
+
+        <!-- Sidebar Components -->
+        <div class="lg:col-span-1 space-y-8">
+            <!-- Usage Metrics -->
+            <div class="card rounded-3xl p-8 border-l-4 border-l-[#dfffad]">
+                <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
+                        class="fa-solid fa-chart-line text-purple-400"></i> AI Usage</h3>
+                <div class="space-y-8">
+                    <div class="text-center py-6 border-b border-gray-800">
+                        <span class="block text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-1">Today's
+                            Inferences</span>
+                        <span class="block text-5xl font-black text-white">0</span>
+                        <span class="text-xs text-gray-600 mt-2 block">AI Analysis Calls</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log (Recent Activity) -->
+            <div class="card rounded-3xl p-6">
+                <h3 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Setting Activity</h3>
+                <div id="activityLog" class="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                    <div class="text-xs text-gray-600 text-center py-4">No activity recorded</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast" class="toast">Configuration Saved</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let selectedFile = null;
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function toggleKey() {
+        const input = document.getElementById('apiKey');
+        input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function fetchModels() {
+        const btn = document.getElementById('fetchBtn');
+        btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i>';
+        btn.disabled = true;
+        try {
+            const res = await fetch('/api/ai/models');
+            const data = await res.json();
+            const select = document.getElementById('modelName');
+            const currentVal = select.value;
+            if (data.models && data.models.length > 0) {
+                select.innerHTML = '';
+                data.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.innerText = m;
+                    select.appendChild(opt);
+                });
+                if (data.models.includes(currentVal)) select.value = currentVal;
+                showToast("Models synced");
+            }
+        } catch (err) { showToast("Sync failed"); }
+        finally { btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Sync'; btn.disabled = false; }
+    }
+
+    // Populate Timezones and Load Inventory
+    async function initPage() {
+        const tzSelect = document.getElementById('timezone');
+        const timezones = Intl.supportedValuesOf('timeZone');
+        timezones.forEach(tz => {
+            const opt = document.createElement('option');
+            opt.value = tz;
+            opt.innerText = tz;
+            tzSelect.appendChild(opt);
+        });
+
+        await loadSettings();
+        await loadInventory();
+    }
+
+    async function loadSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            const config = await res.json();
+            if (config.ai) {
+                document.getElementById('apiKey').value = config.ai.api_key || '';
+                document.getElementById('maxTokens').value = config.ai.max_tokens || 512;
+                document.getElementById('temperature').value = config.ai.temperature || 0.7;
+            }
+            if (config.general) {
+                document.getElementById('timezone').value = config.general.timezone || 'Asia/Jakarta';
+            }
+        } catch (e) { }
+    }
+
+    async function saveSettings() {
+        const btn = document.getElementById('saveBtn');
+        btn.innerText = 'Syncing...';
+        btn.disabled = true;
+        const settings = {
+            general: { timezone: document.getElementById('timezone').value },
+            ai: {
+                provider: 'gemini',
+                api_key: document.getElementById('apiKey').value,
+                model: document.getElementById('modelName').value,
+                max_tokens: parseInt(document.getElementById('maxTokens').value),
+                temperature: parseFloat(document.getElementById('temperature').value)
+            }
+        };
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(settings)
+            });
+            if (res.ok) {
+                showToast('Settings saved!');
+                addActivity('save', 'System configuration updated');
+            }
+        } catch (err) { showToast('Save Failed'); }
+        finally { btn.innerText = 'Save Configuration'; btn.disabled = false; }
+    }
+
+    // Backup Logic
+    async function loadInventory() {
+        try {
+            const res = await fetch('/api/backup/info');
+            const data = await res.json();
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = '';
+            const items = [
+                { icon: 'fa-video', label: 'Cameras', value: data.cameras || 0, color: '#dfffad' },
+                { icon: 'fa-brain', label: 'AI Provider', value: data.ai_provider || 'None', color: '#818cf8' },
+                { icon: 'fa-users', label: 'Known Faces', value: data.faces || 0, color: '#f59e0b' },
+                { icon: 'fa-clock', label: 'Events', value: data.events || 0, color: '#06b6d4' },
+            ];
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'inventory-item bg-[#1a1a1a] rounded-xl p-4 border border-gray-800/50';
+                el.innerHTML = `
+                    <div class="flex items-center gap-2 mb-1">
+                        <i class="fa-solid ${item.icon} text-[10px]" style="color: ${item.color}"></i>
+                        <span class="text-[9px] font-bold text-gray-500 uppercase tracking-widest">${item.label}</span>
+                    </div>
+                    <p class="text-xl font-bold">${item.value}</p>
+                `;
+                grid.appendChild(el);
+            });
+        } catch (err) { }
+    }
+
+    async function createBackup() {
+        const btn = document.getElementById('backupBtn');
+        const btnText = document.getElementById('backupBtnText');
+        const status = document.getElementById('backupStatus');
+        btn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        status.innerText = 'Creating zip...';
+        try {
+            const res = await fetch('/api/backup/create');
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'velovision_backup.zip';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            status.innerHTML = `<span class="text-[#dfffad]">✓ Downloaded (${(blob.size / 1024).toFixed(0)} KB)</span>`;
+            addActivity('backup', 'Backup file downloaded');
+        } catch (err) {
+            status.innerHTML = '<span class="text-red-400">✗ Failed</span>';
+        } finally {
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="fa-solid fa-download mr-2"></i> Download Zip';
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.target.closest('#restoreZone').classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) selectFile(file);
+    }
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) selectFile(file);
+    }
+
+    function selectFile(file) {
+        if (!file.name.endsWith('.zip')) {
+            showToast('Invalid file format');
+            return;
+        }
+        selectedFile = file;
+        document.getElementById('dropContent').classList.add('hidden');
+        document.getElementById('fileInfo').classList.remove('hidden');
+        document.getElementById('fileName').innerText = file.name;
+        document.getElementById('restoreBtn').disabled = false;
+    }
+
+    async function restoreBackup() {
+        if (!selectedFile) return;
+        if (!confirm('This will overwrite everything. Continue?')) return;
+
+        const btn = document.getElementById('restoreBtn');
+        const btnText = document.getElementById('restoreBtnText');
+        const status = document.getElementById('restoreStatus');
+        btn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i>';
+        status.innerText = 'Uploading...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+            const res = await fetch('/api/backup/restore', { method: 'POST', body: formData });
+            const result = await res.json();
+            if (res.ok) {
+                status.innerHTML = '<span class="text-[#dfffad]">✓ Restore successful! Restarting...</span>';
+                setTimeout(() => window.location.reload(), 3000);
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (err) {
+            status.innerHTML = '<span class="text-red-400">✗ Restore failed</span>';
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="fa-solid fa-upload mr-2"></i> Restore Now';
+        }
+    }
+
+    function addActivity(type, message) {
+        const log = document.getElementById('activityLog');
+        const isFirst = log.querySelector('.text-center');
+        if (isFirst) log.innerHTML = '';
+        const now = new Date().toLocaleTimeString();
+        const icon = type === 'save' ? '<i class="fa-solid fa-gear text-blue-400"></i>' :
+            type === 'backup' ? '<i class="fa-solid fa-cloud-arrow-down text-[#dfffad]"></i>' :
+                '<i class="fa-solid fa-cloud-arrow-up text-orange-400"></i>';
+        const el = document.createElement('div');
+        el.className = 'flex items-center gap-3 bg-[#1a1a1a] rounded-xl px-3 py-2 border border-gray-800/50';
+        el.innerHTML = `${icon}<span class="text-[11px] text-gray-300 flex-1">${message}</span><span class="text-[9px] text-gray-600 font-mono">${now}</span>`;
+        log.prepend(el);
+    }
+
+    initPage();
+</script>
+{% endblock %}
