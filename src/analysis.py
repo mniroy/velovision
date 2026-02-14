@@ -86,6 +86,17 @@ class FaceManager:
             logger.error(f"Error removing face: {e}")
             return False, str(e)
 
+    def get_known_faces(self):
+        """Returns metadata for all labeled faces."""
+        faces = []
+        for name in self.known_face_names:
+            for ext in ['.jpg', '.jpeg', '.png']:
+                filepath = os.path.join(self.faces_dir, f"{name}{ext}")
+                if os.path.exists(filepath):
+                    faces.append({"name": name, "image_path": filepath})
+                    break
+        return faces
+
     def identify_faces(self, frame_rgb):
         """Bypassed: Using Cloud AI (Gemini) for all person detection to save resources."""
         return [], []
@@ -101,27 +112,45 @@ class AIAnalyzer:
             self.model = None
             logger.warning("AI API Key not set. Analysis will be disabled.")
 
-    def analyze_image(self, image_bytes, prompt, faces_detected=[]):
+    def analyze_image(self, image_bytes, prompt, known_faces=[]):
+        """
+        known_faces: list of dict {"name": "...", "image_path": "..."}
+        """
         if not self.model:
-            return "AI Analysis Disabled (No API Key)"
+            return "AI Analysis Disabled (No API Key)", []
 
         try:
-            # Convert bytes to PIL Image
-            image = Image.open(io.BytesIO(image_bytes))
+            # Main image
+            main_image = Image.open(io.BytesIO(image_bytes))
             
-            # Construct full prompt
-            if faces_detected:
-                context = f"Identified people in scene: {', '.join(faces_detected)}."
-            else:
-                context = "Identify any people in the image and describe them."
-                
-            full_prompt = f"{prompt}\nContext: {context}"
+            inputs = []
             
-            response = self.model.generate_content([full_prompt, image])
-            return response.text
+            # Add context about known people with their images
+            if known_faces:
+                inputs.append("Here are reference images of people I know. Use these to identify them in the new scene:")
+                for face in known_faces:
+                    try:
+                        if os.path.exists(face['image_path']):
+                            face_img = Image.open(face['image_path'])
+                            inputs.append(f"This is {face['name']}:")
+                            inputs.append(face_img)
+                    except Exception as e:
+                        logger.warning(f"Could not load reference image for {face['name']}: {e}")
+
+            inputs.append(f"NEW SCENE TO ANALYZE:\n{prompt}")
+            inputs.append("\nIMPORTANT: If you see someone you don't recognize among the known people, start your response with 'PERSON_DETECTED: YES'. Otherwise start with 'PERSON_DETECTED: NO'.")
+            inputs.append(main_image)
+            
+            response = self.model.generate_content(inputs)
+            text = response.text
+            
+            # Simple extraction of "person detected" flag
+            detected = "PERSON_DETECTED: YES" in text
+            
+            return text, detected
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
-            return f"Error: {str(e)}"
+            return f"Error: {str(e)}", False
 
     def analyze_multi_images(self, images_data, global_prompt):
         """

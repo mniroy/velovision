@@ -1,10 +1,10 @@
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request, BackgroundTasks
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request, BackgroundTasks, Form
+from fastapi.responses import StreamingResponse, FileResponse
 from src.streaming import camera_manager, generate_frames
 from src.config import config, save_config
 from src import analysis, triggers, whatsapp
 from sqlalchemy.orm import Session
-from src.database import get_db, Event, Face, SessionLocal
+from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson
 import shutil
 import logging
 import os
@@ -135,6 +135,75 @@ def delete_face(name: str):
     if not success:
         raise HTTPException(status_code=404, detail=message)
     return {"status": "success", "message": message}
+
+# ─── Unlabeled Persons (AI Detection) ────────────────────────────────────────
+
+@router.get("/faces/unlabeled")
+def get_unlabeled_persons(db: Session = Depends(get_db)):
+    from src.database import UnlabeledPerson
+    unlabeled = db.query(UnlabeledPerson).order_by(UnlabeledPerson.timestamp.desc()).all()
+    return [{
+        "id": p.id,
+        "timestamp": p.timestamp.isoformat(),
+        "camera_id": p.camera_id,
+        "event_id": p.event_id
+    } for p in unlabeled]
+
+@router.get("/faces/unlabeled/{id}/image")
+def get_unlabeled_image(id: int, db: Session = Depends(get_db)):
+    from src.database import UnlabeledPerson
+    person = db.query(UnlabeledPerson).filter(UnlabeledPerson.id == id).first()
+    if not person or not os.path.exists(person.image_path):
+        raise HTTPException(status_code=404, detail="Image not found")
+    return FileResponse(person.image_path)
+
+@router.post("/faces/unlabeled/{id}/label")
+async def label_person(id: int, name: str = Form(...), category: str = Form("Uncategorized"), db: Session = Depends(get_db)):
+    from src.database import UnlabeledPerson, Face
+    person = db.query(UnlabeledPerson).filter(UnlabeledPerson.id == id).first()
+    if not person:
+        raise HTTPException(status_code=404, detail="Detection not found")
+    
+    # Check if face already exists
+    existing = db.query(Face).filter(Face.name == name).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="A person with this name already exists")
+    
+    # Capture the image from the unlabeled entry
+    if not os.path.exists(person.image_path):
+         raise HTTPException(status_code=404, detail="Reference image missing")
+    
+    with open(person.image_path, "rb") as f:
+        content = f.read()
+    
+    # 1. Add to FaceManager (disk storage)
+    success, message = analysis.face_manager.add_face(name, content)
+    if not success:
+        raise HTTPException(status_code=400, detail=message)
+    
+    # 2. Add to database
+    new_face = Face(
+        name=name,
+        category=category,
+        image_path=os.path.join("/data/faces", f"{name}.jpg"),
+        last_seen=person.timestamp
+    )
+    db.add(new_face)
+    
+    # 3. Cleanup: Remove the unlabeled record (and others if we want to deduplicate? No, just this one)
+    db.delete(person)
+    db.commit()
+    
+    return {"status": "success", "message": f"Identified as {name}"}
+
+@router.delete("/faces/unlabeled/{id}")
+def delete_unlabeled(id: int, db: Session = Depends(get_db)):
+    from src.database import UnlabeledPerson
+    person = db.query(UnlabeledPerson).filter(UnlabeledPerson.id == id).first()
+    if person:
+        db.delete(person)
+        db.commit()
+    return {"status": "success"}
 
 @router.delete("/events/{event_id}")
 def delete_event(event_id: int, db: Session = Depends(get_db)):

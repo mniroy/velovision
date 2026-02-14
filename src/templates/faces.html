@@ -15,6 +15,16 @@
         </button>
     </header>
 
+    <!-- UNLABELED PEOPLE (AI Discoveries) -->
+    <section id="unlabeled-section" class="mb-12 hidden">
+        <h3 class="text-xs font-black uppercase tracking-widest text-[#dfffad] mb-6 flex items-center gap-2">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Discoveries: People to Identify
+        </h3>
+        <div id="unlabeled-grid" class="flex gap-6 overflow-x-auto pb-6 custom-scrollbar">
+            <!-- Populated by JS -->
+        </div>
+    </section>
+
     <!-- Category Filter Pills -->
     <div class="flex flex-wrap gap-2 mb-8">
         <button onclick="filterByCategory('all')" data-cat="all"
@@ -73,6 +83,51 @@
         </form>
     </div>
 </div>
+
+<!-- Identity Modal (Label Discoveries) -->
+<div id="labelModal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#2d2d2d] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#dfffad]/10">
+            <h3 class="text-xl font-semibold">Identify Person</h3>
+            <button onclick="document.getElementById('labelModal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <div class="p-6 flex flex-col items-center">
+            <img id="labelImg" src=""
+                class="w-32 h-32 rounded-full object-cover border-4 border-[#dfffad] shadow-xl mb-6">
+            <form id="labelForm" class="w-full space-y-4">
+                <input type="hidden" name="id" id="labelId">
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Who is this?</label>
+                    <input type="text" name="name" required placeholder="Full Name"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-[#dfffad] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-400 mb-1">Category</label>
+                    <select name="category" required
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-[#dfffad] focus:outline-none">
+                        <option value="Family">Family</option>
+                        <option value="Friend">Friend</option>
+                        <option value="Neighbor">Neighbor</option>
+                        <option value="Staff">Staff</option>
+                        <option value="Courier">Courier</option>
+                        <option value="Uncategorized" selected>Uncategorized</option>
+                    </select>
+                </div>
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="deleteDiscovery()"
+                        class="px-5 py-3 rounded-xl text-red-400 hover:bg-red-400/10 font-medium transition-all">Dismiss</button>
+                    <button type="submit" id="labelBtn"
+                        class="flex-1 bg-[#dfffad] text-[#1a1a1a] px-6 py-3 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                        Identity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -101,6 +156,66 @@
         });
         renderFaces();
     }
+
+    async function loadUnlabeled() {
+        try {
+            const res = await fetch('/api/faces/unlabeled');
+            const data = await res.json();
+            const section = document.getElementById('unlabeled-section');
+            const grid = document.getElementById('unlabeled-grid');
+
+            if (data && data.length > 0) {
+                section.classList.remove('hidden');
+                grid.innerHTML = data.map(p => `
+                    <div class="shrink-0 w-48 group cursor-pointer" onclick="openLabelModal(${p.id})">
+                        <div class="aspect-square rounded-2xl overflow-hidden border-2 border-transparent group-hover:border-[#dfffad] transition-all relative">
+                            <img src="/api/faces/unlabeled/${p.id}/image" class="w-full h-full object-cover">
+                            <div class="absolute inset-x-0 bottom-0 bg-black/60 backdrop-blur-sm p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <p class="text-[10px] font-bold text-center text-[#dfffad] uppercase tracking-widest">Identify</p>
+                            </div>
+                        </div>
+                        <p class="mt-2 text-[9px] text-gray-500 font-mono text-center uppercase tracking-tighter">${new Date(p.timestamp).toLocaleString()}</p>
+                    </div>
+                `).join('');
+            } else {
+                section.classList.add('hidden');
+            }
+        } catch (e) { console.error('Load unlabeled error:', e); }
+    }
+
+    function openLabelModal(id) {
+        document.getElementById('labelId').value = id;
+        document.getElementById('labelImg').src = `/api/faces/unlabeled/${id}/image`;
+        document.getElementById('labelModal').classList.remove('hidden');
+    }
+
+    async function deleteDiscovery() {
+        const id = document.getElementById('labelId').value;
+        if (confirm('Dismiss this discovery?')) {
+            await fetch(`/api/faces/unlabeled/${id}`, { method: 'DELETE' });
+            document.getElementById('labelModal').classList.add('hidden');
+            loadUnlabeled();
+        }
+    }
+
+    document.getElementById('labelForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('labelId').value;
+        const btn = document.getElementById('labelBtn');
+        btn.innerText = 'Saving...'; btn.disabled = true;
+        const formData = new FormData(e.target);
+        try {
+            const res = await fetch(`/api/faces/unlabeled/${id}/label`, { method: 'POST', body: formData });
+            if (res.ok) {
+                document.getElementById('labelModal').classList.add('hidden');
+                loadUnlabeled();
+                loadFaces();
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to save');
+            }
+        } finally { btn.innerText = 'Save Identity'; btn.disabled = false; }
+    };
 
     function renderFaces() {
         const grid = document.getElementById('faces-grid');
@@ -194,5 +309,6 @@
         } finally { btn.innerText = 'Upload & Train'; btn.disabled = false; }
     };
     loadFaces();
+    loadUnlabeled();
 </script>
 {% endblock %}

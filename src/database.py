@@ -29,10 +29,19 @@ class Face(Base):
     name = Column(String, unique=True, index=True)
     role = Column(String) # Owner, Resident, Visitor
     category = Column(String, default="Uncategorized") # Family, Courier, Neighbor, etc.
-    encoding = Column(LargeBinary) # Pickled encoding
+    encoding = Column(LargeBinary) # Pickled encoding (Optional for AI-only)
     image_path = Column(String)
     last_seen = Column(DateTime)
     sighting_count = Column(Integer, default=0)
+
+class UnlabeledPerson(Base):
+    __tablename__ = "unlabeled_persons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    image_path = Column(String)
+    timestamp = Column(DateTime, default=datetime.now)
+    camera_id = Column(String)
+    event_id = Column(Integer) # Optional link to source event
 
 class Notification(Base):
     __tablename__ = "notifications"

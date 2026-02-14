@@ -114,8 +114,11 @@ def perform_analysis(camera_id="default"):
         if msg_instruction:
             prompt = f"{prompt}\nInstruction for delivery: {msg_instruction}"
 
-        analysis_result = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, faces_detected=face_names)
-        logger.info(f"AI Analysis ({camera_id}): {analysis_result}")
+        # Get known faces for AI context
+        known_faces = analysis.face_manager.get_known_faces()
+        
+        analysis_result, person_detected = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
+        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected})")
 
         # 4. Save Event to DB
         timestamp = datetime.now()
@@ -127,7 +130,7 @@ def perform_analysis(camera_id="default"):
             f.write(frame_bytes)
 
         # Save to DB
-        from src.database import SessionLocal, Event
+        from src.database import SessionLocal, Event, UnlabeledPerson
         db = SessionLocal()
         try:
             event = Event(
@@ -135,10 +138,23 @@ def perform_analysis(camera_id="default"):
                 camera_id=camera_id,
                 image_path=filepath,
                 analysis_text=analysis_result,
-                faces_detected=",".join(face_names),
+                faces_detected=",".join(face_names), # We still keep this for compatibility, though empty for now
                 prompt_used=prompt
             )
             db.add(event)
+            
+            # If AI detected a NEW person, save to unlabeled_persons for user labeling
+            if person_detected:
+                # We also save a separate copy or just reuse the event image for labeling
+                unlabeled = UnlabeledPerson(
+                    image_path=filepath,
+                    timestamp=timestamp,
+                    camera_id=camera_id,
+                    event_id=event.id
+                )
+                db.add(unlabeled)
+                logger.info("New person detected - added to Unlabeled queue.")
+
             db.commit()
             logger.info(f"Event saved to DB: ID {event.id}")
         except Exception as e:
