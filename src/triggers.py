@@ -117,8 +117,8 @@ def perform_analysis(camera_id="default"):
         # Get known faces for AI context
         known_faces = analysis.face_manager.get_known_faces()
         
-        analysis_result, person_detected = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
-        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected})")
+        analysis_result, person_detected, recognized_names = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
+        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected}, Recognized: {recognized_names})")
 
         # 4. Save Event to DB
         timestamp = datetime.now()
@@ -130,7 +130,7 @@ def perform_analysis(camera_id="default"):
             f.write(frame_bytes)
 
         # Save to DB
-        from src.database import SessionLocal, Event, UnlabeledPerson
+        from src.database import SessionLocal, Event, UnlabeledPerson, Face
         db = SessionLocal()
         try:
             event = Event(
@@ -138,10 +138,19 @@ def perform_analysis(camera_id="default"):
                 camera_id=camera_id,
                 image_path=filepath,
                 analysis_text=analysis_result,
-                faces_detected=",".join(face_names), # We still keep this for compatibility, though empty for now
+                faces_detected=",".join(recognized_names), # Gemini identified these!
                 prompt_used=prompt
             )
             db.add(event)
+            
+            # Update sighting stats for recognized people
+            if recognized_names:
+                for name in recognized_names:
+                    face = db.query(Face).filter(Face.name == name).first()
+                    if face:
+                        face.last_seen = timestamp
+                        face.sighting_count = (face.sighting_count or 0) + 1
+                        logger.info(f"Updated sighting stats for {name}.")
             
             # If AI detected a NEW person, save to unlabeled_persons for user labeling
             if person_detected:

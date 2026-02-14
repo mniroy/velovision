@@ -76,13 +76,45 @@ def get_events(limit: int = 20, offset: int = 0, db: Session = Depends(get_db)):
 def get_faces(db: Session = Depends(get_db)):
     if not analysis.face_manager:
         raise HTTPException(status_code=503, detail="Face Manager not initialized")
-    names = analysis.face_manager.known_face_names
-    faces = []
-    for name in names:
-        face_record = db.query(Face).filter(Face.name == name).first()
-        category = face_record.category if face_record and face_record.category else "Uncategorized"
-        faces.append({"name": name, "category": category})
-    return {"names": names, "faces": faces}
+    faces_records = db.query(Face).all()
+    results = []
+    for face in faces_records:
+        results.append({
+            "id": face.id,
+            "name": face.name,
+            "category": face.category or "Uncategorized",
+            "last_seen": face.last_seen.isoformat() if face.last_seen else None,
+            "sighting_count": face.sighting_count
+        })
+    return {"faces": results}
+
+@router.get("/faces/{name}/image")
+def get_face_image(name: str, db: Session = Depends(get_db)):
+    face = db.query(Face).filter(Face.name == name).first()
+    path = None
+    if face and face.image_path and os.path.exists(face.image_path):
+        path = face.image_path
+    else:
+        # Fallback disk check
+        for ext in ['.jpg', '.jpeg', '.png']:
+            p = os.path.join("/data/faces", f"{name}{ext}")
+            if os.path.exists(p):
+                path = p
+                break
+    
+    if not path:
+        raise HTTPException(status_code=404, detail="Face image not found")
+    return FileResponse(path)
+
+@router.get("/faces/{name}/sightings")
+def get_face_sightings(name: str, db: Session = Depends(get_db)):
+    events = db.query(Event).filter(Event.faces_detected.contains(name)).order_by(Event.timestamp.desc()).all()
+    return [{
+        "id": e.id,
+        "timestamp": e.timestamp.isoformat(),
+        "camera_id": e.camera_id,
+        "image": f"/events/{os.path.basename(e.image_path)}" if e.image_path else None
+    } for e in events]
 
 @router.get("/faces/categories")
 def get_face_categories(db: Session = Depends(get_db)):
@@ -186,8 +218,18 @@ async def label_person(id: int, name: str = Form(...), category: str = Form("Unc
         name=name,
         category=category,
         image_path=os.path.join("/data/faces", f"{name}.jpg"),
-        last_seen=person.timestamp
+        last_seen=person.timestamp,
+        sighting_count=0
     )
+    
+    # Update the source event so it shows up in sightings gallery immediately
+    if person.event_id:
+        from src.database import Event
+        event = db.query(Event).filter(Event.id == person.event_id).first()
+        if event:
+            event.faces_detected = name
+            new_face.sighting_count = 1
+            
     db.add(new_face)
     
     # 3. Cleanup: Remove the unlabeled record (and others if we want to deduplicate? No, just this one)

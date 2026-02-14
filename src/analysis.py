@@ -138,7 +138,10 @@ class AIAnalyzer:
                         logger.warning(f"Could not load reference image for {face['name']}: {e}")
 
             inputs.append(f"NEW SCENE TO ANALYZE:\n{prompt}")
-            inputs.append("\nIMPORTANT: If you see someone you don't recognize among the known people, start your response with 'PERSON_DETECTED: YES'. Otherwise start with 'PERSON_DETECTED: NO'.")
+            inputs.append("\nIMPORTANT:")
+            inputs.append("1. If you see someone you don't recognize among the known people, start your response with 'PERSON_DETECTED: YES'. Otherwise start with 'PERSON_DETECTED: NO'.")
+            inputs.append("2. If you identify any known people from the reference images, list their names exactly as provided in the format 'RECOGNIZED_PEOPLE: Name1, Name2'.")
+            inputs.append("3. Provide the descriptive analysis after these tags.")
             inputs.append(main_image)
             
             response = self.model.generate_content(inputs)
@@ -147,10 +150,23 @@ class AIAnalyzer:
             # Simple extraction of "person detected" flag
             detected = "PERSON_DETECTED: YES" in text
             
-            return text, detected
+            # Extract recognized people
+            recognized_names = []
+            if "RECOGNIZED_PEOPLE:" in text:
+                try:
+                    # Look for the line containing RECOGNIZED_PEOPLE
+                    for line in text.split('\n'):
+                        if "RECOGNIZED_PEOPLE:" in line:
+                            names_str = line.split("RECOGNIZED_PEOPLE:")[1].strip()
+                            recognized_names = [n.strip() for n in names_str.split(",") if n.strip()]
+                            break
+                except:
+                    pass
+            
+            return text, detected, recognized_names
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
-            return f"Error: {str(e)}", False
+            return f"Error: {str(e)}", False, []
 
     def analyze_multi_images(self, images_data, global_prompt):
         """
