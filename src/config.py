@@ -54,6 +54,7 @@ def get_default_config():
             "whatsapp_trigger_phrase": "",
             "recipients": [],
             "webhook_enabled": False,
+            "whatsapp_enabled": True,
             "schedule_enabled": False,
             "schedule_interval_hrs": 6
         },

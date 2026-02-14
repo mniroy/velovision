@@ -65,6 +65,13 @@
 
 
                     <div class="pt-4 border-t border-white/5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label
+                                class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">WhatsApp
+                                Alerts</label>
+                            <input type="checkbox" id="patrol-waEnable"
+                                class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                        </div>
                         <div class="flex items-center justify-between mb-2">
                             <label
                                 class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
@@ -186,6 +193,7 @@
         document.getElementById('patrol-prompt').value = patrolConfig.prompt || '';
         document.getElementById('patrol-msg').value = patrolConfig.message_instruction || '';
         document.getElementById('patrol-trigger').value = patrolConfig.whatsapp_trigger_phrase || '';
+        document.getElementById('patrol-waEnable').checked = patrolConfig.whatsapp_enabled !== false;
         document.getElementById('patrol-schedEnable').checked = !!patrolConfig.schedule_enabled;
         document.getElementById('patrol-schedHrs').value = patrolConfig.schedule_interval_hrs || 6;
 
@@ -262,7 +270,11 @@
                             </div>
                         </div>
 
-                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">WhatsApp Alerts</label>
+                                <input type="checkbox" id="waEnable-${id}" ${cam.whatsapp_enabled !== false ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                            </div>
+
                             <div class="flex items-center justify-between">
                                 <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Schedule</label>
                                 <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
@@ -275,7 +287,6 @@
                             <button onclick="saveAllConfigs()" class="w-full mt-3 bg-[#1a1a1a] border border-[#dfffad] text-[#dfffad] py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
                                 <i class="fa-solid fa-floppy-disk"></i> Save Changes
                             </button>
-                        </div>
                     </div>
                 </div>
             `;
@@ -337,6 +348,7 @@
             allCameras[id].analysis_prompt = document.getElementById(`prompt-${id}`).value;
             allCameras[id].message_instruction = document.getElementById(`msg-${id}`).value;
             allCameras[id].whatsapp_trigger_phrase = document.getElementById(`trigger-${id}`).value;
+            allCameras[id].whatsapp_enabled = document.getElementById(`waEnable-${id}`).checked;
             allCameras[id].webhook_enabled = document.getElementById(`webEnable-${id}`).checked;
             allCameras[id].schedule_enabled = document.getElementById(`schedEnable-${id}`).checked;
             allCameras[id].schedule_interval_hrs = document.getElementById(`schedHrs-${id}`).value;
@@ -345,6 +357,7 @@
         patrolConfig.prompt = document.getElementById('patrol-prompt').value;
         patrolConfig.message_instruction = document.getElementById('patrol-msg').value;
         patrolConfig.whatsapp_trigger_phrase = document.getElementById('patrol-trigger').value;
+        patrolConfig.whatsapp_enabled = document.getElementById('patrol-waEnable').checked;
         patrolConfig.schedule_enabled = document.getElementById('patrol-schedEnable').checked;
         patrolConfig.schedule_interval_hrs = document.getElementById('patrol-schedHrs').value;
 

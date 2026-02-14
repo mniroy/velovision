@@ -213,7 +213,11 @@ def perform_analysis(camera_id="default"):
         
         # 5. Send WhatsApp Notification
         whatsapp_status = {"enabled": False, "sent": False, "recipients": 0}
-        if whatsapp.client:
+        
+        # Check if notifications are enabled for this camera
+        notifications_enabled = cam_config.get("whatsapp_enabled", True)
+        
+        if whatsapp.client and notifications_enabled:
             whatsapp_status["enabled"] = True
             # Priority: Camera-specific recipients, then Global Defaults
             recipients = cam_config.get("recipients")
@@ -307,7 +311,11 @@ def perform_home_patrol():
     
     # Send to global recipients
     whatsapp_status = {"sent": False, "recipients": 0}
-    if whatsapp.client:
+    
+    # Check if notifications are enabled for patrol
+    notifications_enabled = patrol_config.get("whatsapp_enabled", True)
+    
+    if whatsapp.client and notifications_enabled:
         recipients = patrol_config.get("recipients")
         if not recipients:
             wa_config = config.get("whatsapp", {})
