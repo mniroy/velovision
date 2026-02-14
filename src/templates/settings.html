@@ -458,14 +458,15 @@ background: rgba(223, 255, 173, 0.05);
             formData.append('file', selectedFile);
             const res = await fetch('/api/backup/restore', { method: 'POST', body: formData });
             const result = await res.json();
-            if (res.ok) {
-                status.innerHTML = '<span class="text-[#dfffad]">✓ Restore successful! Restarting...</span>';
-                setTimeout(() => window.location.reload(), 3000);
+            if (res.ok && result.status === 'ok') {
+                status.innerHTML = '<span class="text-[#dfffad]">✓ Files restored! System re-initializing...</span>';
+                setTimeout(() => window.location.reload(), 5000);
             } else {
-                throw new Error(result.message);
+                throw new Error(result.detail || result.message || 'Server error');
             }
         } catch (err) {
-            status.innerHTML = '<span class="text-red-400">✗ Restore failed</span>';
+            console.error("Restore Error:", err);
+            status.innerHTML = `<span class="text-red-400">✗ Restore failed: ${err.message}</span>`;
             btn.disabled = false;
             btnText.innerHTML = '<i class="fa-solid fa-upload mr-2"></i> Restore Now';
         }

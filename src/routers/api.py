@@ -757,7 +757,7 @@ def create_backup():
     )
 
 @router.post("/backup/restore")
-async def restore_backup(file: UploadFile = File(...)):
+async def restore_backup(background_tasks: BackgroundTasks, file: UploadFile = File(...)):
     """Restore a ZIP backup to the /data directory."""
     import zipfile
     import io
@@ -806,39 +806,46 @@ async def restore_backup(file: UploadFile = File(...)):
 
         # Extract backup to /data
         with zipfile.ZipFile(buffer, 'r') as zf:
-            # We extract individually to handle potential locks gracefully
             for member in zf.infolist():
                 try:
                     zf.extract(member, DATA_DIR)
                 except Exception as e:
                     logger.error(f"Failed to extract {member.filename}: {e}")
-                    # If it's a critical file like config.yaml, we should probably fail?
-                    # But for now, let's keep going.
         
-        # Reload config
-        new_config = reload_config()
-        
-        # Re-init DB (this will re-open connections)
-        # We don't need to call init_db() again as it doesn't hurt and tables should exist
-        from src.database import init_db
-        init_db()
+        # We handle re-initialization in a background task to avoid blocking the response
+        def reinit_system():
+            try:
+                logger.info("Starting system re-initialization after restore...")
+                # Reload config
+                new_config = reload_config()
+                
+                # Re-init DB
+                from src.database import init_db
+                init_db()
 
-        # Re-init cameras from restored config
-        for cam_id, cam_cfg in new_config.get("cameras", {}).items():
-            if cam_cfg.get("enabled", True):
-                source = cam_cfg.get("source", 0)
-                camera_manager.add_camera(cam_id, source, name=cam_cfg.get("name", cam_id))
+                # Re-init cameras
+                for cam_id, cam_cfg in new_config.get("cameras", {}).items():
+                    if cam_cfg.get("enabled", True):
+                        source = cam_cfg.get("source", 0)
+                        try:
+                            camera_manager.add_camera(cam_id, source, name=cam_cfg.get("name", cam_id))
+                        except Exception as ce:
+                            logger.error(f"Failed to re-add camera {cam_id}: {ce}")
+                
+                # Re-sync schedules
+                triggers.sync_schedules()
+                
+                # Re-init AI and WhatsApp
+                analysis.init_analysis()
+                whatsapp.init_whatsapp()
+                logger.info("System re-initialization complete.")
+            except Exception as e:
+                logger.error(f"Post-restore re-init failed: {e}", exc_info=True)
+
+        background_tasks.add_task(reinit_system)
         
-        # Re-sync schedules
-        triggers.sync_schedules()
-        
-        # Re-init AI components and WhatsApp client with new config
-        analysis.init_analysis()
-        whatsapp.init_whatsapp()
-        
-        logger.info(f"Backup restored from {file.filename}")
-        
-        return {"status": "ok", "message": "Backup restored successfully. System reloaded."}
+        logger.info(f"Backup restoration initiated from {file.filename}")
+        return {"status": "ok", "message": "Backup files extracted. System is re-initializing."}
     
     except HTTPException:
         raise
