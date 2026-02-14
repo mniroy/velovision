@@ -87,28 +87,32 @@ class FaceManager:
             return False, str(e)
 
     def identify_faces(self, frame_rgb):
-        import face_recognition
-        # Resize frame for faster processing
-        small_frame = cv2.resize(frame_rgb, (0, 0), fx=0.25, fy=0.25)
-        
-        # Find all faces and encodings
-        face_locations = face_recognition.face_locations(small_frame)
-        face_encodings = face_recognition.face_encodings(small_frame, face_locations)
+        try:
+            import face_recognition
+            # Resize frame for faster processing
+            small_frame = cv2.resize(frame_rgb, (0, 0), fx=0.25, fy=0.25)
+            
+            # Find all faces and encodings
+            face_locations = face_recognition.face_locations(small_frame)
+            face_encodings = face_recognition.face_encodings(small_frame, face_locations)
 
-        face_names = []
-        for face_encoding in face_encodings:
-            matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
-            name = "Unknown"
+            face_names = []
+            for face_encoding in face_encodings:
+                matches = face_recognition.compare_faces(self.known_face_encodings, face_encoding)
+                name = "Unknown"
 
-            if self.known_face_encodings:
-                face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
-                best_match_index = np.argmin(face_distances)
-                if matches[best_match_index]:
-                    name = self.known_face_names[best_match_index]
+                if self.known_face_encodings:
+                    face_distances = face_recognition.face_distance(self.known_face_encodings, face_encoding)
+                    best_match_index = np.argmin(face_distances)
+                    if matches[best_match_index]:
+                        name = self.known_face_names[best_match_index]
 
-            face_names.append(name)
-        
-        return face_names, face_locations
+                face_names.append(name)
+            
+            return face_names, face_locations
+        except Exception as e:
+            logger.warning(f"Local face recognition skipped/failed: {e}")
+            return [], []
 
 class AIAnalyzer:
     def __init__(self, api_key=None, model_name="gemini-1.5-flash"):
@@ -130,7 +134,11 @@ class AIAnalyzer:
             image = Image.open(io.BytesIO(image_bytes))
             
             # Construct full prompt
-            context = f"Identified people in scene: {', '.join(faces_detected) if faces_detected else 'None'}."
+            if faces_detected:
+                context = f"Identified people in scene: {', '.join(faces_detected)}."
+            else:
+                context = "Identify any people in the image and describe them."
+                
             full_prompt = f"{prompt}\nContext: {context}"
             
             response = self.model.generate_content([full_prompt, image])
