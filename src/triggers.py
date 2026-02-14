@@ -117,15 +117,15 @@ def perform_analysis(camera_id="default"):
         # Get known faces for AI context
         known_faces = analysis.face_manager.get_known_faces()
         
-        analysis_result, person_detected, recognized_names, unknown_count = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
-        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected}, Recognized: {recognized_names}, Unknown: {unknown_count})")
+        analysis_result, person_detected, recognized_names, unknown_count, detections = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
+        logger.info(f"AI Analysis ({camera_id}): {len(detections)} people detected. Recognized: {recognized_names}, Unknown: {unknown_count}")
 
         # 4. Save Event to DB
         timestamp = datetime.now()
         filename = f"{camera_id}_{timestamp.strftime('%Y%m%d_%H%M%S')}.jpg"
         filepath = os.path.join("/data/events", filename)
         
-        # Save image
+        # Save main image
         with open(filepath, "wb") as f:
             f.write(frame_bytes)
 
@@ -138,38 +138,71 @@ def perform_analysis(camera_id="default"):
                 camera_id=camera_id,
                 image_path=filepath,
                 analysis_text=analysis_result,
-                faces_detected=",".join(recognized_names), # Gemini identified these!
+                faces_detected=",".join(recognized_names),
                 prompt_used=prompt
             )
             db.add(event)
             db.flush() # Get event ID
 
             # Update sighting stats for recognized people
-            if recognized_names:
-                for name in recognized_names:
-                    face = db.query(Face).filter(Face.name == name).first()
-                    if face:
-                        face.last_seen = timestamp
-                        face.sighting_count = (face.sighting_count or 0) + 1
-                        logger.info(f"Updated sighting stats for {name}.")
+            for name in recognized_names:
+                face = db.query(Face).filter(Face.name == name).first()
+                if face:
+                    face.last_seen = timestamp
+                    face.sighting_count = (face.sighting_count or 0) + 1
             
-            # If AI detected a truly NEW person, save to unlabeled_persons for user labeling
-            # Logic: If Gemini specifically recognized some people, only trigger discovery if it ALSO sees an unknown person.
-            should_discover = person_detected
-            if recognized_names and unknown_count == 0:
-                should_discover = False
-                logger.info("Skipping discovery because all detected people were recognized.")
+            # Process ALL unknown detections individually
+            from PIL import Image
+            import io
+            main_img = Image.open(io.BytesIO(frame_bytes))
+            width, height = main_img.size
 
-            if should_discover:
-                # We also save a separate copy or just reuse the event image for labeling
-                unlabeled = UnlabeledPerson(
-                    image_path=filepath,
-                    timestamp=timestamp,
-                    camera_id=camera_id,
-                    event_id=event.id
-                )
-                db.add(unlabeled)
-                logger.info(f"New person detected (Unknown: {unknown_count}) - added to Unlabeled queue.")
+            unknown_list = [d for d in detections if d.get('status') == 'Unknown' or d.get('name') == 'Unknown']
+            
+            for i, det in enumerate(unknown_list):
+                try:
+                    box = det.get('box_2d') # [ymin, xmin, ymax, xmax] 0-1000
+                    if box and len(box) == 4:
+                        # Extract and Crop
+                        left = box[1] * width / 1000
+                        top = box[0] * height / 1000
+                        right = box[3] * width / 1000
+                        bottom = box[2] * height / 1000
+                        
+                        # Add some padding around the face (20%)
+                        padding_w = (right - left) * 0.2
+                        padding_h = (bottom - top) * 0.2
+                        left = max(0, left - padding_w)
+                        top = max(0, top - padding_h)
+                        right = min(width, right + padding_w)
+                        bottom = min(height, bottom + padding_h)
+
+                        face_img = main_img.crop((left, top, right, bottom))
+                        
+                        # Save cropped face
+                        face_filename = f"crop_{event.id}_{i}.jpg"
+                        face_path = os.path.join("/data/faces", face_filename)
+                        face_img.save(face_path, "JPEG")
+                        
+                        unlabeled = UnlabeledPerson(
+                            image_path=face_path,
+                            timestamp=timestamp,
+                            camera_id=camera_id,
+                            event_id=event.id
+                        )
+                        db.add(unlabeled)
+                        logger.info(f"Added isolated face discovery {i} to queue.")
+                    else:
+                        # Fallback to full image if no box
+                        unlabeled = UnlabeledPerson(
+                            image_path=filepath,
+                            timestamp=timestamp,
+                            camera_id=camera_id,
+                            event_id=event.id
+                        )
+                        db.add(unlabeled)
+                except Exception as ce:
+                    logger.error(f"Failed to isolate face {i}: {ce}")
 
             db.commit()
             logger.info(f"Event saved to DB: ID {event.id}")

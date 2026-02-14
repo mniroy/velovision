@@ -138,11 +138,12 @@ class AIAnalyzer:
                         logger.warning(f"Could not load reference image for {face['name']}: {e}")
 
             inputs.append(f"NEW SCENE TO ANALYZE:\n{prompt}")
-            inputs.append("\nIMPORTANT:")
-            inputs.append("1. If you see someone you don't recognize among the known people, start your response with 'PERSON_DETECTED: YES'. Otherwise start with 'PERSON_DETECTED: NO'.")
-            inputs.append("2. If you identify any known people from the reference images, list their names exactly as provided in the format 'RECOGNIZED_PEOPLE: Name1, Name2'.")
-            inputs.append("3. Count how many people are in the image that you CANNOT identify from the reference images. List this count as 'UNKNOWN_COUNT: X'.")
-            inputs.append("4. Provide the descriptive analysis after these tags.")
+            inputs.append("\nIMPORTANT: Analyze the NEW SCENE and return a list of ALL people detected.")
+            inputs.append("For each person, provide:")
+            inputs.append("1. 'name': Their name if recognized from reference images, otherwise 'Unknown'.")
+            inputs.append("2. 'box_2d': Normalized bounding box [ymin, xmin, ymax, xmax] (0-1000).")
+            inputs.append("3. 'status': 'Known' or 'Unknown'.")
+            inputs.append("\nFormat your response as a valid JSON block at the beginning: ```json [{\"name\": \"...\", \"box_2d\": [...], \"status\": \"...\"}] ``` followed by your descriptive analysis.")
             inputs.append(main_image)
             
             response = self.model.generate_content(inputs)
@@ -151,34 +152,31 @@ class AIAnalyzer:
             # Simple extraction of "person detected" flag
             detected = "PERSON_DETECTED: YES" in text
             
-            # Extract recognized people
-            recognized_names = []
-            unknown_count = 0
-            
-            lines = text.split('\n')
-            for line in lines:
-                if "RECOGNIZED_PEOPLE:" in line:
-                    try:
-                        names_str = line.split("RECOGNIZED_PEOPLE:")[1].strip()
-                        recognized_names = [n.strip() for n in names_str.split(",") if n.strip()]
-                    except: pass
-                if "UNKNOWN_COUNT:" in line:
-                    try:
-                        count_str = line.split("UNKNOWN_COUNT:")[1].strip()
-                        # Extract digits only
-                        import re
-                        match = re.search(r'\d+', count_str)
-                        if match:
-                            unknown_count = int(match.group())
-                    except: pass
-            
-            # Final detected flag based on Gemini's count if available, otherwise fallback to its own YES/NO
-            is_new_person = unknown_count > 0 or ("PERSON_DETECTED: YES" in text)
+            # Extract JSON list of people
+            detections = []
+            try:
+                import json
+                # Find JSON block
+                if "```json" in text:
+                    json_str = text.split("```json")[1].split("```")[0].strip()
+                    detections = json.loads(json_str)
+                elif "[" in text and "]" in text and "name" in text:
+                    # Fallback find first [ and last ]
+                    start = text.find("[")
+                    end = text.rfind("]") + 1
+                    detections = json.loads(text[start:end])
+            except Exception as je:
+                logger.warning(f"Could not parse detections JSON: {je}")
 
-            return text, is_new_person, recognized_names, unknown_count
+            recognized_names = [d['name'] for d in detections if d.get('status') == 'Known']
+            unknown_detections = [d for d in detections if d.get('status') == 'Unknown' or d.get('name') == 'Unknown']
+            
+            is_new_person = len(unknown_detections) > 0
+
+            return text, is_new_person, recognized_names, len(unknown_detections), detections
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
-            return f"Error: {str(e)}", False, [], 0
+            return f"Error: {str(e)}", False, [], 0, []
 
     def analyze_multi_images(self, images_data, global_prompt):
         """
