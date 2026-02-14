@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from fastapi.responses import StreamingResponse
 from src.streaming import camera_manager, generate_frames
 from src.config import config, save_config
-from src import analysis, triggers
+from src import analysis, triggers, whatsapp
 from sqlalchemy.orm import Session
 from src.database import get_db, Event, Face, SessionLocal
 import shutil
@@ -736,6 +736,10 @@ async def restore_backup(file: UploadFile = File(...)):
         
         # Re-sync schedules
         triggers.sync_schedules()
+        
+        # Re-init AI components and WhatsApp client with new config
+        analysis.init_analysis()
+        whatsapp.init_whatsapp()
         
         logger.info(f"Backup restored from {file.filename}")
         

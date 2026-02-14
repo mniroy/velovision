@@ -83,9 +83,12 @@ apply_timezone()
 
 def reload_config():
     global config
-    config = load_config()
+    new_data = load_config()
+    # Update the existing dictionary in-place to preserve references in other modules
+    config.clear()
+    config.update(new_data)
     apply_timezone() # Re-apply on reload
-    logger.info("Configuration reloaded.")
+    logger.info("Configuration reloaded in-place.")
     return config
 
 def save_config(updates):
