@@ -64,23 +64,16 @@
                     </div>
 
 
-                    <div class="pt-4 border-t border-white/5 space-y-4">
+                    <div class="pt-4 border-t border-white/5 space-y-3">
                         <div class="flex items-center justify-between">
-                            <label
-                                class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">WhatsApp
-                                Alerts</label>
-                            <input type="checkbox" id="patrol-waEnable"
-                                class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
-                        </div>
-                        <div class="flex items-center justify-between mb-2">
                             <label
                                 class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
                             <button onclick="openPicker('patrol')"
                                 class="text-[10px] font-bold text-[#dfffad] hover:underline">Select</button>
                         </div>
                         <div id="patrol-recipients-label"
-                            class="p-4 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400">
-                            Global Defaults
+                            class="p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400 min-h-[40px] flex items-center">
+                            No recipients assigned
                         </div>
                     </div>
 
@@ -193,7 +186,6 @@
         document.getElementById('patrol-prompt').value = patrolConfig.prompt || '';
         document.getElementById('patrol-msg').value = patrolConfig.message_instruction || '';
         document.getElementById('patrol-trigger').value = patrolConfig.whatsapp_trigger_phrase || '';
-        document.getElementById('patrol-waEnable').checked = patrolConfig.whatsapp_enabled !== false;
         document.getElementById('patrol-schedEnable').checked = !!patrolConfig.schedule_enabled;
         document.getElementById('patrol-schedHrs').value = patrolConfig.schedule_interval_hrs || 6;
 
@@ -207,86 +199,94 @@
 
         Object.entries(allCameras).forEach(([id, cam]) => {
             const card = document.createElement('div');
-            card.className = "card rounded-3xl overflow-hidden p-6 flex flex-col lg:flex-row gap-8";
+            card.className = "card rounded-3xl overflow-hidden p-6 flex flex-col xl:flex-row gap-8 items-start";
 
-            // Format recipients display
             const camRecipients = cam.recipients || [];
             const recipientLabel = getRecipientNames(camRecipients);
 
             card.innerHTML = `
-                <!-- Left: Preview -->
-                <div class="w-full lg:w-80 space-y-4 shrink-0">
-                    <div onclick="enlargeCamera('${id}', '${cam.name}')" class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer">
+                <!-- Left Column: Media & Identity -->
+                <div class="w-full xl:w-72 shrink-0 space-y-4">
+                    <div class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer" onclick="enlargeCamera('${id}', '${cam.name}')">
                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100">
                         <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
-                        <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                            <div class="bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest">
-                                <i class="fa-solid fa-expand mr-2"></i> Expand Feed
+                        <div class="absolute top-2 right-2 flex gap-1.5">
+                            <div class="bg-black/60 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-[#dfffad] border border-[#dfffad]/20 backdrop-blur-md">
+                                <i class="fa-solid fa-bolt mr-1"></i> Diagnostic
                             </div>
                         </div>
-                        <button onclick="event.stopPropagation(); triggerSingle('${id}')" class="absolute bottom-3 right-3 w-10 h-10 bg-white/10 hover:bg-[#dfffad] hover:text-black rounded-xl transition-all flex items-center justify-center backdrop-blur-md border border-white/10 z-10">
-                            <i class="fa-solid fa-bolt"></i>
-                        </button>
                     </div>
-                    <div class="flex items-center justify-between px-1">
-                        <div>
-                            <h4 class="font-bold text-white text-lg">${cam.name}</h4>
-                            <p class="text-[10px] text-gray-500 font-mono tracking-widest uppercase">${id}</p>
+                    
+                    <div class="space-y-1 px-1">
+                        <h4 class="font-bold text-white text-lg leading-tight truncate">${cam.name}</h4>
+                        <p class="text-[9px] text-gray-500 font-mono tracking-widest uppercase">${id}</p>
+                    </div>
+
+                    <div class="pt-4 border-t border-white/5 px-1">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Alert Recipients</label>
+                            <button onclick="openPicker('${id}')" class="text-[9px] font-bold text-[#dfffad] hover:underline">Edit</button>
                         </div>
-                        <button onclick="openPicker('${id}')" class="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg text-[10px] font-black uppercase tracking-widest border border-white/5 transition-all text-[#dfffad]">
-                            <i class="fa-solid fa-users mr-1"></i> <span id="label-${id}">${recipientLabel}</span>
-                        </button>
+                        <div class="bg-white/5 border border-white/5 rounded-xl p-3 text-[9px] text-gray-400 min-h-[36px] flex items-center">
+                            <span id="label-${id}">${recipientLabel}</span>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Right: Configs -->
-                <div class="flex-1 space-y-6">
+                <!-- Right Column: Context & Automation -->
+                <div class="flex-1 w-full space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Review Context</label>
-                            <textarea id="prompt-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="What to monitor?">${cam.analysis_prompt || ''}</textarea>
+                            <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">AI Context</label>
+                            <textarea id="prompt-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="What should the AI look for?">${cam.analysis_prompt || ''}</textarea>
                         </div>
                         <div>
-                            <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Message Style</label>
-                            <textarea id="msg-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="How to notify?">${cam.message_instruction || ''}</textarea>
+                            <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">Notification Style</label>
+                            <textarea id="msg-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="How should the alert be phrased?">${cam.message_instruction || ''}</textarea>
                         </div>
                     </div>
 
-                    <!-- Automation Section -->
-                    <div class="pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook Trigger</label>
-                                <input type="checkbox" id="webEnable-${id}" ${cam.webhook_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
+                        <!-- Triggers -->
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook Trigger</label>
+                                    <input type="checkbox" id="webEnable-${id}" ${cam.webhook_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                                </div>
+                                <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                                    <input type="text" readonly value="/api/trigger/${id}" class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                                    <i onclick="navigator.clipboard.writeText('/api/trigger/${id}'); showToast('Copied!')" class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                                </div>
                             </div>
-                            <div class="flex items-center bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 mb-3">
-                                <input type="text" readonly value="/api/trigger/${id}" class="bg-transparent text-[10px] text-gray-500 w-full focus:outline-none font-mono">
-                                <i onclick="navigator.clipboard.writeText('/api/trigger/${id}'); showToast('Copied!')" class="fa-regular fa-copy text-gray-500 hover:text-white cursor-pointer ml-2"></i>
-                            </div>
-
-                            <div>
-                                <label class="block text-[10px] text-gray-500 mb-1 font-black uppercase tracking-widest leading-none">WhatsApp Trigger</label>
-                                <input type="text" id="trigger-${id}" value="${cam.whatsapp_trigger_phrase || ''}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none custom-scrollbar" placeholder="e.g. check garage">
+                            <div class="space-y-2">
+                                <label class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">WhatsApp Trigger Phrase</label>
+                                <input type="text" id="trigger-${id}" value="${cam.whatsapp_trigger_phrase || ''}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-[#dfffad] focus:outline-none" placeholder="e.g. status driveway">
                             </div>
                         </div>
 
-                            <div class="flex items-center justify-between">
-                                <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">WhatsApp Alerts</label>
-                                <input type="checkbox" id="waEnable-${id}" ${cam.whatsapp_enabled !== false ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                        <!-- Schedule & Actions -->
+                        <div class="space-y-4 flex flex-col justify-between">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Auto-Check</label>
+                                    <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <input type="number" id="schedHrs-${id}" value="${cam.schedule_interval_hrs || 1}" class="w-20 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-[#dfffad] focus:outline-none font-mono">
+                                    <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest text-right">Hour Interval</span>
+                                </div>
                             </div>
 
-                            <div class="flex items-center justify-between">
-                                <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Schedule</label>
-                                <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                            <div class="pt-4 flex gap-3">
+                                <button onclick="triggerSingle('${id}')" class="flex-1 bg-white/5 border border-white/10 text-white py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">
+                                    Test
+                                </button>
+                                <button onclick="saveAllConfigs()" class="flex-[2] bg-[#dfffad] text-[#1a1a1a] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#dfffad]/10">
+                                    Save Config
+                                </button>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <input type="number" id="schedHrs-${id}" value="${cam.schedule_interval_hrs || 1}" class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-[#dfffad] focus:outline-none placeholder-gray-600 font-mono">
-                                <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
-                            </div>
-
-                            <button onclick="saveAllConfigs()" class="w-full mt-3 bg-[#1a1a1a] border border-[#dfffad] text-[#dfffad] py-2 rounded-xl font-bold uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
-                                <i class="fa-solid fa-floppy-disk"></i> Save Changes
-                            </button>
+                        </div>
                     </div>
                 </div>
             `;
@@ -348,7 +348,6 @@
             allCameras[id].analysis_prompt = document.getElementById(`prompt-${id}`).value;
             allCameras[id].message_instruction = document.getElementById(`msg-${id}`).value;
             allCameras[id].whatsapp_trigger_phrase = document.getElementById(`trigger-${id}`).value;
-            allCameras[id].whatsapp_enabled = document.getElementById(`waEnable-${id}`).checked;
             allCameras[id].webhook_enabled = document.getElementById(`webEnable-${id}`).checked;
             allCameras[id].schedule_enabled = document.getElementById(`schedEnable-${id}`).checked;
             allCameras[id].schedule_interval_hrs = document.getElementById(`schedHrs-${id}`).value;
@@ -357,7 +356,6 @@
         patrolConfig.prompt = document.getElementById('patrol-prompt').value;
         patrolConfig.message_instruction = document.getElementById('patrol-msg').value;
         patrolConfig.whatsapp_trigger_phrase = document.getElementById('patrol-trigger').value;
-        patrolConfig.whatsapp_enabled = document.getElementById('patrol-waEnable').checked;
         patrolConfig.schedule_enabled = document.getElementById('patrol-schedEnable').checked;
         patrolConfig.schedule_interval_hrs = document.getElementById('patrol-schedHrs').value;
 

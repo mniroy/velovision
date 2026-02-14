@@ -600,7 +600,6 @@ def update_camera(cam_data: dict):
         "mqtt_enabled": cam_data.get("mqtt_enabled", False),
         "mqtt_topic": cam_data.get("mqtt_topic", ""),
         "on_dashboard": cam_data.get("on_dashboard", True),
-        "whatsapp_enabled": cam_data.get("whatsapp_enabled", True),
         "enabled": True
     }
     
