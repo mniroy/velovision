@@ -165,7 +165,7 @@
     }
 
     function getRecipientNames(values) {
-        if (!values || values.length === 0) return "Global Defaults";
+        if (!values || values.length === 0) return "No recipients assigned";
         return values.map(v => {
             const found = allRecipients.find(r => r.value === v);
             return found ? (found.label || found.name) : v;

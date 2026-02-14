@@ -219,11 +219,8 @@ def perform_analysis(camera_id="default"):
         
         if whatsapp.client and notifications_enabled:
             whatsapp_status["enabled"] = True
-            # Priority: Camera-specific recipients, then Global Defaults
+            # ONLY use explicitly assigned recipients
             recipients = cam_config.get("recipients")
-            if not recipients:
-                wa_config = config.get("whatsapp", {})
-                recipients = wa_config.get("recipients", "")
             
             if recipients:
                 name = cam_config.get("name", camera_id)
@@ -316,10 +313,8 @@ def perform_home_patrol():
     notifications_enabled = patrol_config.get("whatsapp_enabled", True)
     
     if whatsapp.client and notifications_enabled:
+        # ONLY use explicitly assigned recipients
         recipients = patrol_config.get("recipients")
-        if not recipients:
-            wa_config = config.get("whatsapp", {})
-            recipients = wa_config.get("recipients", "")
             
         if recipients:
             caption = f"🛡️ *Home Patrol Summary*\n\n{summary}"
