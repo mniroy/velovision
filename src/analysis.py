@@ -170,10 +170,22 @@ class AIAnalyzer:
 
             recognized_names = [d['name'] for d in detections if d.get('status') == 'Known']
             unknown_detections = [d for d in detections if d.get('status') == 'Unknown' or d.get('name') == 'Unknown']
-            
             is_new_person = len(unknown_detections) > 0
 
-            return text, is_new_person, recognized_names, len(unknown_detections), detections
+            # CLEANUP: Remove JSON block from the human description
+            cleaned_text = text
+            if "```json" in cleaned_text:
+                parts = cleaned_text.split("```")
+                # If it starts with JSON, parts[0] is empty, parts[1] is json, parts[2] is text
+                if len(parts) >= 3:
+                     # Join everything AFTER the JSON block
+                     cleaned_text = "".join(parts[2:]).strip()
+            elif "[" in text and "]" in text and "name" in text:
+                # Fallback for plain formatting
+                end = text.rfind("]") + 1
+                cleaned_text = text[end:].strip()
+
+            return cleaned_text, is_new_person, recognized_names, len(unknown_detections), detections
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
             return f"Error: {str(e)}", False, [], 0, []
