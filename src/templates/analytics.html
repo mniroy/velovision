@@ -10,22 +10,21 @@
             <p class="text-gray-400 text-sm mt-1">Detection trends and system health</p>
         </div>
         <div class="bg-[#262626] rounded-xl p-1 flex items-center border border-white/5">
-            <button
-                class="bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">24h
+            <button id="btn-24h" onclick="setView('24h')"
+                class="bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition-all">24h
                 View</button>
-            <button
-                class="text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-colors">Historical
-                (Soon)</button>
+            <button id="btn-hist" onclick="setView('hist')"
+                class="text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all">Historical</button>
         </div>
     </header>
 
     <div id="analytics-content" class="hidden space-y-8">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Metric 1: Total Events -->
-            <div class="card rounded-3xl p-6 border-l-4 border-l-blue-500">
+            <div class="card rounded-3xl p-6 border-l-4 border-l-[#dfffad]/50">
                 <div class="flex items-center gap-4 mb-4">
                     <div
-                        class="bg-blue-500/10 text-blue-400 w-12 h-12 rounded-2xl flex items-center justify-center border border-blue-500/10">
+                        class="bg-[#dfffad]/10 text-[#dfffad] w-12 h-12 rounded-2xl flex items-center justify-center border border-[#dfffad]/10">
                         <i class="fa-solid fa-bolt"></i>
                     </div>
                     <div>
@@ -34,7 +33,7 @@
                     </div>
                 </div>
                 <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                    <div class="bg-blue-500 h-full w-[65%] shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
+                    <div class="bg-[#dfffad] h-full w-[65%] shadow-[0_0_8px_rgba(223,255,173,0.3)]"></div>
                 </div>
                 <p class="text-[10px] text-gray-600 mt-2 uppercase font-bold tracking-wider">System-wide detections</p>
             </div>
@@ -58,10 +57,10 @@
             </div>
 
             <!-- Metric 3: Active Cameras -->
-            <div class="card rounded-3xl p-6 border-l-4 border-l-purple-500">
+            <div class="card rounded-3xl p-6 border-l-4 border-l-[#dfffad]/50">
                 <div class="flex items-center gap-4 mb-4">
                     <div
-                        class="bg-purple-500/10 text-purple-400 w-12 h-12 rounded-2xl flex items-center justify-center border border-purple-500/10">
+                        class="bg-[#dfffad]/10 text-[#dfffad] w-12 h-12 rounded-2xl flex items-center justify-center border border-[#dfffad]/10">
                         <i class="fa-solid fa-video"></i>
                     </div>
                     <div>
@@ -70,7 +69,7 @@
                     </div>
                 </div>
                 <div class="w-full bg-white/5 h-1 rounded-full overflow-hidden">
-                    <div class="bg-purple-500 h-full w-[100%] shadow-[0_0_8px_rgba(168,85,247,0.5)]"></div>
+                    <div class="bg-[#dfffad] h-full w-[100%] shadow-[0_0_8px_rgba(223,255,173,0.3)]"></div>
                 </div>
                 <p class="text-[10px] text-gray-600 mt-2 uppercase font-bold tracking-wider">Active Stream Nodes</p>
             </div>
@@ -82,8 +81,10 @@
             <div class="card rounded-3xl p-8 lg:col-span-2 flex flex-col h-[400px]">
                 <div class="flex justify-between items-center mb-8">
                     <h3 class="text-lg font-bold flex items-center gap-2"><i
-                            class="fa-solid fa-clock-rotate-left text-blue-400"></i> Activity by Hour</h3>
-                    <span class="text-[9px] text-gray-600 uppercase font-black tracking-widest">Last 24 Hours</span>
+                            class="fa-solid fa-clock-rotate-left text-[#dfffad]"></i> <span id="chart-title">Activity by
+                            Hour</span></h3>
+                    <span id="chart-subtitle" class="text-[9px] text-gray-600 uppercase font-black tracking-widest">Last
+                        24 Hours</span>
                 </div>
                 <div id="hourly-chart" class="flex-1 flex items-end gap-1.5 justify-between pb-2">
                     <!-- Bars injected by JS -->
@@ -99,7 +100,7 @@
             <!-- Distribution: Events by Camera -->
             <div class="card rounded-3xl p-8 flex flex-col h-[400px]">
                 <h3 class="text-lg font-bold mb-8 flex items-center gap-2"><i
-                        class="fa-solid fa-layer-group text-purple-400"></i> Event Layout</h3>
+                        class="fa-solid fa-layer-group text-[#dfffad]"></i> Event Layout</h3>
                 <div id="camera-list" class="flex-1 space-y-6 overflow-y-auto pr-2 custom-scrollbar">
                     <!-- Progress bars injected by JS -->
                 </div>
@@ -111,7 +112,7 @@
             <!-- Common Objects -->
             <div class="card rounded-3xl p-8 h-72">
                 <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
-                        class="fa-solid fa-cube text-blue-400"></i> Detected Objects</h3>
+                        class="fa-solid fa-cube text-[#dfffad]"></i> Detected Objects</h3>
                 <div id="object-cloud"
                     class="flex flex-wrap gap-2 content-start overflow-y-auto max-h-[160px] pr-2 custom-scrollbar">
                     <!-- Objects injected by JS -->
@@ -130,7 +131,7 @@
             <!-- Detected Health -->
             <div class="card rounded-3xl p-8 h-72">
                 <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><i
-                        class="fa-solid fa-heart-pulse text-red-500"></i> System Health</h3>
+                        class="fa-solid fa-heart-pulse text-[#dfffad]"></i> System Health</h3>
                 <div class="space-y-4">
                     <div>
                         <div
@@ -162,7 +163,7 @@
                         </div>
                         <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
                             <div id="health-storage-bar"
-                                class="bg-orange-400 h-full w-[0%] transition-all duration-1000"></div>
+                                class="bg-[#dfffad] h-full w-[0%] transition-all duration-1000"></div>
                         </div>
                     </div>
                 </div>
@@ -198,15 +199,51 @@
 
 {% block extra_scripts %}
 <script>
+    let currentView = '24h';
+
+    function setView(view) {
+        currentView = view;
+        const btn24h = document.getElementById('btn-24h');
+        const btnHist = document.getElementById('btn-hist');
+
+        if (view === '24h') {
+            btn24h.className = "bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition-all";
+            btnHist.className = "text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all";
+            document.getElementById('chart-title').innerText = "Activity by Hour";
+            document.getElementById('chart-subtitle').innerText = "Last 24 Hours";
+        } else {
+            btnHist.className = "bg-[#dfffad] text-[#1a1a1a] px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm transition-all";
+            btn24h.className = "text-gray-500 hover:text-white px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all";
+            document.getElementById('chart-title').innerText = "Historical Activity";
+            document.getElementById('chart-subtitle').innerText = "Last 7 Days";
+        }
+        loadAnalytics();
+    }
+
     async function loadAnalytics() {
         try {
+            const chartUrl = currentView === '24h' ? '/api/analytics/summary' : '/api/activity?period=week';
+
             const [statsRes, summaryRes] = await Promise.all([
                 fetch('/api/stats'),
-                fetch('/api/analytics/summary')
+                fetch(chartUrl)
             ]);
 
             const stats = await statsRes.json();
-            const summary = await summaryRes.json();
+            const rawSummary = await summaryRes.json();
+
+            // Normalize historical data if needed
+            let summary = rawSummary;
+            if (currentView === 'hist') {
+                // If historical, the API returns a different structure. Let's adapt.
+                summary = {
+                    hourly: rawSummary.map(item => ({ label: item.label, count: item.count })),
+                    // Keep other data from previous fetch or global? 
+                    // For now let's just re-fetch analytics summary for the other cards
+                    ...(await (await fetch('/api/analytics/summary')).json())
+                };
+                summary.hourly = rawSummary.map(item => ({ label: item.label, count: item.count }));
+            }
 
             if (!stats.total_events || stats.total_events === 0) {
                 document.getElementById('empty-state').classList.remove('hidden');
@@ -232,8 +269,8 @@
                 const hPercent = Math.max(5, (hour.count / maxVal) * 90);
                 bar.className = "flex-1 group relative flex flex-col justify-end";
                 bar.innerHTML = `
-                    <div class="w-full bg-white/5 hover:bg-white/10 rounded-t-lg transition-all duration-500 relative" style="height: ${hPercent}%">
-                        <div class="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-20 transition-opacity rounded-t-lg"></div>
+                    <div class="w-full bg-white/5 hover:bg-[#dfffad]/80 rounded-t-lg transition-all duration-500 relative" style="height: ${hPercent}%">
+                        <div class="absolute inset-0 bg-[#dfffad] opacity-0 group-hover:opacity-20 transition-opacity rounded-t-lg"></div>
                         <div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-[#2d2d2d] border border-white/10 px-2 py-1 rounded text-[8px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-20 shadow-xl whitespace-nowrap">
                             ${hour.count} Events @ ${hour.label}
                         </div>
@@ -253,7 +290,7 @@
                         <span class="text-white">${cam.percent}%</span>
                     </div>
                     <div class="w-full bg-white/5 h-1.5 rounded-full overflow-hidden">
-                        <div class="bg-purple-500 h-full shadow-[0_0_8px_rgba(168,85,247,0.4)]" style="width: ${cam.percent}%"></div>
+                        <div class="bg-[#dfffad] h-full shadow-[0_0_8px_rgba(223,255,173,0.3)]" style="width: ${cam.percent}%"></div>
                     </div>
                 `;
                 camList.appendChild(div);
@@ -265,12 +302,10 @@
             if (summary.objects.length === 0) {
                 objectCloud.innerHTML = '<p class="text-gray-600 text-[10px] text-center w-full py-8 italic uppercase font-black tracking-widest">Awaiting classifications</p>';
             } else {
-                const colors = ['text-[#dfffad]', 'text-blue-400', 'text-purple-400', 'text-orange-400', 'text-pink-400', 'text-teal-400'];
                 summary.objects.forEach((obj, idx) => {
                     const tag = document.createElement('span');
-                    const color = colors[idx % colors.length];
-                    tag.className = `px-3 py-1.5 bg-white/5 rounded-xl border border-white/5 text-[10px] font-black uppercase tracking-widest ${color}`;
-                    tag.innerHTML = `${obj.label} <span class="text-[8px] opacity-30 ml-1">${obj.count}</span>`;
+                    tag.className = `px-3 py-1.5 bg-white/5 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest text-[#dfffad]`;
+                    tag.innerHTML = `${obj.label} <span class="text-[8px] opacity-30 ml-1 font-mono">${obj.count}</span>`;
                     objectCloud.appendChild(tag);
                 });
             }
