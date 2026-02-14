@@ -22,13 +22,12 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 
 ![Cameras](docs/screenshots/cameras.png)
 
-### AI-Powered Intelligence
-- **Scene analysis** — Powered by Google Gemini or OpenAI vision models
-- **Motion detection** — Frame-differencing with configurable sensitivity
-- **Object & activity descriptions** — AI narrates what it sees (vehicles, people, activity)
-- **Configurable engine parameters** — Model selection, token limits, temperature tuning
+### System Configuration
+- **Unified Settings hub** — Manage system timezone, AI engine parameters, and service provider credentials in one place.
+- **Service management** — Configure Google Gemini or OpenAI vision models with ease.
+- **Configurable engine parameters** — Tune model selection, token limits, and temperature.
 
-![AI Settings](docs/screenshots/ai_settings.png)
+![Settings](docs/screenshots/settings.png)
 
 ### AI Patrol
 - **Holistic property patrol** — AI reviews all cameras simultaneously and summarizes the state of the home
@@ -68,12 +67,10 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 
 ![Analytics](docs/screenshots/analytics.png)
 
-### Backup & Restore
-- **One-click backup** — Download a complete snapshot of your entire system configuration
-- **Drag & drop restore** — Upload a backup file to restore cameras, AI config, WhatsApp settings, face database, and event history
-- **Data inventory** — View system stats before backup (cameras, AI provider, known faces, events)
-
-![Backup](docs/screenshots/backup.png)
+### Backup & Recovery (Integrated)
+- **One-click backup** — Download a complete snapshot of your entire system configuration from the Settings hub.
+- **Drag & drop restore** — Upload a backup file to restore cameras, AI config, WhatsApp settings, face database, and event history.
+- **Data inventory** — Real-time system stats (cameras, AI provider, known faces, events) visible before backup.
 
 ---
 
@@ -125,10 +122,10 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
    Open [http://localhost:8000](http://localhost:8000) in your browser.
 
 5. **Initial configuration:**
-   - Navigate to **AI Settings** → Enter your Gemini or OpenAI API key
-   - Navigate to **Cameras** → Add your camera streams
-   - Navigate to **Messages** → Configure WhatsApp gateway (optional)
-   - Navigate to **AI Patrol** → Set up patrol schedules
+    - Navigate to **Settings** → Enter your Gemini or OpenAI API key
+    - Navigate to **Cameras** → Add your camera streams
+    - Navigate to **Messages** → Configure WhatsApp gateway (optional)
+    - Navigate to **AI Patrol** → Set up patrol schedules
 
 ---
 
@@ -213,6 +210,33 @@ velovision/
 - API keys are stored in `data/config.yaml` and only accessible within the container.
 - Camera stream URLs may contain authentication credentials — these are never exposed in the UI.
 - The application is designed for **local network deployment**. If exposing externally, use a reverse proxy with HTTPS and authentication.
+
+---
+
+---
+
+## Publishing to Docker Hub
+
+To publish your own version of Velo Vision to Docker Hub, follow these steps:
+
+1. **Login to Docker Hub:**
+   ```bash
+   docker login
+   ```
+
+2. **Build the image:**
+   Replace `yourusername` with your actual Docker Hub username.
+   ```bash
+   docker build -t yourusername/velovision:latest .
+   ```
+
+3. **Push the image:**
+   ```bash
+   docker push yourusername/velovision:latest
+   ```
+
+4. **Verify on Docker Hub:**
+   Go to [hub.docker.com](https://hub.docker.com) to see your repository.
 
 ---
 
