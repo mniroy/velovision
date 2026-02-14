@@ -102,20 +102,25 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 
 ### Quick Start with Docker Compose
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/mniroy/velovision.git
-   cd velovision
+1. **Create a `docker-compose.yml` file:**
+   ```yaml
+   version: '3.8'
+   services:
+     velovision:
+       image: mniroy/velovision:latest
+       container_name: velovision
+       ports:
+         - "8000:8000"
+       environment:
+         - TZ=Asia/Jakarta
+       volumes:
+         - ./data:/data
+       restart: unless-stopped
    ```
 
-2. **Create the data directory:**
+2. **Start the application:**
    ```bash
-   mkdir -p data
-   ```
-
-3. **Start the application:**
-   ```bash
-   docker compose up -d --build
+   docker compose up -d
    ```
 
 4. **Access the dashboard:**
@@ -138,18 +143,16 @@ version: '3.8'
 
 services:
   velovision:
-    build: .
+    image: mniroy/velovision:latest
     container_name: velovision
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=http://localhost:8000
       - TZ=Asia/Jakarta
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./data:/data
-      - ./src:/app/src
     restart: unless-stopped
 ```
 
