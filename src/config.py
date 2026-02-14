@@ -54,8 +54,39 @@ def get_default_config():
             "whatsapp_trigger_phrase": "",
             "recipients": [],
             "webhook_enabled": False,
+            "mqtt_enabled": False,
             "schedule_enabled": False,
             "schedule_interval_hrs": 6
+        },
+        "person_finder": {
+            "names": [],
+            "prompt": "",
+            "recipients": [],
+            "webhook_enabled": False,
+            "mqtt_enabled": False,
+            "schedule_enabled": False,
+            "schedule_interval_hrs": 4
+        },
+        "doorbell_iq": {
+            "camera_id": "",
+            "webhook_enabled": False,
+            "mqtt_enabled": False,
+            "analysis_prompt": "Analyse who is at the door, their appearance, and any objects they are carrying (e.g. packages). Determine if they look like a delivery person, friend, or stranger.",
+            "message_prompt": "Keep it brief and professional. Start with 'Doorbell Alert:'.",
+            "include_image": True,
+            "recipients_whatsapp": [],
+            "recipients_webhook": "",
+            "recipients_mqtt": ""
+        },
+        "utility_meters": [],
+        "mqtt": {
+            "enabled": False,
+            "broker_host": "localhost",
+            "broker_port": 1883,
+            "username": "",
+            "password": "",
+            "client_id": "velovision",
+            "base_topic": "velovision"
         },
         "general": {
             "timezone": "Asia/Jakarta"

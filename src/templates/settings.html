@@ -299,10 +299,10 @@ background: rgba(223, 255, 173, 0.05);
                     select.appendChild(opt);
                 });
                 if (data.models.includes(currentVal)) select.value = currentVal;
-                showToast("Models synced");
+                showToast("Models Updated");
             }
-        } catch (err) { showToast("Sync failed"); }
-        finally { btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Sync'; btn.disabled = false; }
+        } catch (err) { showToast("Fetch Failed"); }
+        finally { btn.innerHTML = '<i class="fa-solid fa-arrows-rotate"></i> Refresh Models'; btn.disabled = false; }
     }
 
     // Populate Timezones and Load Inventory
@@ -364,7 +364,7 @@ background: rgba(223, 255, 173, 0.05);
 
     async function saveSettings() {
         const btn = document.getElementById('saveBtn');
-        btn.innerText = 'Syncing...';
+        btn.innerText = 'Updating...';
         btn.disabled = true;
         const settings = {
             general: { timezone: document.getElementById('timezone').value },

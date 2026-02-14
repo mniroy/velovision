@@ -12,62 +12,307 @@
 50%; background: #333; }
 .history-item.success { border-left-color: #10b981; }
 .history-item.success::before { background: #10b981; }
+
+/* MQTT Styles */
+.topic-card {
+background: linear-gradient(135deg, #1f1f1f 0%, #262626 100%);
+border: 1px solid rgba(255,255,255,0.05);
+transition: all 0.3s ease;
+}
+.topic-card:hover {
+border-color: rgba(139, 92, 246, 0.3);
+transform: translateY(-1px);
+box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.topic-badge {
+font-size: 8px;
+letter-spacing: 0.1em;
+padding: 2px 8px;
+border-radius: 999px;
+font-weight: 800;
+text-transform: uppercase;
+}
+.badge-event { background: rgba(255, 255, 255, 0.05); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); }
+.badge-status { background: rgba(255, 255, 255, 0.05); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); }
+.badge-image { background: rgba(255, 255, 255, 0.05); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); }
+.badge-trigger { background: rgba(255, 255, 255, 0.05); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.2); }
+.payload-box {
+background: #0d0d0d;
+border: 1px solid #2a2a2a;
+border-radius: 0.75rem;
+font-size: 11px;
+line-height: 1.6;
+overflow-x: auto;
+}
+.mqtt-msg-item {
+border-left: 2px solid rgba(139, 92, 246, 0.4);
+transition: all 0.2s;
+}
+.mqtt-msg-item:hover {
+border-left-color: #8b5cf6;
+background: rgba(139, 92, 246, 0.03);
+}
+/* Segmented Tab Styles */
+.segmented-control {
+display: inline-flex;
+background: #000000;
+padding: 6px;
+border-radius: 99px;
+border: 1px solid #333;
+gap: 4px;
+box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+.section-tab {
+padding: 0.75rem 1.5rem;
+border-radius: 99px;
+font-weight: 800;
+font-size: 0.8rem;
+text-transform: uppercase;
+letter-spacing: 0.05em;
+cursor: pointer;
+transition: all 0.2s ease-out;
+color: #888;
+display: flex;
+align-items: center;
+gap: 0.75rem;
+border: 1px solid transparent;
+}
+.section-tab:hover {
+color: white;
+background: #1a1a1a;
+}
+.section-tab.active-wa {
+background: #dfffad;
+color: #000;
+box-shadow: 0 2px 10px rgba(223, 255, 173, 0.3);
+border-color: #dfffad;
+}
+.section-tab.active-mqtt {
+background: #8b5cf6;
+color: white;
+box-shadow: 0 2px 10px rgba(139, 92, 246, 0.4);
+border-color: #7c3aed;
+}
 {% endblock %}
 
 {% block content %}
 <div class="p-8">
     <header class="mb-10">
         <div>
-            <h2 class="text-3xl font-semibold">Notification Recipients</h2>
-            <p class="text-gray-400 text-sm mt-1">Manage who receives alerts via WhatsApp (GOWA)</p>
+            <h2 class="text-3xl font-semibold">Messaging & Integrations</h2>
+            <p class="text-gray-400 text-sm mt-1">Manage WhatsApp recipients and MQTT broker connections</p>
         </div>
     </header>
 
-    <!-- Connectivity Status -->
-    <div class="card rounded-2xl p-6 mb-4 flex flex-col md:flex-row items-center justify-between gap-6">
-        <div class="flex items-center gap-4">
-            <div id="wa-status-icon"
-                class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl transition-colors">
-                <i class="fa-brands fa-whatsapp"></i>
+    <!-- Section Tabs -->
+    <div class="mb-10">
+        <style>
+            .segmented-control {
+                display: inline-flex !important;
+                background: #000 !important;
+                padding: 8px !important;
+                border: 2px solid white !important;
+                border-radius: 50px !important;
+                gap: 8px !important;
+            }
+
+            .section-tab {
+                padding: 10px 24px !important;
+                border-radius: 40px !important;
+                font-weight: 900 !important;
+                cursor: pointer !important;
+                display: flex !important;
+                align-items: center !important;
+                gap: 10px !important;
+                border: none !important;
+                transition: 0.2s !important;
+            }
+
+            .section-tab.active-wa {
+                background: #dfffad !important;
+                color: #000 !important;
+            }
+
+            .section-tab.active-mqtt {
+                background: #8b5cf6 !important;
+                color: #fff !important;
+            }
+
+            .section-tab:not(.active-wa):not(.active-mqtt) {
+                background: #222 !important;
+                color: #aaa !important;
+            }
+        </style>
+        <div class="segmented-control">
+            <button onclick="switchTab('whatsapp')" id="tab-whatsapp" class="section-tab active-wa">
+                <i class="fa-brands fa-whatsapp text-lg"></i>
+                <span>WhatsApp</span>
+            </button>
+            <button onclick="switchTab('mqtt')" id="tab-mqtt" class="section-tab">
+                <i class="fa-solid fa-tower-broadcast text-lg"></i>
+                <span>MQTT Broker</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- ============ WHATSAPP TAB ============ -->
+    <div id="section-whatsapp">
+        <!-- Connectivity Status -->
+        <div class="card rounded-2xl p-6 mb-4 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div id="wa-status-icon"
+                    class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl transition-colors">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">GOWA Service</h3>
+                    <p id="wa-status-text" class="text-sm text-gray-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-gray-600"></span> Disconnected
+                    </p>
+                </div>
             </div>
+            <div class="flex items-center gap-4">
+                <button onclick="openConfigModal()" class="text-sm text-gray-400 hover:text-white underline">Configure
+                    Gateway</button>
+            </div>
+        </div>
+
+        <div class="flex justify-end mb-10">
+            <button onclick="openAddModal()"
+                class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
+                <i class="fa-solid fa-plus text-xs"></i> Add New Recipient
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- People -->
             <div>
-                <h3 class="font-semibold text-lg">GOWA Service</h3>
-                <p id="wa-status-text" class="text-sm text-gray-400 flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full bg-gray-600"></span> Disconnected
-                </p>
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-user text-[#dfffad] text-sm"></i> People
+                </h3>
+                <div id="people-list" class="space-y-3">
+                    <div class="text-center py-10 text-gray-600 italic text-sm">No individual recipients configured
+                    </div>
+                </div>
             </div>
-        </div>
-        <div class="flex items-center gap-4">
-            <button onclick="openConfigModal()" class="text-sm text-gray-400 hover:text-white underline">Configure
-                Gateway</button>
+
+            <!-- Groups -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-users text-[#dfffad] text-sm"></i> Groups
+                </h3>
+                <div id="groups-list" class="space-y-3">
+                    <div class="text-center py-10 text-gray-600 italic text-sm">No group recipients configured</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <div class="flex justify-end mb-10">
-        <button onclick="openAddModal()"
-            class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2.5 rounded-xl text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
-            <i class="fa-solid fa-plus text-xs"></i> Add New Recipient
-        </button>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <!-- People -->
-        <div>
-            <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-user text-[#dfffad] text-sm"></i> People
-            </h3>
-            <div id="people-list" class="space-y-3">
-                <div class="text-center py-10 text-gray-600 italic text-sm">No individual recipients configured</div>
+    <!-- ============ MQTT TAB ============ -->
+    <div id="section-mqtt" class="hidden">
+        <!-- MQTT Connection Status -->
+        <div class="card rounded-2xl p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <div id="mqtt-status-icon"
+                    class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl transition-colors">
+                    <i class="fa-solid fa-tower-broadcast"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">MQTT Broker</h3>
+                    <p id="mqtt-status-text" class="text-sm text-gray-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-gray-600"></span> Not Configured
+                    </p>
+                    <p id="mqtt-broker-info" class="text-[10px] text-gray-600 font-mono mt-1"></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="openMqttConfigModal()"
+                    class="text-sm bg-[#333] hover:bg-[#444] text-white px-5 py-2.5 rounded-xl transition-all flex items-center gap-2 border border-gray-700">
+                    <i class="fa-solid fa-gear"></i> Configure
+                </button>
             </div>
         </div>
 
-        <!-- Groups -->
-        <div>
-            <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-users text-[#dfffad] text-sm"></i> Groups
-            </h3>
-            <div id="groups-list" class="space-y-3">
-                <div class="text-center py-10 text-gray-600 italic text-sm">No group recipients configured</div>
+        <!-- MQTT Layout: 2 columns -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left: Available Topics -->
+            <div class="lg:col-span-2 space-y-6">
+                <div>
+                    <h3 class="text-lg font-bold mb-1 flex items-center gap-2">
+                        <i class="fa-solid fa-list text-purple-400 text-sm"></i> Available Topics
+                    </h3>
+                    <p class="text-[11px] text-gray-500 mb-4">All MQTT topics VeloVision publishes or subscribes to. Use
+                        these for Home Assistant automations, Node-RED, or any MQTT client.</p>
+                </div>
+
+                <!-- Outbound topics -->
+                <div>
+                    <h4
+                        class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-up-from-bracket text-purple-400"></i> Published Topics (Outbound)
+                    </h4>
+                    <div id="outbound-topics" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Inbound topics -->
+                <div class="mt-8">
+                    <h4
+                        class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-down-to-bracket text-red-400"></i> Trigger Topics (Inbound)
+                    </h4>
+                    <p class="text-[11px] text-gray-500 mb-3">Publish to these topics to remotely trigger actions in
+                        VeloVision.</p>
+                    <div id="inbound-topics" class="space-y-3">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Message Log -->
+            <div class="space-y-6">
+                <div class="card rounded-2xl p-6">
+                    <h3 class="text-sm font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-clock-rotate-left text-purple-400 text-xs"></i> Recent Messages
+                    </h3>
+                    <div id="mqtt-message-log" class="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                        <div class="text-center py-8 text-gray-600 italic text-xs">No messages published yet</div>
+                    </div>
+                    <button onclick="refreshMqttMessages()"
+                        class="mt-4 w-full text-center text-[10px] text-gray-500 hover:text-purple-400 transition-colors uppercase tracking-widest font-bold">
+                        <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh
+                    </button>
+                </div>
+
+                <!-- Quick Info Card -->
+                <div class="card rounded-2xl p-6 border-l-4 border-l-purple-500">
+                    <h4 class="text-sm font-bold mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-info text-purple-400 text-xs"></i> Integration Info
+                    </h4>
+                    <div class="space-y-3 text-[11px] text-gray-400">
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-house text-blue-400 mt-0.5"></i>
+                            <span><strong class="text-white">Home Assistant:</strong> Use MQTT discovery or add sensors
+                                manually using the topic paths listed.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-diagram-project text-green-400 mt-0.5"></i>
+                            <span><strong class="text-white">Node-RED:</strong> Subscribe to <code
+                                    class="text-purple-300">velovision/#</code> to receive all events.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-bolt text-yellow-400 mt-0.5"></i>
+                            <span><strong class="text-white">Triggers:</strong> Publish JSON to inbound topics to
+                                remotely trigger patrols or analysis.</span>
+                        </div>
+                        <div class="flex items-start gap-2">
+                            <i class="fa-solid fa-heart-pulse text-red-400 mt-0.5"></i>
+                            <span><strong class="text-white">LWT:</strong> Status topic uses Last Will & Testament for
+                                automatic offline detection.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -204,6 +449,94 @@
         </div>
     </div>
 
+    <!-- MQTT Configuration Modal -->
+    <div id="mqttConfigModal"
+        class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden hidden"
+        onclick="event.stopPropagation()">
+        <div
+            class="p-6 border-b border-gray-700 flex justify-between items-center bg-gradient-to-r from-purple-500/10 to-transparent">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                    <i class="fa-solid fa-tower-broadcast text-purple-400"></i>
+                </div>
+                <h3 class="text-xl font-semibold">MQTT Configuration</h3>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-5">
+            <div class="flex items-center gap-4 bg-gray-800/30 p-4 rounded-2xl border border-white/5">
+                <div class="flex-1">
+                    <p class="text-sm font-semibold">Enable MQTT</p>
+                    <p class="text-[10px] text-gray-500">Connect to an MQTT broker for Home Assistant / IoT integrations
+                    </p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="mqttEnabled" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500">
+                    </div>
+                </label>
+            </div>
+
+            <div class="space-y-4">
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Broker
+                            Host</label>
+                        <input type="text" id="mqttHost" placeholder="192.168.1.100 or mqtt.example.com"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Port</label>
+                        <input type="number" id="mqttPort" placeholder="1883" value="1883"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Username
+                            <span class="text-gray-700">(optional)</span></label>
+                        <input type="text" id="mqttUser" placeholder="mqtt_user"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Password
+                            <span class="text-gray-700">(optional)</span></label>
+                        <input type="password" id="mqttPass" placeholder="••••••••"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Client
+                            ID</label>
+                        <input type="text" id="mqttClientId" placeholder="velovision" value="velovision"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Base
+                            Topic</label>
+                        <input type="text" id="mqttBaseTopic" placeholder="velovision" value="velovision"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-purple-400 focus:outline-none font-mono">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-700 flex justify-end gap-3 -mx-6 -mb-6 mt-6">
+                <button onclick="closeModal()"
+                    class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+                <button onclick="saveMqttConfig()"
+                    class="bg-purple-500 text-white px-8 py-2 rounded-xl font-bold hover:bg-purple-600 transition-all flex items-center gap-2">
+                    <i class="fa-solid fa-tower-broadcast text-sm"></i> Save & Connect
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- History Modal -->
     <div id="historyModal"
         class="bg-[#262626] border border-gray-700 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden hidden"
@@ -252,6 +585,7 @@
 <script>
     let currentRecipients = [];
     let waConfig = {};
+    let mqttConfig = {};
 
     function showToast(msg) {
         const t = document.getElementById('toast');
@@ -260,11 +594,36 @@
         setTimeout(() => t.classList.add('translate-y-28', 'opacity-0'), 3000);
     }
 
+    // ============ TAB SWITCHING ============
+    function switchTab(tab) {
+        document.getElementById('section-whatsapp').classList.toggle('hidden', tab !== 'whatsapp');
+        document.getElementById('section-mqtt').classList.toggle('hidden', tab !== 'mqtt');
+
+        const tabWa = document.getElementById('tab-whatsapp');
+        const tabMqtt = document.getElementById('tab-mqtt');
+
+        if (tab === 'whatsapp') {
+            tabWa.className = 'section-tab active-wa';
+            tabMqtt.className = 'section-tab';
+        } else {
+            tabWa.className = 'section-tab';
+            tabMqtt.className = 'section-tab active-mqtt';
+        }
+
+        if (tab === 'mqtt') {
+            loadMqttTopics();
+            refreshMqttMessages();
+            checkMqttStatus();
+        }
+    }
+
+    // ============ LOAD DATA ============
     async function loadData() {
         try {
             const res = await fetch('/api/settings');
             const config = await res.json();
             waConfig = config.whatsapp || {};
+            mqttConfig = config.mqtt || {};
 
             // Setup Config Modal
             document.getElementById('waEnabled').checked = waConfig.enabled || false;
@@ -272,6 +631,15 @@
             document.getElementById('waUser').value = waConfig.username || '';
             document.getElementById('waPass').value = waConfig.password || '';
             document.getElementById('waSession').value = waConfig.session_id || 'default';
+
+            // Setup MQTT Config
+            document.getElementById('mqttEnabled').checked = mqttConfig.enabled || false;
+            document.getElementById('mqttHost').value = mqttConfig.broker_host || 'localhost';
+            document.getElementById('mqttPort').value = mqttConfig.broker_port || 1883;
+            document.getElementById('mqttUser').value = mqttConfig.username || '';
+            document.getElementById('mqttPass').value = mqttConfig.password || '';
+            document.getElementById('mqttClientId').value = mqttConfig.client_id || 'velovision';
+            document.getElementById('mqttBaseTopic').value = mqttConfig.base_topic || 'velovision';
 
             // Parse Recipients
             try {
@@ -290,9 +658,183 @@
             }
             renderRecipients();
             checkStatusSilent();
+            checkMqttStatus();
         } catch (e) { console.error(e); }
     }
 
+    // ============ MQTT FUNCTIONS ============
+    async function checkMqttStatus() {
+        const icon = document.getElementById('mqtt-status-icon');
+        const text = document.getElementById('mqtt-status-text');
+        const info = document.getElementById('mqtt-broker-info');
+
+        try {
+            const res = await fetch('/api/mqtt/status');
+            const data = await res.json();
+
+            if (data.connected) {
+                icon.className = "w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-xl";
+                text.innerHTML = '<span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Connected';
+                info.innerHTML = `<i class="fa-solid fa-server mr-1"></i> ${data.broker_host}:${data.broker_port} &bull; <i class="fa-solid fa-tag mr-1"></i> ${data.client_id} &bull; <i class="fa-solid fa-message mr-1"></i> ${data.message_count} msgs`;
+            } else if (data.status === 'disabled' || !mqttConfig.enabled) {
+                icon.className = "w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl";
+                text.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-600"></span> Disabled';
+                info.innerHTML = 'Enable MQTT and configure your broker to get started';
+            } else {
+                icon.className = "w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xl";
+                text.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> Connection Failed';
+                info.innerHTML = `Could not connect to ${mqttConfig.broker_host || 'broker'}:${mqttConfig.broker_port || 1883}`;
+            }
+        } catch (e) {
+            icon.className = "w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl";
+            text.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-600"></span> Not Configured';
+            info.innerHTML = '';
+        }
+    }
+
+    async function loadMqttTopics() {
+        try {
+            const res = await fetch('/api/mqtt/topics');
+            const topics = await res.json();
+
+            const outbound = document.getElementById('outbound-topics');
+            const inbound = document.getElementById('inbound-topics');
+            outbound.innerHTML = '';
+            inbound.innerHTML = '';
+
+            const baseTopic = mqttConfig.base_topic || 'velovision';
+
+            for (const [topicPath, info] of Object.entries(topics)) {
+                const isInbound = info.direction === 'inbound' || info.type === 'trigger';
+                const container = isInbound ? inbound : outbound;
+
+                const badgeClass = info.type === 'event' ? 'badge-event' :
+                    info.type === 'status' ? 'badge-status' :
+                        info.type === 'image' ? 'badge-image' : 'badge-trigger';
+
+                const haIcon = info.ha_discovery ? `<span class="topic-badge badge-status"><i class="fa-solid fa-house mr-1"></i>${info.ha_discovery}</span>` : '';
+                const dirIcon = isInbound ?
+                    '<i class="fa-solid fa-arrow-down text-gray-500 text-[10px]"></i>' :
+                    '<i class="fa-solid fa-arrow-up text-gray-400 text-[10px]"></i>';
+
+                const payloadStr = typeof info.payload_example === 'object' ?
+                    JSON.stringify(info.payload_example, null, 2) : String(info.payload_example);
+
+                const card = document.createElement('div');
+                card.className = 'topic-card rounded-xl p-4';
+                card.innerHTML = `
+                    <div class="flex items-start justify-between mb-2">
+                        <div class="flex items-center gap-2 flex-1 min-w-0">
+                            ${dirIcon}
+                            <code class="text-xs text-gray-300 font-mono truncate">${topicPath}</code>
+                        </div>
+                        <div class="flex gap-1.5 flex-shrink-0 ml-2">
+                            <span class="topic-badge ${badgeClass}">${info.type}</span>
+                            ${haIcon}
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-gray-400 mb-3">${info.description}</p>
+                    <details class="group">
+                        <summary class="text-[10px] text-gray-600 cursor-pointer hover:text-white transition-colors uppercase tracking-widest font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-code text-[8px]"></i> Payload Example
+                            <i class="fa-solid fa-chevron-down text-[8px] ml-1 transition-transform group-open:rotate-180"></i>
+                        </summary>
+                        <div class="payload-box p-3 mt-2">
+                            <pre class="text-gray-300 font-mono whitespace-pre-wrap">${escapeHtml(payloadStr)}</pre>
+                        </div>
+                    </details>
+                `;
+                container.appendChild(card);
+            }
+        } catch (e) {
+            console.error('Failed to load MQTT topics:', e);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function refreshMqttMessages() {
+        const log = document.getElementById('mqtt-message-log');
+        try {
+            const res = await fetch('/api/mqtt/messages');
+            const messages = await res.json();
+
+            if (!messages.length) {
+                log.innerHTML = '<div class="text-center py-8 text-gray-600 italic text-xs">No messages published yet</div>';
+                return;
+            }
+
+            log.innerHTML = messages.map(msg => {
+                const time = new Date(msg.timestamp).toLocaleTimeString();
+                const topicShort = msg.topic.replace('velovision/', '');
+                const retainBadge = msg.retained ? '<span class="text-[8px] bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded font-bold">R</span>' : '';
+                return `
+                    <div class="mqtt-msg-item pl-3 py-2 rounded-r-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <code class="text-[10px] text-gray-300 font-mono truncate flex-1">${topicShort}</code>
+                            <div class="flex items-center gap-1.5">
+                                ${retainBadge}
+                                <span class="text-[9px] text-gray-600 font-mono">${time}</span>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 truncate font-mono">${escapeHtml(msg.payload_preview.substring(0, 100))}</p>
+                    </div>
+                `;
+            }).join('');
+        } catch (e) {
+            log.innerHTML = '<div class="text-center py-8 text-red-500/50 text-xs">Error loading messages</div>';
+        }
+    }
+
+    function openMqttConfigModal() {
+        // Populate from loaded config
+        document.getElementById('mqttEnabled').checked = mqttConfig.enabled || false;
+        document.getElementById('mqttHost').value = mqttConfig.broker_host || 'localhost';
+        document.getElementById('mqttPort').value = mqttConfig.broker_port || 1883;
+        document.getElementById('mqttUser').value = mqttConfig.username || '';
+        document.getElementById('mqttPass').value = mqttConfig.password || '';
+        document.getElementById('mqttClientId').value = mqttConfig.client_id || 'velovision';
+        document.getElementById('mqttBaseTopic').value = mqttConfig.base_topic || 'velovision';
+        openModal('mqttConfigModal');
+    }
+
+    async function saveMqttConfig() {
+        const data = {
+            mqtt: {
+                enabled: document.getElementById('mqttEnabled').checked,
+                broker_host: document.getElementById('mqttHost').value,
+                broker_port: parseInt(document.getElementById('mqttPort').value) || 1883,
+                username: document.getElementById('mqttUser').value,
+                password: document.getElementById('mqttPass').value,
+                client_id: document.getElementById('mqttClientId').value,
+                base_topic: document.getElementById('mqttBaseTopic').value
+            }
+        };
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                mqttConfig = data.mqtt;
+                showToast("MQTT configuration saved!");
+                closeModal();
+                // Wait a moment for backend to connect
+                setTimeout(() => {
+                    checkMqttStatus();
+                    loadMqttTopics();
+                    refreshMqttMessages();
+                }, 2000);
+            }
+        } catch (e) { showToast("Error saving MQTT config"); }
+    }
+
+    // ============ WHATSAPP FUNCTIONS ============
     function renderRecipients() {
         const peopleList = document.getElementById('people-list');
         const groupsList = document.getElementById('groups-list');
@@ -483,6 +1025,7 @@
         document.getElementById('configModal').classList.add('hidden');
         document.getElementById('historyModal').classList.add('hidden');
         document.getElementById('groupSearchModal').classList.add('hidden');
+        document.getElementById('mqttConfigModal').classList.add('hidden');
         document.body.classList.remove('modal-open');
     }
 

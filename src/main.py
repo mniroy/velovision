@@ -18,8 +18,9 @@ async def startup_event():
         import threading
         def background_init():
             try:
-                from src import triggers
+                from src import triggers, mqtt
                 triggers.start_scheduler()
+                mqtt.init_mqtt()
             except Exception as thread_e:
                 print(f"BACKGROUND INIT ERROR: {thread_e}")
         
@@ -34,7 +35,8 @@ try:
 except Exception as e:
     print(f"Directory creation error: {e}")
 
-# Mount events directory unconditionally (it's created above)
+# Mount static directories
+app.mount("/static", StaticFiles(directory="src/static"), name="static")
 app.mount("/events", StaticFiles(directory="/data/events"), name="events")
 
 # Mount Routers

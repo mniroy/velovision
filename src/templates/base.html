@@ -5,6 +5,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Velo Vision{% endblock %}</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/favicon-16x16.png">
+    <link rel="manifest" href="/static/site.webmanifest">
+    <link rel="shortcut icon" href="/static/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -90,7 +95,7 @@
 
         .nav-link.active {
             background-color: #2d2d2d;
-            color: #dfffad;
+            color: #ffffff;
             font-weight: 700;
         }
 
@@ -125,7 +130,7 @@
         }
 
         .period-pill.active {
-            background-color: #dfffad;
+            background-color: #ffffff;
             color: #1a1a1a;
         }
 
@@ -136,7 +141,7 @@
         }
 
         .cat-pill.active {
-            background-color: #dfffad;
+            background-color: #ffffff;
             color: #1a1a1a;
         }
 
@@ -154,8 +159,12 @@
 
     <!-- Sidebar -->
     <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
-        <div class="mb-10 flex items-center gap-3">
-            <h1 class="text-h2 font-black tracking-tight text-white">Velo Vision</h1>
+        <div class="mb-10 flex items-center gap-4">
+            <div
+                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-white/20 shadow-lg shadow-black/20">
+                <img src="/static/favicon-32x32.png" class="w-7 h-7 object-contain">
+            </div>
+            <h1 class="text-h3 font-black tracking-tight text-white leading-tight">Velo<br>Vision</h1>
         </div>
         <nav class="flex-1 space-y-2">
             <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
@@ -171,13 +180,13 @@
                 <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
             </a>
             <a href="/patrol" class="nav-link {% if active_page == 'patrol' %}active{% endif %}">
-                <i class="fa-solid fa-shield-halved w-5"></i><span>AI Patrol</span>
+                <i class="fa-solid fa-eye w-5"></i><span>Vision AI</span>
             </a>
             <a href="/analytics" class="nav-link {% if active_page == 'analytics' %}active{% endif %}">
                 <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
             </a>
             <a href="/messages" class="nav-link {% if active_page == 'messages' %}active{% endif %}">
-                <i class="fa-brands fa-whatsapp w-5"></i><span>Messages</span>
+                <i class="fa-solid fa-bell w-5"></i><span>Messages</span>
             </a>
             <a href="/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">
                 <i class="fa-solid fa-gear w-5"></i><span>Settings</span>
@@ -188,7 +197,8 @@
             <div class="p-4 bg-white/5 rounded-2xl border border-white/10">
                 <p class="text-caption uppercase tracking-[0.2em] text-gray-500 font-black mb-2">Engine Status</p>
                 <div class="flex items-center gap-2">
-                    <div class="w-2 h-2 bg-[#dfffad] rounded-full animate-pulse shadow-[0_0_8px_#dfffad]"></div>
+                    <div class="w-2 h-2 bg-white rounded-full animate-pulse shadow-[0_0_8px_rgba(255,255,255,0.5)]">
+                    </div>
                     <span class="text-body font-black text-white">Vision Core Active</span>
                 </div>
             </div>
@@ -197,10 +207,10 @@
                 <div
                     class="flex items-center justify-between text-caption font-black uppercase tracking-[0.2em] text-gray-500">
                     <span>Version</span>
-                    <span class="text-gray-400">v1.5.5</span>
+                    <span class="text-gray-400">v1.5.6</span>
                 </div>
                 <a href="https://github.com/mniroy/velovision" target="_blank"
-                    class="flex items-center gap-2 text-caption font-black uppercase tracking-[0.2em] text-gray-500 hover:text-[#dfffad] transition-all">
+                    class="flex items-center gap-2 text-caption font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-all">
                     <i class="fa-brands fa-github text-sm"></i>
                     <span>mniroy/velovision</span>
                 </a>
@@ -258,7 +268,7 @@
                     errorDiv.innerHTML = `
                         <i class="fa-solid fa-video-slash text-gray-600 text-xl mb-2"></i>
                         <span class="text-caption font-black uppercase tracking-widest text-gray-500">Connection Issue</span>
-                        <button onclick="event.stopPropagation(); retryImage(this)" class="mt-3 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-caption font-black text-[#dfffad] uppercase tracking-widest transition-all">Retry</button>
+                        <button onclick="event.stopPropagation(); retryImage(this)" class="mt-3 px-3 py-1 bg-white/5 hover:bg-white/10 border border-white/5 rounded-full text-caption font-black text-white uppercase tracking-widest transition-all">Retry</button>
                     `;
                     container.appendChild(errorDiv);
                 }

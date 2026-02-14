@@ -13,3 +13,4 @@ tenacity==8.2.3
 scikit-image==0.22.0
 numpy<2.0.0
 git+https://github.com/FalkTannhaeuser/python-onvif-zeep.git
+paho-mqtt==1.6.1

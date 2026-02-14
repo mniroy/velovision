@@ -2,7 +2,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import APIRouter, BackgroundTasks
 import logging
 from src.streaming import camera_manager
-from src import analysis, whatsapp
+from src import analysis, whatsapp, mqtt
 from src.config import config
 import cv2
 import numpy as np
@@ -85,6 +85,22 @@ def sync_schedules():
     else:
         if scheduler.get_job(job_id):
             scheduler.remove_job(job_id)
+
+    # Utility Meter Schedules
+    for meter in config.get("utility_meters", []):
+        job_id = f"meter_{meter['id']}"
+        if scheduler.get_job(job_id):
+            scheduler.remove_job(job_id)
+            
+        if meter.get("schedule_enabled") and meter.get("camera_id"):
+            interval = meter.get("schedule_interval", "daily")
+            if interval == "hourly":
+                scheduler.add_job(perform_meter_read, 'interval', hours=1, args=[meter['id']], id=job_id)
+                logger.info(f"Scheduled HOURLY meter read for {meter['name']}")
+            else: # daily
+                # Default to 08:00 AM for daily reads
+                scheduler.add_job(perform_meter_read, 'cron', hour=8, minute=0, args=[meter['id']], id=job_id)
+                logger.info(f"Scheduled DAILY meter read for {meter['name']} at 08:00")
 
     # Person Finder Schedule
     finder_config = config.get("person_finder", {})
@@ -273,6 +289,14 @@ def perform_analysis(camera_id="default"):
                 finally:
                     db.close()
 
+        # 6. Publish to MQTT
+        if mqtt.client and mqtt.client.connected:
+            cam_name = cam_config.get("name", camera_id)
+            mqtt.client.publish_camera_event(
+                camera_id, cam_name, analysis_result,
+                persons=recognized_names, snapshot_bytes=frame_bytes
+            )
+
         return {
             "status": "success",
             "timestamp": timestamp.isoformat(),
@@ -291,6 +315,11 @@ def trigger_analysis_manual(camera_id: str):
     """
     Manually trigger analysis and wait for result.
     """
+    cam_cfg = config.get("cameras", {}).get(camera_id, {})
+    if not cam_cfg.get("webhook_enabled", True): # Default to True for internal use, but config UI will set it
+        logger.warning(f"Webhook trigger ignored for {camera_id}: webhook_enabled is false")
+        return {"status": "error", "message": "Webhook trigger is disabled for this camera"}
+
     result = perform_analysis(camera_id)
     return result
 
@@ -299,6 +328,10 @@ def patrol_summarize():
     """
     Home Patrol: Capture snapshots from all cameras and summarize.
     """
+    if not config.get("patrol", {}).get("webhook_enabled", True):
+        logger.warning("Webhook Home Patrol trigger ignored: webhook_enabled is false")
+        return {"status": "error", "message": "Webhook trigger is disabled for Home Patrol"}
+        
     return perform_home_patrol()
 
 def perform_home_patrol():
@@ -382,6 +415,16 @@ def perform_home_patrol():
             whatsapp_status["sent"] = True
             whatsapp_status["recipients"] = len(results)
             
+    # Publish to MQTT
+    if mqtt.client and mqtt.client.connected:
+        mqtt.client.publish_patrol_result(
+            summary=summary,
+            primary_camera=primary_camera_id or "",
+            recognized=list(set(all_recognized)),
+            unknown_count=all_unknown_count,
+            cameras_scanned=len(images_data)
+        )
+
     return {
         "status": "success",
         "timestamp": datetime.now().isoformat(),
@@ -416,6 +459,10 @@ def person_finder(data: dict):
     Person Finder: Search for specific people across all cameras.
     data: {"names": ["Alice", "Bob"], "prompt": "optional custom instructions"}
     """
+    if not config.get("person_finder", {}).get("webhook_enabled", True):
+        logger.warning("Webhook Person Finder trigger ignored: webhook_enabled is false")
+        return {"status": "error", "message": "Webhook trigger is disabled for Person Finder"}
+
     names = data.get("names", [])
     custom_prompt = data.get("prompt", "")
     
@@ -514,6 +561,16 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
         whatsapp_status["sent"] = True
         whatsapp_status["recipients"] = len(results)
     
+    # Publish to MQTT
+    if mqtt.client and mqtt.client.connected:
+        mqtt.client.publish_person_finder_result(
+            targets=target_names,
+            found=found_locations,
+            not_found=list(not_found),
+            cameras_scanned=len(images_data),
+            summary=summary
+        )
+
     return {
         "status": "success",
         "timestamp": datetime.now().isoformat(),
@@ -524,3 +581,174 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
         "results_by_camera": results_by_camera,
         "whatsapp": whatsapp_status
     }
+
+@router.post("/doorbell/analyze")
+def doorbell_analyze_trigger():
+    """Trigger Doorbell IQ analysis."""
+    if not config.get("doorbell_iq", {}).get("webhook_enabled", True):
+        logger.warning("Webhook Doorbell IQ trigger ignored: webhook_enabled is false")
+        return {"status": "error", "message": "Webhook trigger is disabled for Doorbell IQ"}
+        
+    return perform_doorbell_analysis()
+
+def perform_doorbell_analysis():
+    logger.info("Executing DOORBELL IQ Analysis...")
+    doorbell_cfg = config.get("doorbell_iq", {})
+    camera_id = doorbell_cfg.get("camera_id")
+    
+    if not camera_id:
+        logger.error("Doorbell IQ: No camera selected.")
+        return {"status": "error", "message": "No camera selected for Doorbell IQ"}
+        
+    # 1. Capture Frame
+    try:
+        camera = camera_manager.get_camera(camera_id)
+        if not camera:
+             logger.error(f"Doorbell IQ: Camera {camera_id} not found.")
+             return {"status": "error", "message": f"Camera {camera_id} not found"}
+        
+        frame_bytes = camera.get_frame()
+        if not frame_bytes:
+            logger.error("Doorbell IQ: Failed to capture frame.")
+            return {"status": "error", "message": "Failed to capture frame"}
+
+        # 2. AI Analysis
+        prompt = doorbell_cfg.get("analysis_prompt", "Analyze who is at the door.")
+        msg_style = doorbell_cfg.get("message_prompt", "")
+        if msg_style:
+            prompt = f"{prompt}\nInstruction for delivery: {msg_style}"
+            
+        known_faces = analysis.face_manager.get_known_faces()
+        
+        analysis_result, person_detected, recognized_names, unknown_count, detections = analysis.ai_analyzer.analyze_image(
+            frame_bytes, prompt, known_faces=known_faces
+        )
+        
+        logger.info(f"Doorbell IQ Result: {analysis_result}")
+        
+        # 3. Notify WhatsApp
+        whatsapp_status = {"sent": False, "recipients": 0}
+        recipients_wa = doorbell_cfg.get("recipients_whatsapp", [])
+        if whatsapp.client and recipients_wa:
+            caption = f"🔔 *Doorbell Alert*\n\n{analysis_result}"
+            image_to_send = frame_bytes if doorbell_cfg.get("include_image", True) else None
+            
+            # If no image, we might need a different method or just send caption as message
+            if image_to_send:
+                results = whatsapp.client.send_alert(recipients_wa, image_to_send, caption)
+                whatsapp_status["sent"] = True
+                whatsapp_status["recipients"] = len(results)
+            else:
+                # Handle text-only alert if client supports it (usually send_alert handles None image)
+                results = whatsapp.client.send_alert(recipients_wa, None, caption)
+                whatsapp_status["sent"] = True
+                whatsapp_status["recipients"] = len(results)
+
+        # 4. Notify Webhook
+        webhook_target = doorbell_cfg.get("recipients_webhook")
+        if webhook_target:
+            try:
+                import requests
+                payload = {
+                    "event": "doorbell_iq",
+                    "camera_id": camera_id,
+                    "analysis": analysis_result,
+                    "recognized_names": recognized_names,
+                    "unknown_count": unknown_count,
+                    "timestamp": datetime.now().isoformat()
+                }
+                requests.post(webhook_target, json=payload, timeout=5)
+                logger.info(f"Doorbell IQ: Webhook sent to {webhook_target}")
+            except Exception as e:
+                logger.error(f"Doorbell IQ: Webhook failed: {e}")
+
+        # 5. Notify MQTT
+        mqtt_target = doorbell_cfg.get("recipients_mqtt")
+        if mqtt.client and mqtt.client.connected and mqtt_target:
+            try:
+                import json
+                payload = {
+                    "analysis": analysis_result,
+                    "camera_id": camera_id,
+                    "recognized": recognized_names,
+                    "unknown_count": unknown_count
+                }
+                mqtt.client.client.publish(mqtt_target, json.dumps(payload))
+                logger.info(f"Doorbell IQ: MQTT result published to {mqtt_target}")
+            except Exception as e:
+                logger.error(f"Doorbell IQ: MQTT publish failed: {e}")
+
+        return {
+            "status": "success",
+            "timestamp": datetime.now().isoformat(),
+            "analysis": analysis_result,
+            "whatsapp": whatsapp_status
+        }
+
+    except Exception as e:
+        logger.error(f"Doorbell IQ error: {e}")
+        return {"status": "error", "message": str(e)}
+
+def perform_meter_read(meter_id: str = None):
+    """
+    Perform utility meter reading.
+    If meter_id is None, read all configured meters.
+    """
+    meters = config.get("utility_meters", [])
+    if meter_id:
+        meters = [m for m in meters if m['id'] == meter_id]
+    
+    if not meters:
+        return {"status": "error", "message": "No meters found to read"}
+
+    results = []
+    for meter in meters:
+        if not meter.get("camera_id"):
+            continue
+            
+        try:
+            cam_id = meter['camera_id']
+            # 1. Capture Frame
+            frame = camera_manager.get_frame(cam_id)
+            if frame is None:
+                logger.error(f"Meter Read: Failed to capture frame from {cam_id}")
+                continue
+            
+            _, frame_bytes = cv2.imencode('.jpg', frame)
+            frame_bytes = frame_bytes.tobytes()
+            
+            # 2. Analyze
+            prompt = meter.get("analysis_prompt", "Read the physical utility meter numbers.")
+            # Basic analysis without face recognition tracking
+            analysis_result, _, _, _, _ = analysis.ai_analyzer.analyze_image(
+                frame_bytes, prompt
+            )
+            
+            logger.info(f"Meter Read ({meter['name']}): {analysis_result}")
+            
+            # 3. Notify WhatsApp
+            recipients = meter.get("recipients_whatsapp", [])
+            if whatsapp.client and recipients:
+                caption = f"📊 *Utility Meter: {meter['name']}*\n\nRead Value: {analysis_result}\nType: {meter['type'].upper()}"
+                whatsapp.client.send_alert(recipients, frame_bytes, caption)
+            
+            results.append({
+                "meter_id": meter['id'],
+                "name": meter['name'],
+                "result": analysis_result
+            })
+            
+        except Exception as e:
+            logger.error(f"Error reading meter {meter.get('name')}: {e}")
+            
+    return {"status": "success", "results": results}
+
+@router.post("/meter/read")
+def meter_read_trigger(meter_id: str = None):
+    """
+    Trigger Utility Meter reading immediately.
+    """
+    import threading
+    # Run in background to avoid timeout
+    threading.Thread(target=perform_meter_read, args=(meter_id,), daemon=True).start()
+    return {"status": "success", "message": "Utility Meter analysis triggered in background."}

@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}AI Patrol - Velo Vision{% endblock %}
+{% block title %}Vision AI - Velo Vision{% endblock %}
 
 {% block extra_style %}
 .card { background-color: #262626; border: 1px solid #333; }
-.btn-primary { background-color: #dfffad; color: #1a1a1a; }
+.btn-primary { background-color: #ffffff; color: #1a1a1a; }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #444; border-radius: 10px; }
@@ -16,8 +16,8 @@
 }
 .finder-face { transition: all 0.2s; cursor: pointer; }
 .finder-face:hover { transform: scale(1.05); }
-.finder-face.selected { ring: 2px solid #dfffad; }
-.finder-face.selected .face-ring { border-color: #dfffad; box-shadow: 0 0 12px rgba(223,255,173,0.4); }
+.finder-face.selected { ring: 2px solid #ffffff; }
+.finder-face.selected .face-ring { border-color: #ffffff; box-shadow: 0 0 12px rgba(255,255,255,0.4); }
 .finder-face .face-ring { border: 2px solid #444; transition: all 0.2s; }
 @keyframes scan-pulse {
 0%,100% { opacity: 0.5; }
@@ -28,198 +28,371 @@
 
 {% block content %}
 <div class="p-8">
-    <header class="mb-10 flex justify-between items-end">
-        <div>
-            <h2 class="text-3xl font-semibold">AI Patrol</h2>
-            <p class="text-gray-400 text-sm mt-1">Central Intelligence & Multi-Camera Analysis</p>
-        </div>
+    <header class="mb-10">
+        <h2 class="text-3xl font-semibold">Vision AI</h2>
+        <p class="text-gray-400 text-sm mt-1">Advanced Visual Intelligence & Diagnostic Tools</p>
     </header>
 
-    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <!-- Sidebar: Home Patrol Config -->
-        <div class="space-y-6">
-            <div class="card rounded-3xl p-6 space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-black uppercase tracking-widest text-gray-500">Home Patrol Config</h3>
-                    <span id="active-cams-count"
-                        class="text-[10px] font-bold bg-[#dfffad] text-[#1a1a1a] px-2 py-0.5 rounded-full">0
-                        Cameras</span>
+    <!-- SECTION 1: VISION TOOLS -->
+    <div class="mb-12">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-8 h-px bg-white/10"></div>
+            <h3 class="text-[11px] font-black uppercase tracking-[0.3em] text-gray-500">Vision Tools</h3>
+            <div class="flex-1 h-px bg-white/10"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Tool: Home Patrol -->
+            <div class="card rounded-3xl p-6 flex flex-col justify-between hover:border-white/30 transition-all group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform border border-white/5">
+                        <i class="fa-solid fa-cloud-sun text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Home Patrol</h4>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-6">Executes a coordinated scan across all
+                        active cameras to generate a holistic state summary of your home.</p>
                 </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label
-                            class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Global
-                            Context</label>
-                        <textarea id="patrol-prompt" rows="3"
-                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar"
-                            placeholder="Instruction for holistic patrol..."></textarea>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Message
-                            Style</label>
-                        <textarea id="patrol-msg" rows="2"
-                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar"
-                            placeholder="Delivery style for summary..."></textarea>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">WhatsApp
-                            Trigger</label>
-                        <input type="text" id="patrol-trigger"
-                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none custom-scrollbar"
-                            placeholder="e.g. how is home right now">
-                    </div>
-
-
-                    <div class="pt-4 border-t border-white/5 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <label
-                                class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
-                            <button onclick="openPicker('patrol')"
-                                class="text-[10px] font-bold text-[#dfffad] hover:underline">Select</button>
-                        </div>
-                        <div id="patrol-recipients-label"
-                            class="p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400 min-h-[40px] flex items-center">
-                            No recipients assigned
-                        </div>
-                    </div>
-
-                    <div class="pt-4 border-t border-white/5 space-y-4">
-                        <div class="flex items-center justify-between">
-                            <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
-                                Schedule</label>
-                            <input type="checkbox" id="patrol-schedEnable"
-                                class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <input type="number" id="patrol-schedHrs" value="6"
-                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-[#dfffad] focus:outline-none placeholder-gray-600 font-mono">
-                            <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 grid grid-cols-2 gap-3">
-                        <button onclick="saveAllConfigs()"
-                            class="bg-[#1a1a1a] border border-[#dfffad] text-[#dfffad] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-floppy-disk"></i> Save
-                        </button>
-                        <button onclick="runHomePatrol()"
-                            class="pulse-glow bg-[#dfffad] text-[#1a1a1a] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:brightness-90 transition-all flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-bolt"></i> Run
-                        </button>
-                    </div>
+                <div class="space-y-3">
+                    <button onclick="document.getElementById('patrol-modal').classList.remove('hidden')"
+                        class="w-full py-2.5 rounded-xl bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">
+                        Configure
+                    </button>
+                    <button onclick="runHomePatrol()"
+                        class="w-full py-2.5 rounded-xl bg-white text-[#1a1a1a] text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-bolt"></i> Run Scan
+                    </button>
                 </div>
             </div>
 
-            <!-- Person Finder -->
-            <div class="card rounded-3xl p-6 space-y-5">
+            <!-- Tool: People Finder -->
+            <div class="card rounded-3xl p-6 flex flex-col justify-between hover:border-white/30 transition-all group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform border border-white/5">
+                        <i class="fa-solid fa-crosshairs text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">People Finder</h4>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-6">Identifies specific registered individuals
+                        across all feeds. Useful for tracking arrival or presence.</p>
+                </div>
+                <div class="space-y-3">
+                    <button onclick="document.getElementById('finder-modal').classList.remove('hidden')"
+                        class="w-full py-2.5 rounded-xl bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">
+                        Select Persons
+                    </button>
+                    <button onclick="runPersonFinder()" id="finder-run-btn"
+                        class="w-full py-2.5 rounded-xl bg-white text-[#1a1a1a] text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-search"></i> Search All
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tool: Doorbell IQ -->
+            <div class="card rounded-3xl p-6 flex flex-col justify-between hover:border-white/30 transition-all group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform border border-white/5">
+                        <i class="fa-solid fa-door-open text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Doorbell IQ</h4>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-6">Enhanced visitor analysis and package
+                        detection. Prioritizes interactions at your primary entry points.</p>
+                </div>
+                <div class="space-y-3">
+                    <button onclick="document.getElementById('doorbell-modal').classList.remove('hidden')"
+                        class="w-full py-2.5 rounded-xl bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">
+                        Configure
+                    </button>
+                    <button id="doorbell-run-btn" onclick="runDoorbellAnalysis()"
+                        class="w-full py-2.5 rounded-xl bg-white text-[#1a1a1a] text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 border border-white/5">
+                        <i class="fa-solid fa-play"></i> Test
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tool: Utility Meter -->
+            <div class="card rounded-3xl p-6 flex flex-col justify-between hover:border-white/30 transition-all group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform border border-white/5">
+                        <i class="fa-solid fa-gauge-high text-xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-2">Utility Meter</h4>
+                    <p class="text-[11px] text-gray-400 leading-relaxed mb-6">Reads physical utility measurements (e.g.
+                        PLN electricity meter) and parses them into digital data values.</p>
+                </div>
+                <div class="space-y-3">
+                    <button onclick="showMeterList(); document.getElementById('meter-modal').classList.remove('hidden')"
+                        class="w-full py-2.5 rounded-xl bg-white/5 text-gray-400 text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all border border-white/5">
+                        Configure
+                    </button>
+                    <button id="meter-run-btn" onclick="runMeterAnalysis()"
+                        class="w-full py-2.5 rounded-xl bg-white text-[#1a1a1a] text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all flex items-center justify-center gap-2 border border-white/5">
+                        <i class="fa-solid fa-play"></i> Scan All
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 2: CAMERA CONFIG -->
+    <div class="pb-20">
+        <div class="flex items-center gap-3 mb-6">
+            <div class="w-8 h-px bg-white/10"></div>
+            <h3 class="text-[11px] font-black uppercase tracking-[0.3em] text-gray-500">Camera Intelligence</h3>
+            <div class="flex-1 h-px bg-white/10"></div>
+        </div>
+
+        <div id="camera-intelligence-list" class="space-y-6">
+            <div class="text-center py-20 text-gray-600 italic">Scanning for cameras...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Home Patrol Modal -->
+<div id="patrol-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4"
+    onclick="this.classList.add('hidden')">
+    <div class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <h3 class="text-xl font-semibold">Home Patrol Config</h3>
+            <button onclick="document.getElementById('patrol-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div class="flex items-center justify-between mb-2">
+                <span id="active-cams-count"
+                    class="text-[10px] font-bold bg-white text-[#1a1a1a] px-3 py-1 rounded-full uppercase tracking-widest">0
+                    Cameras</span>
+            </div>
+            <div>
+                <label
+                    class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Global
+                    Context</label>
+                <textarea id="patrol-prompt" rows="3"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"
+                    placeholder="Instruction for holistic patrol..."></textarea>
+            </div>
+            <div>
+                <label
+                    class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Message
+                    Style</label>
+                <textarea id="patrol-msg" rows="2"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"
+                    placeholder="Delivery style for summary..."></textarea>
+            </div>
+            <div>
+                <label
+                    class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">WhatsApp
+                    Trigger Phrase</label>
+                <input type="text" id="patrol-trigger"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none"
+                    placeholder="e.g. how is home right now">
+            </div>
+            <div class="pt-4 border-t border-white/5 space-y-3">
                 <div class="flex items-center justify-between">
-                    <h3 class="text-sm font-black uppercase tracking-widest text-gray-500">
-                        <i class="fa-solid fa-crosshairs mr-1.5 text-[#dfffad]"></i> Person Finder
-                    </h3>
-                    <span id="finder-selected-count"
-                        class="text-[10px] font-bold bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">0
-                        selected</span>
-                </div>
-
-                <!-- Face Selection Grid -->
-                <div>
                     <label
-                        class="block text-[10px] text-gray-500 mb-3 font-black uppercase tracking-widest leading-none">Select
-                        People to Find</label>
-                    <div id="finder-faces-grid" class="grid grid-cols-4 gap-2.5">
-                        <div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">Loading faces...</div>
-                    </div>
-                    <button onclick="toggleAllFinderFaces()"
-                        class="mt-2 text-[9px] font-bold text-gray-500 hover:text-[#dfffad] transition-colors uppercase tracking-widest">
-                        <i class="fa-solid fa-check-double mr-1"></i> Toggle All
-                    </button>
+                        class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
+                    <button onclick="openPicker('patrol')"
+                        class="text-[10px] font-bold text-white hover:underline">Select</button>
                 </div>
-
-                <!-- Custom Prompt -->
-                <div>
-                    <label
-                        class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Custom
-                        Instructions</label>
-                    <textarea id="finder-prompt" rows="2"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar"
-                        placeholder="e.g. Describe what they are wearing and their mood..."></textarea>
+                <div id="patrol-recipients-label"
+                    class="p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400 min-h-[40px] flex items-center">
+                    No recipients assigned</div>
+            </div>
+            <div class="pt-4 border-t border-white/5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
+                        Schedule</label>
+                    <input type="checkbox" id="patrol-schedEnable"
+                        class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                 </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="patrol-schedHrs" value="6"
+                        class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                    <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                </div>
+            </div>
 
-                <!-- Recipients -->
-                <div class="pt-4 border-t border-white/5 space-y-3">
+            <!-- HOME PATROL TRIGGERS -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+                <label class="block text-[10px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4">External
+                    Triggers</label>
+
+                <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <label
-                            class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
-                        <button onclick="openPicker('finder')"
-                            class="text-[10px] font-bold text-[#dfffad] hover:underline">Select</button>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-link text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="patrol-webEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                     </div>
-                    <div id="finder-recipients-label"
-                        class="p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400 min-h-[40px] flex items-center">
-                        No recipients assigned
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly value="/api/patrol/summarize"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText('/api/patrol/summarize'); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
                     </div>
                 </div>
 
-                <!-- Schedule -->
-                <div class="pt-4 border-t border-white/5 space-y-4">
+                <div class="space-y-3">
                     <div class="flex items-center justify-between">
-                        <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
-                            Schedule</label>
-                        <input type="checkbox" id="finder-schedEnable"
-                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-tower-broadcast text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">MQTT
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="patrol-mqttEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="finder-schedHrs" value="4"
-                            class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-[#dfffad] focus:outline-none placeholder-gray-600 font-mono">
-                        <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
-                    </div>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="pt-2 grid grid-cols-2 gap-3">
-                    <button onclick="saveAllConfigs()"
-                        class="bg-[#1a1a1a] border border-[#dfffad] text-[#dfffad] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-floppy-disk"></i> Save
-                    </button>
-                    <button id="finder-run-btn" onclick="runPersonFinder()"
-                        class="bg-[#1a1a1a] border border-[#dfffad]/50 text-[#dfffad] py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-[#dfffad] hover:text-[#1a1a1a] transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-crosshairs"></i> Scan
-                    </button>
-                </div>
-
-                <!-- Results Area -->
-                <div id="finder-results" class="hidden space-y-3">
-                    <div class="flex items-center justify-between">
-                        <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Results</label>
-                        <span id="finder-cameras-scanned" class="text-[9px] text-gray-600 font-mono"></span>
-                    </div>
-                    <div id="finder-results-content" class="space-y-2"></div>
-                    <div id="finder-summary"
-                        class="mt-3 p-4 bg-white/5 rounded-2xl border border-white/5 text-xs text-gray-300 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar">
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly id="patrol-mqttTopic" value="velovision/trigger/patrol"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText(document.getElementById('patrol-mqttTopic').value); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
                     </div>
                 </div>
             </div>
         </div>
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="saveAllConfigs()"
+                class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                & Close</button>
+        </div>
+    </div>
+</div>
 
-        <!-- Main: Per-Camera Config -->
-        <div class="xl:col-span-2 space-y-6">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-xl font-semibold">Camera Intelligence</h3>
+<!-- People Finder Modal -->
+<div id="finder-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4"
+    onclick="this.classList.add('hidden')">
+    <div class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <div class="flex items-center gap-3">
+                <h3 class="text-xl font-semibold">People Finder</h3>
+                <span id="finder-selected-count"
+                    class="text-[10px] font-bold bg-white/10 text-gray-400 px-2 py-0.5 rounded-full">0 selected</span>
+            </div>
+            <button onclick="document.getElementById('finder-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div>
+                <label
+                    class="block text-[10px] text-gray-500 mb-3 font-black uppercase tracking-widest leading-none">Select
+                    People to Find</label>
+                <div id="finder-faces-grid" class="grid grid-cols-4 gap-2.5">
+                    <div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">Loading faces...</div>
+                </div>
+                <button onclick="toggleAllFinderFaces()"
+                    class="mt-2 text-[9px] font-bold text-gray-500 hover:text-white transition-colors uppercase tracking-widest"><i
+                        class="fa-solid fa-check-double mr-1"></i> Toggle All</button>
+            </div>
+            <div>
+                <label
+                    class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">Custom
+                    Instructions</label>
+                <textarea id="finder-prompt" rows="2"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"
+                    placeholder="Describe what they are wearing, mood, etc..."></textarea>
+            </div>
+            <div class="pt-4 border-t border-white/5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label
+                        class="text-[10px] text-gray-500 font-black uppercase tracking-widest leading-none">Recipients</label>
+                    <button onclick="openPicker('finder')"
+                        class="text-[10px] font-bold text-white hover:underline">Select</button>
+                </div>
+                <div id="finder-recipients-label"
+                    class="p-3 bg-white/5 rounded-2xl border border-white/5 text-[10px] text-gray-400 min-h-[40px] flex items-center">
+                    No recipients assigned</div>
+            </div>
+            <div class="pt-4 border-t border-white/5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
+                        Schedule</label>
+                    <input type="checkbox" id="finder-schedEnable"
+                        class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="finder-schedHrs" value="4"
+                        class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                    <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                </div>
             </div>
 
-            <div id="camera-intelligence-list" class="space-y-6">
-                <div class="text-center py-20 text-gray-600 italic">Scanning for cameras...</div>
+            <!-- PEOPLE FINDER TRIGGERS -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+                <label class="block text-[10px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4">External
+                    Triggers</label>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-link text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="finder-webEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                    </div>
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly value="/api/patrol/find"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText('/api/patrol/find'); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-tower-broadcast text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">MQTT
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="finder-mqttEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                    </div>
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly id="finder-mqttTopic" value="velovision/trigger/person_finder"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText(document.getElementById('finder-mqttTopic').value); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                    </div>
+                </div>
             </div>
+
+            <!-- Results Preview in Modal -->
+            <div id="finder-results" class="hidden pt-6 border-t border-white/5 space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Live Search
+                        Results</label>
+                    <span id="finder-cameras-scanned" class="text-[9px] text-gray-600 font-mono"></span>
+                </div>
+                <div id="finder-results-content" class="space-y-2"></div>
+                <div id="finder-summary"
+                    class="mt-3 p-4 bg-white/5 rounded-2xl border border-white/5 text-xs text-gray-300 leading-relaxed max-h-48 overflow-y-auto custom-scrollbar">
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="saveAllConfigs()"
+                class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                & Close</button>
         </div>
     </div>
 </div>
 
 <!-- Recipients Picker Modal -->
 <div id="pickerOverlay"
-    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[400] hidden flex items-center justify-center p-4"
+    onclick="this.classList.add('hidden')">
     <div class="bg-[#262626] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
         onclick="event.stopPropagation()">
         <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
@@ -232,13 +405,268 @@
         </div>
         <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
             <button onclick="closePicker()"
-                class="bg-[#dfffad] text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Done</button>
+                class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Done</button>
+        </div>
+    </div>
+</div>
+
+<!-- Doorbell IQ Modal -->
+<div id="doorbell-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4"
+    onclick="this.classList.add('hidden')">
+    <div class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <h3 class="text-xl font-semibold">Doorbell IQ Config</h3>
+            <button onclick="document.getElementById('doorbell-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <!-- 1. Select Camera -->
+            <div class="space-y-3">
+                <label class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">1. Monitor
+                    Camera</label>
+                <select id="doorbell-camera"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none appearance-none cursor-pointer">
+                    <option value="">Select a camera...</option>
+                </select>
+            </div>
+
+            <!-- 2. Select Trigger -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+                <label class="block text-[10px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4">2. External
+                    Triggers</label>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-link text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="doorbell-webEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                    </div>
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly value="/api/doorbell/analyze"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText('/api/doorbell/analyze'); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-tower-broadcast text-gray-600 text-[10px]"></i>
+                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">MQTT
+                                Trigger</span>
+                        </div>
+                        <input type="checkbox" id="doorbell-mqttEnable"
+                            class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                    </div>
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                        <input type="text" readonly id="doorbell-mqttTopic" value="velovision/trigger/doorbell_iq"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText(document.getElementById('doorbell-mqttTopic').value); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Define Analysis Prompt -->
+            <div class="pt-6 border-t border-white/5 space-y-3">
+                <label class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">3. Analysis
+                    Prompt</label>
+                <textarea id="doorbell-analysisPrompt" rows="3" placeholder="What should the AI analyze?"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"></textarea>
+            </div>
+
+            <!-- 4. Message Style & Options -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+                <label class="block text-[10px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4">4. Message
+                    Style</label>
+                <div class="space-y-3">
+                    <textarea id="doorbell-messagePrompt" rows="2" placeholder="Define the message tone and style..."
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"></textarea>
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Include
+                        Picture</label>
+                    <input type="checkbox" id="doorbell-includeImage"
+                        class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                </div>
+            </div>
+
+            <!-- 5. Recipients -->
+            <div class="pt-6 border-t border-white/5 space-y-4">
+                <div class="flex items-center justify-between">
+                    <label class="text-[10px] text-gray-300 font-black uppercase tracking-[0.2em]">5. Recipients</label>
+                </div>
+
+                <!-- WhatsApp Recipients -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] text-gray-500 font-black uppercase tracking-widest">WhatsApp
+                            Contacts</span>
+                        <button onclick="openPicker('doorbell')"
+                            class="text-[10px] font-bold text-white hover:underline">Select</button>
+                    </div>
+                    <div id="doorbell-recipients-label"
+                        class="text-[10px] text-gray-400 bg-black/20 p-3 rounded-xl min-h-[40px] italic">No contacts
+                        selected</div>
+                </div>
+
+                <!-- Webhook & MQTT Recipients (New inputs) -->
+                <div class="space-y-3">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook Payload URL
+                        (Optional)</label>
+                    <input type="text" id="doorbell-webhookTarget" placeholder="https://your-server.com/callback"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-white focus:outline-none font-mono">
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">MQTT Result Topic
+                        (Optional)</label>
+                    <input type="text" id="doorbell-mqttTarget" placeholder="custom/topic/result"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-white focus:outline-none font-mono">
+                </div>
+            </div>
+        </div>
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="saveAllConfigs(); document.getElementById('doorbell-modal').classList.add('hidden')"
+                class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all shadow-lg shadow-white/5">Save
+                Config</button>
+        </div>
+    </div>
+</div>
+
+<!-- Utility Meter Modal -->
+<div id="meter-modal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4"
+    onclick="this.classList.add('hidden')">
+    <div class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <h3 class="text-xl font-semibold">Utility Meter Config</h3>
+            <button onclick="document.getElementById('meter-modal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-0 max-h-[75vh] overflow-y-auto custom-scrollbar bg-[#262626]">
+            <!-- List View -->
+            <div id="meter-list-view" class="p-6 space-y-4">
+                <div class="flex items-center justify-between mb-2">
+                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Monitored
+                        Meters</label>
+                    <button onclick="addNewMeter()"
+                        class="bg-white/10 hover:bg-white/20 text-white text-[9px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-white/5 transition-all">Add
+                        New</button>
+                </div>
+                <div id="meters-container" class="space-y-3">
+                    <!-- Meters will be rendered here -->
+                </div>
+
+                <div class="pt-6 border-t border-white/5 space-y-4">
+                    <label
+                        class="block text-[10px] text-gray-300 font-black uppercase tracking-[0.2em] mb-4 text-center">External
+                        Triggers</label>
+                    <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center mb-2">
+                        <input type="text" readonly value="/api/meter/read"
+                            class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                        <i onclick="navigator.clipboard.writeText('/api/meter/read'); showToast('Copied!')"
+                            class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit View -->
+            <div id="meter-edit-view" class="hidden p-6 space-y-6 animate-in slide-in-from-right duration-300">
+                <div class="flex items-center gap-3 mb-2">
+                    <button onclick="showMeterList()" class="text-gray-400 hover:text-white"><i
+                            class="fa-solid fa-arrow-left"></i></button>
+                    <h4 id="meter-edit-title" class="text-sm font-bold text-white uppercase tracking-widest">Edit Meter
+                    </h4>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Meter Name</label>
+                        <input type="text" id="meter-name"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-white focus:outline-none"
+                            placeholder="e.g. Electricity">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Utility
+                            Type</label>
+                        <select id="meter-type"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                            <option value="electricity">Electricity</option>
+                            <option value="water">Water</option>
+                            <option value="gas">Gas</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Source Camera</label>
+                    <select id="meter-camera"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-white focus:outline-none appearance-none cursor-pointer">
+                        <option value="">Select a camera...</option>
+                    </select>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Analysis Prompt</label>
+                    <textarea id="meter-prompt" rows="3"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"
+                        placeholder="Read the physical utility meter numbers."></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6 pt-2">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <label
+                                class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Schedule</label>
+                            <input type="checkbox" id="meter-schedEnable"
+                                class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                        </div>
+                        <select id="meter-interval"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                            <option value="hourly">Every Hour</option>
+                            <option value="daily">Once Daily</option>
+                        </select>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label
+                                class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Recipients</label>
+                            <button onclick="openPicker('meter')"
+                                class="text-[9px] font-bold text-white hover:underline">Select</button>
+                        </div>
+                        <div id="meter-recipients-label"
+                            class="text-[9px] text-gray-400 bg-black/20 p-2.5 rounded-xl min-h-[36px] flex items-center italic">
+                            No recipients assigned</div>
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button onclick="saveMeter()"
+                        class="flex-1 bg-white text-[#1a1a1a] py-3 rounded-2xl font-black uppercase text-[10px] tracking-[0.2em] hover:brightness-110 transition-all shadow-lg active:scale-95">Save
+                        Meter</button>
+                </div>
+            </div>
+        </div>
+        <div id="meter-footer" class="p-6 border-t border-gray-700 flex justify-end bg-[#1e1e1e]/50">
+            <button onclick="saveAllConfigs(); document.getElementById('meter-modal').classList.add('hidden')"
+                class="bg-white/10 text-white px-8 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all border border-white/5">Close
+                & Finalize All</button>
         </div>
     </div>
 </div>
 
 <div id="toast"
-    class="fixed bottom-8 right-8 bg-[#dfffad] text-black px-6 py-3 rounded-2xl font-bold shadow-2xl transform translate-y-28 opacity-0 transition-all duration-300 z-[300]">
+    class="fixed bottom-8 right-8 bg-white text-black px-6 py-3 rounded-2xl font-bold shadow-2xl transform translate-y-28 opacity-0 transition-all duration-300 z-[500]">
 </div>
 {% endblock %}
 
@@ -251,6 +679,10 @@
     let allFaces = [];
     let finderSelectedNames = new Set();
     let finderConfig = { prompt: '', recipients: [], names: [], schedule_enabled: false, schedule_interval_hrs: 4 };
+    let doorbellConfig = { camera_id: '', webhook_enabled: false, mqtt_enabled: false, analysis_prompt: '', message_prompt: '', include_image: true, recipients_whatsapp: [], recipients_webhook: '', recipients_mqtt: '' };
+    let utilityMeters = [];
+    let editingMeterId = null;
+    let tempMeterRecipients = [];
 
     function showToast(msg) {
         const t = document.getElementById('toast');
@@ -270,17 +702,33 @@
     async function loadData() {
         try {
             const [cRes, sRes] = await Promise.all([fetch('/api/cameras'), fetch('/api/settings')]);
-            const config = await sRes.json();
-            allCameras = config.cameras || {};
-            allRecipients = JSON.parse(config.whatsapp.recipients || "[]");
-            patrolConfig = config.patrol || { prompt: '', recipients: [] };
-            finderConfig = config.person_finder || { prompt: '', recipients: [], names: [], schedule_enabled: false, schedule_interval_hrs: 4 };
+            const camerasList = await cRes.json();
+            const configData = await sRes.json();
 
-            // Restore finder selections from saved config
+            // Map live cameras and merge with saved config
+            const savedCams = configData.cameras || {};
+            allCameras = {};
+            camerasList.forEach(c => {
+                allCameras[c.id] = {
+                    name: c.name,
+                    enabled: true,
+                    ...savedCams[c.id]
+                };
+            });
+
+            allRecipients = JSON.parse(configData.whatsapp.recipients || "[]");
+            patrolConfig = configData.patrol || { prompt: '', recipients: [] };
+            finderConfig = configData.person_finder || { prompt: '', recipients: [], names: [], schedule_enabled: false, schedule_interval_hrs: 4 };
+            doorbellConfig = configData.doorbell_iq || { camera_id: '', webhook_enabled: false, mqtt_enabled: false, analysis_prompt: '', message_prompt: '', include_image: true, recipients_whatsapp: [], recipients_webhook: '', recipients_mqtt: '' };
+            utilityMeters = configData.utility_meters || [];
+
             finderSelectedNames = new Set(finderConfig.names || []);
 
+            populateCameraSelects();
             updatePatrolUI();
             updateFinderUI();
+            updateDoorbellUI();
+            updateMeterUI();
             renderIntelligenceList();
         } catch (e) { console.error(e); }
     }
@@ -295,6 +743,8 @@
         document.getElementById('patrol-trigger').value = patrolConfig.whatsapp_trigger_phrase || '';
         document.getElementById('patrol-schedEnable').checked = !!patrolConfig.schedule_enabled;
         document.getElementById('patrol-schedHrs').value = patrolConfig.schedule_interval_hrs || 6;
+        document.getElementById('patrol-webEnable').checked = !!patrolConfig.webhook_enabled;
+        document.getElementById('patrol-mqttEnable').checked = !!patrolConfig.mqtt_enabled;
 
         const label = document.getElementById('patrol-recipients-label');
         label.innerText = getRecipientNames(patrolConfig.recipients);
@@ -304,12 +754,140 @@
         document.getElementById('finder-prompt').value = finderConfig.prompt || '';
         document.getElementById('finder-schedEnable').checked = !!finderConfig.schedule_enabled;
         document.getElementById('finder-schedHrs').value = finderConfig.schedule_interval_hrs || 4;
+        document.getElementById('finder-webEnable').checked = !!finderConfig.webhook_enabled;
+        document.getElementById('finder-mqttEnable').checked = !!finderConfig.mqtt_enabled;
 
         const label = document.getElementById('finder-recipients-label');
         label.innerText = getRecipientNames(finderConfig.recipients);
-
-        renderFinderGrid();
     }
+
+    function populateCameraSelects() {
+        const selects = ['doorbell-camera', 'meter-camera'];
+        selects.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let currentVal = '';
+            if (id === 'doorbell-camera') currentVal = doorbellConfig.camera_id;
+
+            el.innerHTML = '<option value="">Select a camera...</option>' +
+                Object.keys(allCameras).map(cid => `<option value="${cid}" ${cid === currentVal ? 'selected' : ''}>${allCameras[cid].name || cid}</option>`).join('');
+        });
+    }
+
+    function updateMeterUI() {
+        const container = document.getElementById('meters-container');
+        if (!container) return;
+        if (utilityMeters.length === 0) {
+            container.innerHTML = `<div class="text-center py-8 text-gray-600 text-[10px] italic border-2 border-dashed border-white/5 rounded-2xl">No utility meters configured.</div>`;
+            return;
+        }
+        container.innerHTML = utilityMeters.map(m => `
+            <div class="bg-white/5 border border-white/5 rounded-2xl p-4 flex items-center justify-between group hover:bg-white/10 transition-all">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-gray-400">
+                        <i class="fa-solid ${m.type === 'electricity' ? 'fa-bolt' : m.type === 'water' ? 'fa-droplet' : m.type === 'gas' ? 'fa-fire' : 'fa-chart-simple'}"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-white">${m.name}</p>
+                        <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">${m.type} • ${m.schedule_enabled ? (m.schedule_interval || 'daily') : 'Manual'}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="editMeter('${m.id}')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10"><i class="fa-solid fa-pen text-[10px]"></i></button>
+                    <button onclick="deleteMeter('${m.id}')" class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center text-red-500/50 hover:text-red-500 hover:bg-red-500/10"><i class="fa-solid fa-trash text-[10px]"></i></button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function addNewMeter() {
+        editingMeterId = 'new_' + Date.now();
+        document.getElementById('meter-edit-title').innerText = "Add New Meter";
+        document.getElementById('meter-name').value = '';
+        document.getElementById('meter-type').value = 'electricity';
+        document.getElementById('meter-camera').value = '';
+        document.getElementById('meter-prompt').value = 'Read the physical utility meter numbers. Return only the numeric digits shown on the display.';
+        document.getElementById('meter-schedEnable').checked = true;
+        document.getElementById('meter-interval').value = 'daily';
+
+        tempMeterRecipients = [];
+        document.getElementById('meter-recipients-label').innerText = getRecipientNames([]);
+
+        showMeterEdit();
+    }
+
+    function editMeter(id) {
+        const m = utilityMeters.find(x => x.id === id);
+        if (!m) return;
+        editingMeterId = id;
+        document.getElementById('meter-edit-title').innerText = "Edit " + m.name;
+        document.getElementById('meter-name').value = m.name;
+        document.getElementById('meter-type').value = m.type;
+        document.getElementById('meter-camera').value = m.camera_id;
+        document.getElementById('meter-prompt').value = m.analysis_prompt;
+        document.getElementById('meter-schedEnable').checked = !!m.schedule_enabled;
+        document.getElementById('meter-interval').value = m.schedule_interval || 'daily';
+
+        tempMeterRecipients = m.recipients_whatsapp || [];
+        document.getElementById('meter-recipients-label').innerText = getRecipientNames(tempMeterRecipients);
+
+        showMeterEdit();
+    }
+
+    function showMeterEdit() {
+        document.getElementById('meter-list-view').classList.add('hidden');
+        document.getElementById('meter-edit-view').classList.remove('hidden');
+    }
+
+    function showMeterList() {
+        document.getElementById('meter-list-view').classList.remove('hidden');
+        document.getElementById('meter-edit-view').classList.add('hidden');
+    }
+
+    function saveMeter() {
+        const name = document.getElementById('meter-name').value;
+        if (!name) return showToast("Name is required");
+
+        const m = {
+            id: (editingMeterId && editingMeterId.startsWith('new_')) ? 'm_' + Date.now() : editingMeterId,
+            name: name,
+            type: document.getElementById('meter-type').value,
+            camera_id: document.getElementById('meter-camera').value,
+            analysis_prompt: document.getElementById('meter-prompt').value,
+            schedule_enabled: document.getElementById('meter-schedEnable').checked,
+            schedule_interval: document.getElementById('meter-interval').value,
+            recipients_whatsapp: tempMeterRecipients
+        };
+
+        const idx = utilityMeters.findIndex(x => x.id === m.id);
+        if (idx > -1) utilityMeters[idx] = m;
+        else utilityMeters.push(m);
+
+        updateMeterUI();
+        showMeterList();
+    }
+
+    function deleteMeter(id) {
+        if (!confirm("Delete this meter?")) return;
+        utilityMeters = utilityMeters.filter(x => x.id !== id);
+        updateMeterUI();
+    }
+
+    function updateDoorbellUI() {
+        if (!doorbellConfig) return;
+        document.getElementById('doorbell-camera').value = doorbellConfig.camera_id || '';
+        document.getElementById('doorbell-webEnable').checked = !!doorbellConfig.webhook_enabled;
+        document.getElementById('doorbell-mqttEnable').checked = !!doorbellConfig.mqtt_enabled;
+        document.getElementById('doorbell-analysisPrompt').value = doorbellConfig.analysis_prompt || '';
+        document.getElementById('doorbell-messagePrompt').value = doorbellConfig.message_prompt || '';
+        document.getElementById('doorbell-includeImage').checked = !!doorbellConfig.include_image;
+        document.getElementById('doorbell-webhookTarget').value = doorbellConfig.recipients_webhook || '';
+        document.getElementById('doorbell-mqttTarget').value = doorbellConfig.recipients_mqtt || '';
+
+        const label = document.getElementById('doorbell-recipients-label');
+        label.innerText = getRecipientNames(doorbellConfig.recipients_whatsapp);
+    }
+
 
     function renderIntelligenceList() {
         const list = document.getElementById('camera-intelligence-list');
@@ -323,13 +901,12 @@
             const recipientLabel = getRecipientNames(camRecipients);
 
             card.innerHTML = `
-                <!-- Left Column: Media & Identity -->
                 <div class="w-full xl:w-72 shrink-0 space-y-4">
-                    <div class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer" onclick="enlargeCamera('${id}', '${cam.name}')">
-                        <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" onerror="handleImageError(this)">
+                    <div class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer">
+                        <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" onerror="this.src='https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=225&fit=crop'">
                         <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
                         <div class="absolute top-2 right-2 flex gap-1.5">
-                            <div class="bg-black/60 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-[#dfffad] border border-[#dfffad]/20 backdrop-blur-md">
+                            <div class="bg-black/60 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-white border border-white/20 backdrop-blur-md">
                                 <i class="fa-solid fa-bolt mr-1"></i> Diagnostic
                             </div>
                         </div>
@@ -343,7 +920,7 @@
                     <div class="pt-4 border-t border-white/5 px-1">
                         <div class="flex items-center justify-between mb-2">
                             <label class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Alert Recipients</label>
-                            <button onclick="openPicker('${id}')" class="text-[9px] font-bold text-[#dfffad] hover:underline">Edit</button>
+                            <button onclick="openPicker('${id}')" class="text-[9px] font-bold text-white hover:underline">Edit</button>
                         </div>
                         <div class="bg-white/5 border border-white/5 rounded-xl p-3 text-[9px] text-gray-400 min-h-[36px] flex items-center">
                             <span id="label-${id}">${recipientLabel}</span>
@@ -351,47 +928,50 @@
                     </div>
                 </div>
 
-                <!-- Right Column: Context & Automation -->
                 <div class="flex-1 w-full space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">AI Context</label>
-                            <textarea id="prompt-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="What should the AI look for?">${cam.analysis_prompt || ''}</textarea>
+                            <textarea id="prompt-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar" placeholder="What should the AI look for?">${cam.analysis_prompt || ''}</textarea>
                         </div>
                         <div>
                             <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">Notification Style</label>
-                            <textarea id="msg-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-[#dfffad] focus:outline-none resize-none custom-scrollbar" placeholder="How should the alert be phrased?">${cam.message_instruction || ''}</textarea>
+                            <textarea id="msg-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar" placeholder="How should the alert be phrased?">${cam.message_instruction || ''}</textarea>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-white/5">
-                        <!-- Triggers -->
                         <div class="space-y-4">
                             <div class="space-y-2">
                                 <div class="flex items-center justify-between">
                                     <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Webhook Trigger</label>
-                                    <input type="checkbox" id="webEnable-${id}" ${cam.webhook_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                                    <input type="checkbox" id="webEnable-${id}" ${cam.webhook_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                                 </div>
                                 <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
                                     <input type="text" readonly value="/api/trigger/${id}" class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
                                     <i onclick="navigator.clipboard.writeText('/api/trigger/${id}'); showToast('Copied!')" class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
                                 </div>
                             </div>
-                            <div class="space-y-2">
-                                <label class="block text-[10px] text-gray-500 font-black uppercase tracking-widest">WhatsApp Trigger Phrase</label>
-                                <input type="text" id="trigger-${id}" value="${cam.whatsapp_trigger_phrase || ''}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-[#dfffad] focus:outline-none" placeholder="e.g. status driveway">
-                            </div>
                         </div>
 
-                        <!-- Schedule & Actions -->
-                        <div class="space-y-4 flex flex-col justify-between">
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">MQTT Trigger</label>
+                                    <input type="checkbox" id="mqttEnable-${id}" ${cam.mqtt_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                                </div>
+                                <div class="bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 flex items-center">
+                                    <input type="text" readonly value="velovision/trigger/analyze/${id}" class="bg-transparent text-[9px] text-gray-500 w-full focus:outline-none font-mono">
+                                    <i onclick="navigator.clipboard.writeText('velovision/trigger/analyze/${id}'); showToast('Copied!')" class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
+                                </div>
+                            </div>
                             <div class="space-y-2">
                                 <div class="flex items-center justify-between">
                                     <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Auto-Check</label>
-                                    <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-[#dfffad]">
+                                    <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                                 </div>
                                 <div class="flex items-center gap-3">
-                                    <input type="number" id="schedHrs-${id}" value="${cam.schedule_interval_hrs || 1}" class="w-20 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-[#dfffad] focus:outline-none font-mono">
+                                    <input type="number" id="schedHrs-${id}" value="${cam.schedule_interval_hrs || 1}" class="w-20 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none font-mono">
                                     <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest text-right">Hour Interval</span>
                                 </div>
                             </div>
@@ -400,7 +980,7 @@
                                 <button onclick="triggerSingle('${id}')" class="flex-1 bg-white/5 border border-white/10 text-white py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/10 transition-all">
                                     Test
                                 </button>
-                                <button onclick="saveAllConfigs()" class="flex-[2] bg-[#dfffad] text-[#1a1a1a] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-lg shadow-[#dfffad]/10">
+                                <button onclick="saveAllConfigs()" class="flex-1 bg-white text-[#1a1a1a] py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:brightness-110 transition-all shadow-lg shadow-white/10">
                                     Save Config
                                 </button>
                             </div>
@@ -421,6 +1001,10 @@
             selectedRecipients = patrolConfig.recipients || [];
         } else if (targetId === 'finder') {
             selectedRecipients = finderConfig.recipients || [];
+        } else if (targetId === 'doorbell') {
+            selectedRecipients = doorbellConfig.recipients_whatsapp || [];
+        } else if (targetId === 'meter') {
+            selectedRecipients = tempMeterRecipients || [];
         } else {
             selectedRecipients = allCameras[targetId].recipients || [];
         }
@@ -428,7 +1012,7 @@
         list.innerHTML = allRecipients.map(r => `
             <label class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10 transition-all mb-2 last:mb-0">
                 <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 rounded-full bg-[#dfffad]/10 text-[#dfffad] flex items-center justify-center font-bold text-sm">
+                    <div class="w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center font-bold text-sm">
                         ${r.type === 'person' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-users"></i>'}
                     </div>
                     <div>
@@ -436,7 +1020,7 @@
                         <p class="text-[10px] text-gray-500 font-mono tracking-tighter">${r.value}</p>
                     </div>
                 </div>
-                <input type="checkbox" class="recipient-checkbox w-6 h-6 rounded-lg border-gray-700 bg-gray-800 checked:bg-[#dfffad] focus:ring-0" 
+                <input type="checkbox" class="recipient-checkbox w-6 h-6 rounded-lg border-gray-700 bg-gray-800 checked:bg-white focus:ring-0" 
                     value="${r.value}" ${selectedRecipients.includes(r.value) ? 'checked' : ''}>
             </label>
         `).join('');
@@ -457,6 +1041,14 @@
                 finderConfig.recipients = selected;
                 const label = document.getElementById('finder-recipients-label');
                 label.innerText = getRecipientNames(selected);
+            } else if (currentTargetCam === 'doorbell') {
+                doorbellConfig.recipients_whatsapp = selected;
+                const label = document.getElementById('doorbell-recipients-label');
+                label.innerText = getRecipientNames(selected);
+            } else if (currentTargetCam === 'meter') {
+                tempMeterRecipients = selected;
+                const label = document.getElementById('meter-recipients-label');
+                label.innerText = getRecipientNames(selected);
             } else {
                 allCameras[currentTargetCam].recipients = selected;
                 const label = document.getElementById(`label-${currentTargetCam}`);
@@ -473,6 +1065,7 @@
             allCameras[id].message_instruction = document.getElementById(`msg-${id}`).value;
             allCameras[id].whatsapp_trigger_phrase = document.getElementById(`trigger-${id}`).value;
             allCameras[id].webhook_enabled = document.getElementById(`webEnable-${id}`).checked;
+            allCameras[id].mqtt_enabled = document.getElementById(`mqttEnable-${id}`).checked;
             allCameras[id].schedule_enabled = document.getElementById(`schedEnable-${id}`).checked;
             allCameras[id].schedule_interval_hrs = document.getElementById(`schedHrs-${id}`).value;
         });
@@ -482,12 +1075,24 @@
         patrolConfig.whatsapp_trigger_phrase = document.getElementById('patrol-trigger').value;
         patrolConfig.schedule_enabled = document.getElementById('patrol-schedEnable').checked;
         patrolConfig.schedule_interval_hrs = document.getElementById('patrol-schedHrs').value;
+        patrolConfig.webhook_enabled = document.getElementById('patrol-webEnable').checked;
+        patrolConfig.mqtt_enabled = document.getElementById('patrol-mqttEnable').checked;
 
-        // Person Finder config
         finderConfig.prompt = document.getElementById('finder-prompt').value;
         finderConfig.schedule_enabled = document.getElementById('finder-schedEnable').checked;
         finderConfig.schedule_interval_hrs = document.getElementById('finder-schedHrs').value;
+        finderConfig.webhook_enabled = document.getElementById('finder-webEnable').checked;
+        finderConfig.mqtt_enabled = document.getElementById('finder-mqttEnable').checked;
         finderConfig.names = Array.from(finderSelectedNames);
+
+        doorbellConfig.camera_id = document.getElementById('doorbell-camera').value;
+        doorbellConfig.webhook_enabled = document.getElementById('doorbell-webEnable').checked;
+        doorbellConfig.mqtt_enabled = document.getElementById('doorbell-mqttEnable').checked;
+        doorbellConfig.analysis_prompt = document.getElementById('doorbell-analysisPrompt').value;
+        doorbellConfig.message_prompt = document.getElementById('doorbell-messagePrompt').value;
+        doorbellConfig.include_image = document.getElementById('doorbell-includeImage').checked;
+        doorbellConfig.recipients_webhook = document.getElementById('doorbell-webhookTarget').value;
+        doorbellConfig.recipients_mqtt = document.getElementById('doorbell-mqttTarget').value;
 
         try {
             const res = await fetch('/api/settings', {
@@ -496,11 +1101,18 @@
                 body: JSON.stringify({
                     cameras: allCameras,
                     patrol: patrolConfig,
-                    person_finder: finderConfig
+                    person_finder: finderConfig,
+                    doorbell_iq: doorbellConfig,
+                    utility_meters: utilityMeters
                 })
             });
-            if (res.ok) showToast("All AI Patrol configurations saved!");
-            else showToast("Failed to save configuration.");
+            if (res.ok) {
+                showToast("Vision AI configurations saved!");
+                document.getElementById('patrol-modal').classList.add('hidden');
+                document.getElementById('finder-modal').classList.add('hidden');
+            } else {
+                showToast("Failed to save configuration.");
+            }
         } catch (e) { showToast("Error connecting to server."); }
     }
 
@@ -514,10 +1126,7 @@
             } else {
                 showToast("Analysis failed: " + (data.message || data.error || "Server error"));
             }
-        } catch (e) {
-            console.error("Trigger Error:", e);
-            showToast("Error triggering analysis. Check console.");
-        }
+        } catch (e) { showToast("Error triggering analysis."); }
     }
 
     async function runHomePatrol() {
@@ -532,7 +1141,47 @@
             }
         } catch (e) { showToast("Error starting Home Patrol."); }
     }
-    // ─── Person Finder ────────────────────────────────────────────────
+
+    async function runDoorbellAnalysis() {
+        const btn = document.getElementById('doorbell-run-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
+        showToast("Triggering Doorbell IQ analysis...");
+        try {
+            const res = await fetch('/api/doorbell/analyze', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                showToast("Doorbell analysis complete!");
+            } else {
+                showToast("Doorbell analysis failed: " + (data.message || "Unknown error"));
+            }
+        } catch (e) { showToast("Error triggering doorbell analysis."); }
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Test';
+        }
+    }
+
+    async function runMeterAnalysis() {
+        const btn = document.getElementById('meter-run-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Running...';
+        showToast("Triggering all utility meter readings...");
+        try {
+            const res = await fetch('/api/meter/read', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                showToast("Meter readings triggered successfully!");
+            } else {
+                showToast("Failed to trigger readings: " + (data.message || "Unknown error"));
+            }
+        } catch (e) { showToast("Error triggering meter readings."); }
+        finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-play mr-1"></i> Scan All';
+        }
+    }
+
     async function loadFinderFaces() {
         try {
             const res = await fetch('/api/faces');
@@ -545,17 +1194,17 @@
     function renderFinderGrid() {
         const grid = document.getElementById('finder-faces-grid');
         if (!allFaces.length) {
-            grid.innerHTML = `<div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">No known faces registered. Add faces in the Faces page first.</div>`;
+            grid.innerHTML = `<div class="col-span-4 text-center py-6 text-gray-600 text-xs italic">No known faces registered.</div>`;
             return;
         }
         grid.innerHTML = allFaces.map(f => {
             const selected = finderSelectedNames.has(f.name);
             return `
-                <div class="finder-face flex flex-col items-center gap-1.5 p-2 rounded-2xl ${selected ? 'selected bg-[#dfffad]/10' : 'bg-white/5 hover:bg-white/10'}" onclick="toggleFinderFace('${f.name}')">
-                    <div class="face-ring w-12 h-12 rounded-full overflow-hidden ${selected ? '' : ''}">
+                <div class="finder-face flex flex-col items-center gap-1.5 p-2 rounded-2xl ${selected ? 'selected bg-white/10' : 'bg-white/5 hover:bg-white/10'}" onclick="toggleFinderFace('${f.name}')">
+                    <div class="face-ring w-12 h-12 rounded-full overflow-hidden">
                         <img src="/api/faces/${encodeURIComponent(f.name)}/image" class="w-full h-full object-cover" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect fill=%22%23333%22 width=%2240%22 height=%2240%22/><text x=%2220%22 y=%2224%22 text-anchor=%22middle%22 fill=%22%23888%22 font-size=%2216%22>${f.name[0]}</text></svg>'">
                     </div>
-                    <span class="text-[9px] font-bold ${selected ? 'text-[#dfffad]' : 'text-gray-400'} truncate w-full text-center leading-tight">${f.name}</span>
+                    <span class="text-[9px] font-bold ${selected ? 'text-white' : 'text-gray-400'} truncate w-full text-center leading-tight">${f.name}</span>
                 </div>
             `;
         }).join('');
@@ -563,20 +1212,14 @@
     }
 
     function toggleFinderFace(name) {
-        if (finderSelectedNames.has(name)) {
-            finderSelectedNames.delete(name);
-        } else {
-            finderSelectedNames.add(name);
-        }
+        if (finderSelectedNames.has(name)) finderSelectedNames.delete(name);
+        else finderSelectedNames.add(name);
         renderFinderGrid();
     }
 
     function toggleAllFinderFaces() {
-        if (finderSelectedNames.size === allFaces.length) {
-            finderSelectedNames.clear();
-        } else {
-            allFaces.forEach(f => finderSelectedNames.add(f.name));
-        }
+        if (finderSelectedNames.size === allFaces.length) finderSelectedNames.clear();
+        else allFaces.forEach(f => finderSelectedNames.add(f.name));
         renderFinderGrid();
     }
 
@@ -584,11 +1227,7 @@
         const el = document.getElementById('finder-selected-count');
         const count = finderSelectedNames.size;
         el.innerText = `${count} selected`;
-        if (count > 0) {
-            el.className = 'text-[10px] font-bold bg-[#dfffad] text-[#1a1a1a] px-2 py-0.5 rounded-full';
-        } else {
-            el.className = 'text-[10px] font-bold bg-white/10 text-gray-400 px-2 py-0.5 rounded-full';
-        }
+        el.className = `text-[10px] font-bold ${count > 0 ? 'bg-white text-[#1a1a1a]' : 'bg-white/10 text-gray-400'} px-2 py-0.5 rounded-full`;
     }
 
     async function runPersonFinder() {
@@ -604,11 +1243,11 @@
         const scannedEl = document.getElementById('finder-cameras-scanned');
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-radar scanning"></i> Scanning cameras...';
+        btn.innerHTML = '<i class="fa-solid fa-radar scanning"></i> Scanning...';
         btn.classList.add('opacity-60');
 
         resultsArea.classList.remove('hidden');
-        resultsContent.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs scanning"><i class="fa-solid fa-crosshairs mr-2"></i>Searching for ${finderSelectedNames.size} person(s) across all cameras...</div>`;
+        resultsContent.innerHTML = `<div class="text-center py-6 text-gray-500 text-xs scanning">Searching across all cameras...</div>`;
         summaryEl.innerHTML = '';
 
         try {
@@ -625,17 +1264,15 @@
             if (data.status === 'success') {
                 scannedEl.innerText = `${data.cameras_scanned} cameras scanned`;
                 renderFinderResults(data);
-                showToast('Person Finder complete!');
+                showToast('Search complete!');
             } else {
                 resultsContent.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">${data.message || 'Search failed'}</div>`;
-                showToast('Person Finder failed: ' + (data.message || 'Unknown error'));
             }
         } catch (e) {
             resultsContent.innerHTML = `<div class="text-center py-4 text-red-400 text-xs">Connection error</div>`;
-            showToast('Error running Person Finder.');
         } finally {
             btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> Scan All Cameras';
+            btn.innerHTML = '<i class="fa-solid fa-search"></i> Search All';
             btn.classList.remove('opacity-60');
         }
     }
@@ -645,7 +1282,6 @@
         const summaryEl = document.getElementById('finder-summary');
         let html = '';
 
-        // Found persons
         const found = data.found || {};
         for (const [name, locations] of Object.entries(found)) {
             for (const loc of locations) {
@@ -653,13 +1289,13 @@
                     loc.confidence === 'medium' ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/20' :
                         'text-orange-400 bg-orange-400/10 border-orange-400/20';
                 html += `
-                    <div class="flex items-start gap-3 p-3.5 bg-[#dfffad]/5 border border-[#dfffad]/15 rounded-2xl">
-                        <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-[#dfffad]/40">
+                    <div class="flex items-start gap-3 p-3.5 bg-white/5 border border-white/15 rounded-2xl">
+                        <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-white/40">
                             <img src="/api/faces/${encodeURIComponent(name)}/image" class="w-full h-full object-cover">
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center gap-2 flex-wrap">
-                                <span class="text-xs font-bold text-[#dfffad]">${name}</span>
+                                <span class="text-xs font-bold text-white">${name}</span>
                                 <span class="text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${confColor}">${loc.confidence}</span>
                             </div>
                             <p class="text-[10px] text-gray-400 mt-0.5"><i class="fa-solid fa-video mr-1 text-gray-600"></i>${loc.camera_name}</p>
@@ -670,7 +1306,6 @@
             }
         }
 
-        // Not found persons
         const notFound = data.not_found || [];
         for (const name of notFound) {
             html += `
@@ -678,19 +1313,15 @@
                     <div class="w-9 h-9 rounded-full overflow-hidden shrink-0 border-2 border-gray-700">
                         <img src="/api/faces/${encodeURIComponent(name)}/image" class="w-full h-full object-cover">
                     </div>
-                    <div class="flex-1">
+                    <div class="flex-1 min-w-0">
                         <span class="text-xs font-bold text-gray-400">${name}</span>
-                        <p class="text-[10px] text-red-400/70 mt-0.5"><i class="fa-solid fa-eye-slash mr-1"></i>Not found in any camera</p>
+                        <p class="text-[10px] text-red-400/70 mt-0.5">Not found</p>
                     </div>
                 </div>
             `;
         }
 
-        if (!html) {
-            html = '<div class="text-center py-4 text-gray-500 text-xs">No results to display</div>';
-        }
-
-        resultsContent.innerHTML = html;
+        resultsContent.innerHTML = html || '<div class="text-center py-4 text-gray-500 text-xs">No targets found.</div>';
         summaryEl.innerHTML = (data.summary || '').replace(/\n/g, '<br>');
     }
 

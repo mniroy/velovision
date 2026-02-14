@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Request
 from fastapi.responses import StreamingResponse, FileResponse
 from src.streaming import camera_manager, generate_frames
 from src.config import config, save_config
-from src import analysis, triggers, whatsapp
+from src import analysis, triggers, whatsapp, mqtt
 from sqlalchemy.orm import Session
 from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson, engine
 import shutil
@@ -530,9 +530,27 @@ def update_settings(settings: dict):
             triggers.whatsapp.init_whatsapp()
         if "cameras" in settings or "person_finder" in settings:
             triggers.sync_schedules()
+        if "mqtt" in settings:
+            mqtt.init_mqtt()
         return {"status": "saved"}
     else:
         raise HTTPException(status_code=500, detail="Failed to save config")
+
+@router.get("/mqtt/status")
+def get_mqtt_status():
+    if not mqtt.client:
+        return {"available": mqtt.MQTT_AVAILABLE, "connected": False, "status": "disabled"}
+    return mqtt.client.get_status()
+
+@router.get("/mqtt/topics")
+def get_mqtt_topics():
+    return mqtt.get_topics_info()
+
+@router.get("/mqtt/messages")
+def get_mqtt_messages():
+    if not mqtt.client:
+        return []
+    return mqtt.client.get_recent_messages()
 
 @router.get("/whatsapp/status")
 def get_whatsapp_status():
