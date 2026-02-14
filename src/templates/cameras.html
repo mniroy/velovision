@@ -28,8 +28,8 @@ input[type="checkbox"] { accent-color: #dfffad; }
         </button>
     </header>
 
-    <div id="cameras-list" class="space-y-4 max-w-4xl">
-        <div class="text-center py-20 text-gray-600">Loading resources...</div>
+    <div id="cameras-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6">
+        <div class="col-span-full text-center py-20 text-gray-600">Loading resources...</div>
     </div>
 </div>
 
@@ -221,9 +221,9 @@ input[type="checkbox"] { accent-color: #dfffad; }
             Object.entries(allCameras).forEach(([id, cam]) => {
                 const isDash = cam.on_dashboard !== false;
                 const card = document.createElement('div');
-                card.className = "card rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-start hover:border-gray-600 transition-colors";
+                card.className = "card rounded-2xl p-4 flex flex-col gap-4 hover:border-gray-600 transition-all bg-[#1a1a1a] border border-gray-800 group";
                 card.innerHTML = `
-                     <div class="w-full md:w-64 aspect-video bg-black rounded-xl overflow-hidden relative group cursor-pointer border border-white/5" onclick="enlargeCamera('${id}', '${cam.name}')">
+                     <div class="w-full aspect-video bg-black rounded-xl overflow-hidden relative cursor-pointer border border-white/5" onclick="enlargeCamera('${id}', '${cam.name}')">
                          <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="if(!this.dataset.retry) this.dataset.retry=0; if(this.dataset.retry<3){this.dataset.retry++;setTimeout(()=>{this.src='/api/snapshot?camera_id=${id}&t='+Date.now()},2000)}">
                          <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
                          <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -231,27 +231,32 @@ input[type="checkbox"] { accent-color: #dfffad; }
                                 <i class="fa-solid fa-expand text-white text-xs"></i>
                             </div>
                          </div>
-                         <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[10px] flex items-center gap-1.5 font-bold">
+                         <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[10px] flex items-center gap-1.5 font-bold text-white">
                              <div class="status-dot status-active"></div> LIVE
                          </div>
                      </div>
-                     <div class="flex-1 w-full flex flex-col justify-between self-stretch">
-                         <div class="flex justify-between items-start">
-                             <div>
-                                 <h3 class="text-xl font-semibold">${cam.name}</h3>
-                                 <p class="text-[10px] text-gray-500 font-mono mt-1">ID: ${id}</p>
-                                 <div class="flex gap-2 mt-3">
-                                     <button onclick="toggleDashboard('${id}')" class="dash-toggle ${isDash ? 'active' : ''} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all">
-                                         <i class="fa-solid fa-plus mr-1"></i> Dashboard
-                                     </button>
-                                     ${cam.schedule_enabled ? '<span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/20">Auto Poll</span>' : ''}
-                                 </div>
-                             </div>
-                             <div class="flex gap-2">
-                                 <button onclick="openModal('${id}')" class="bg-[#333] hover:bg-white hover:text-black text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center"><i class="fa-solid fa-pen"></i></button>
-                                 <button onclick="deleteCamera('${id}')" class="bg-[#333] hover:bg-red-500 text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
-                             </div>
-                         </div>
+
+                     <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div>
+                                <h3 class="text-lg font-bold text-white truncate max-w-[150px]">${cam.name}</h3>
+                                <p class="text-[9px] text-gray-500 font-mono tracking-tighter">${id}</p>
+                            </div>
+                            <div class="flex gap-1.5">
+                                <button onclick="openModal('${id}')" class="bg-[#262626] hover:bg-white hover:text-black text-gray-400 w-8 h-8 rounded-lg transition-all flex items-center justify-center"><i class="fa-solid fa-pen text-xs"></i></button>
+                                <button onclick="deleteCamera('${id}')" class="bg-[#262626] hover:bg-red-500 hover:text-white text-gray-400 w-8 h-8 rounded-lg transition-all flex items-center justify-center"><i class="fa-solid fa-trash text-xs"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex gap-2">
+                                <button onclick="toggleDashboard('${id}')" class="dash-toggle ${isDash ? 'active' : ''} px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
+                                    <i class="fa-solid ${isDash ? 'fa-check' : 'fa-plus'} mr-1"></i> Dashboard
+                                </button>
+                                ${cam.schedule_enabled ? '<span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border border-blue-400/20 flex items-center"><i class="fa-solid fa-clock mr-1"></i> Auto</span>' : ''}
+                            </div>
+                            <!-- Mini Sparkline Placeholder if needed -->
+                        </div>
                      </div>`;
                 list.appendChild(card);
             });
