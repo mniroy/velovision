@@ -528,7 +528,7 @@ def update_settings(settings: dict):
             analysis.init_analysis()
         if "whatsapp" in settings:
             triggers.whatsapp.init_whatsapp()
-        if "cameras" in settings:
+        if "cameras" in settings or "person_finder" in settings:
             triggers.sync_schedules()
         return {"status": "saved"}
     else:

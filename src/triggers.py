@@ -86,6 +86,26 @@ def sync_schedules():
         if scheduler.get_job(job_id):
             scheduler.remove_job(job_id)
 
+    # Person Finder Schedule
+    finder_config = config.get("person_finder", {})
+    finder_job_id = "person_finder_scheduled"
+    if finder_config.get("schedule_enabled") and finder_config.get("names"):
+        hrs = int(finder_config.get("schedule_interval_hrs", 4))
+        if hrs > 0:
+            if scheduler.get_job(finder_job_id):
+                scheduler.remove_job(finder_job_id)
+            scheduler.add_job(
+                perform_person_finder,
+                'interval',
+                hours=hrs,
+                args=[finder_config.get("names", []), finder_config.get("prompt", ""), finder_config.get("recipients", [])],
+                id=finder_job_id
+            )
+            logger.info(f"Scheduled PERSON FINDER every {hrs}h for {finder_config['names']}")
+    else:
+        if scheduler.get_job(finder_job_id):
+            scheduler.remove_job(finder_job_id)
+
 def perform_analysis(camera_id="default"):
     logger.info(f"Starting analysis for camera: {camera_id}")
     
@@ -402,9 +422,13 @@ def person_finder(data: dict):
     if not names:
         return {"status": "error", "message": "No persons selected"}
     
-    return perform_person_finder(names, custom_prompt)
+    # Get recipients from saved config
+    finder_config = config.get("person_finder", {})
+    recipients = data.get("recipients", finder_config.get("recipients", []))
+    
+    return perform_person_finder(names, custom_prompt, recipients)
 
-def perform_person_finder(target_names, custom_prompt=""):
+def perform_person_finder(target_names, custom_prompt="", recipients=None):
     logger.info(f"PERSON FINDER: Searching for {target_names}...")
     
     # 1. Resolve target faces from known faces
@@ -462,6 +486,34 @@ def perform_person_finder(target_names, custom_prompt=""):
     
     logger.info(f"Person Finder Results: found={list(found_locations.keys())}, not_found={list(not_found)}")
     
+    # Send WhatsApp alert if recipients configured
+    whatsapp_status = {"sent": False, "recipients": 0}
+    
+    if whatsapp.client and recipients:
+        # Build summary message
+        lines = ["🔍 *Person Finder Results*\n"]
+        for name, locations in found_locations.items():
+            for loc in locations:
+                conf_emoji = "🟢" if loc['confidence'] == 'high' else ("🟡" if loc['confidence'] == 'medium' else "🟠")
+                lines.append(f"{conf_emoji} *{name}* — {loc['camera_name']}")
+                lines.append(f"   _{loc['activity']}_")
+        if not_found:
+            lines.append(f"\n👻 Not found: {', '.join(not_found)}")
+        lines.append(f"\n📷 {len(images_data)} cameras scanned")
+        
+        caption = "\n".join(lines)
+        
+        # Pick image from first camera that found someone, or first camera
+        selected_image = images_data[0]["image_bytes"]
+        for cam_id in results_by_camera:
+            if results_by_camera[cam_id].get("found") and cam_id in images_by_cam_id:
+                selected_image = images_by_cam_id[cam_id]
+                break
+        
+        results = whatsapp.client.send_alert(recipients, selected_image, caption)
+        whatsapp_status["sent"] = True
+        whatsapp_status["recipients"] = len(results)
+    
     return {
         "status": "success",
         "timestamp": datetime.now().isoformat(),
@@ -469,5 +521,6 @@ def perform_person_finder(target_names, custom_prompt=""):
         "found": found_locations,
         "not_found": list(not_found),
         "cameras_scanned": len(images_data),
-        "results_by_camera": results_by_camera
+        "results_by_camera": results_by_camera,
+        "whatsapp": whatsapp_status
     }
