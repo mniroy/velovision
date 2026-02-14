@@ -767,85 +767,73 @@ async def restore_backup(background_tasks: BackgroundTasks, file: UploadFile = F
         raise HTTPException(status_code=400, detail="Only .zip files are accepted")
     
     try:
-        contents = await file.read()
-        buffer = io.BytesIO(contents)
+        # Save the uploaded file to a temporary location first
+        temp_zip = "/tmp/restore_temp.zip"
+        with open(temp_zip, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
         
-        if not zipfile.is_zipfile(buffer):
-            raise HTTPException(status_code=400, detail="Invalid ZIP file")
-        
-        buffer.seek(0)
-        
-        # Validate: check that config.yaml exists in the archive
-        with zipfile.ZipFile(buffer, 'r') as zf:
-            names = zf.namelist()
-            if 'config.yaml' not in names:
-                raise HTTPException(status_code=400, detail="Invalid backup: missing config.yaml")
-        
-        buffer.seek(0)
-        
-        # Stop all cameras before restoring
-        for cam_id in list(camera_manager.cameras.keys()):
+        # We handle the entire extraction and re-initialization in a background task
+        def perform_full_restore():
             try:
-                camera_manager.remove_camera(cam_id)
-            except:
-                pass
-        
-        # Stop scheduler jobs
-        try:
-            triggers.scheduler.remove_all_jobs()
-        except:
-            pass
-
-        # CRITICAL: Dispose Database engine to close active connections
-        # This allows overwriting the velovision.db file on most systems
-        try:
-            engine.dispose()
-            logger.info("Database engine disposed for restore.")
-        except Exception as e:
-            logger.warning(f"Failed to dispose engine: {e}")
-
-        # Extract backup to /data
-        with zipfile.ZipFile(buffer, 'r') as zf:
-            for member in zf.infolist():
-                try:
-                    zf.extract(member, DATA_DIR)
-                except Exception as e:
-                    logger.error(f"Failed to extract {member.filename}: {e}")
-        
-        # We handle re-initialization in a background task to avoid blocking the response
-        def reinit_system():
-            try:
-                logger.info("Starting system re-initialization after restore...")
-                # Reload config
-                new_config = reload_config()
+                logger.info("Starting background restore process...")
                 
-                # Re-init DB
+                # 1. Stop all cameras
+                for cam_id in list(camera_manager.cameras.keys()):
+                    try:
+                        camera_manager.remove_camera(cam_id)
+                    except:
+                        pass
+                
+                # 2. Stop scheduler
+                try:
+                    triggers.scheduler.remove_all_jobs()
+                except:
+                    pass
+
+                # 3. Dispose DB to release file locks
+                try:
+                    engine.dispose()
+                except:
+                    pass
+
+                # 4. Extract Zip
+                import zipfile
+                with zipfile.ZipFile(temp_zip, 'r') as zf:
+                    for member in zf.infolist():
+                        try:
+                            zf.extract(member, DATA_DIR)
+                        except Exception as e:
+                            logger.error(f"Extraction error ({member.filename}): {e}")
+
+                # 5. Reload system
+                new_config = reload_config()
                 from src.database import init_db
                 init_db()
 
-                # Re-init cameras
                 for cam_id, cam_cfg in new_config.get("cameras", {}).items():
                     if cam_cfg.get("enabled", True):
                         source = cam_cfg.get("source", 0)
                         try:
                             camera_manager.add_camera(cam_id, source, name=cam_cfg.get("name", cam_id))
-                        except Exception as ce:
-                            logger.error(f"Failed to re-add camera {cam_id}: {ce}")
+                        except:
+                            pass
                 
-                # Re-sync schedules
                 triggers.sync_schedules()
-                
-                # Re-init AI and WhatsApp
                 analysis.init_analysis()
                 whatsapp.init_whatsapp()
-                logger.info("System re-initialization complete.")
-            except Exception as e:
-                logger.error(f"Post-restore re-init failed: {e}", exc_info=True)
+                
+                # 6. Cleanup
+                if os.path.exists(temp_zip):
+                    os.remove(temp_zip)
+                
+                logger.info("BACKGROUND RESTORE COMPLETE.")
+            except Exception as bge:
+                logger.error(f"Background restore failed: {bge}", exc_info=True)
 
-        background_tasks.add_task(reinit_system)
+        background_tasks.add_task(perform_full_restore)
         
-        logger.info(f"Backup restoration initiated from {file.filename}")
-        return {"status": "ok", "message": "Backup files extracted. System is re-initializing."}
+        logger.info(f"Restore request accepted for {file.filename}")
+        return {"status": "ok", "message": "Restore started in background. Page will refresh shortly."}
     
     except HTTPException:
         raise
