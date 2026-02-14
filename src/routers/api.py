@@ -408,6 +408,91 @@ def get_activity_log(period: str = "week", category: str = "all", db: Session = 
                 current = current.replace(month=current.month + 1)
         return results
 
+@router.get("/analytics/summary")
+def get_analytics_summary(db: Session = Depends(get_db)):
+    from sqlalchemy import func
+    from datetime import datetime, timedelta
+    import os, shutil
+
+    # 1. Hourly activity for the last 24 hours
+    now = datetime.now()
+    hourly_activity = []
+    for i in range(23, -1, -1):
+        target_time = (now - timedelta(hours=i))
+        hour_start = target_time.replace(minute=0, second=0, microsecond=0)
+        hour_end = hour_start + timedelta(hours=1)
+        count = db.query(Event).filter(Event.timestamp >= hour_start, Event.timestamp < hour_end).count()
+        hourly_activity.append({
+            "label": hour_start.strftime("%I%p"),
+            "count": count
+        })
+
+    # 2. Events by Camera
+    camera_stats = db.query(Event.camera_id, func.count(Event.id)).group_by(Event.camera_id).all()
+    cam_breakdown = []
+    total_events = sum(c[1] for c in camera_stats) or 1
+    for cam_id, count in camera_stats:
+        cam_breakdown.append({
+            "id": cam_id,
+            "count": count,
+            "percent": round((count / total_events) * 100)
+        })
+
+    # 3. Top Faces
+    face_stats = db.query(Face.name, Face.sighting_count).order_by(Face.sighting_count.desc()).limit(5).all()
+    top_faces = [{"name": f[0], "count": f[1]} for f in face_stats]
+
+    # 4. System health
+    try:
+        # CPU Load
+        load = os.getloadavg()[0] * 10 
+        cpu = round(min(load, 100.0), 1)
+        
+        # Disk usage
+        du = shutil.disk_usage("/")
+        storage_percent = round((du.used / du.total) * 100)
+        
+        # Memory usage (Fallback for Linux)
+        mem_percent = 45 
+        if os.path.exists("/proc/meminfo"):
+             with open("/proc/meminfo", "r") as f:
+                 lines = f.readlines()
+                 total = 0
+                 avail = 0
+                 for line in lines:
+                     if "MemTotal" in line: total = int(line.split()[1])
+                     if "MemAvailable" in line: avail = int(line.split()[1])
+                 if total > 0:
+                     mem_percent = round(((total - avail) / total) * 100)
+    except:
+        cpu, storage_percent, mem_percent = 0, 0, 0
+
+    # 5. Common Objects (parsing last 50 events)
+    objects = {}
+    recent_events = db.query(Event.analysis_text).order_by(Event.id.desc()).limit(50).all()
+    keywords = ["person", "car", "package", "dog", "cat", "bicycle", "motorcycle", "delivery"]
+    for (text,) in recent_events:
+        if not text: continue
+        t = text.lower()
+        for k in keywords:
+            if k in t:
+                objects[k] = objects.get(k, 0) + 1
+    
+    obj_list = [{"label": k.capitalize(), "count": v} for k, v in objects.items()]
+    obj_list = sorted(obj_list, key=lambda x: x["count"], reverse=True)
+
+    return {
+        "hourly": hourly_activity,
+        "cameras": cam_breakdown,
+        "faces": top_faces,
+        "objects": obj_list,
+        "health": {
+            "cpu": cpu,
+            "storage": storage_percent,
+            "memory": mem_percent
+        }
+    }
+
 @router.get("/settings")
 def get_settings():
     return config
