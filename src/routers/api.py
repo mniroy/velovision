@@ -198,8 +198,32 @@ async def label_person(id: int, name: str = Form(...), category: str = Form("Unc
     
     # Check if face already exists
     existing = db.query(Face).filter(Face.name == name).first()
+    
     if existing:
-        raise HTTPException(status_code=400, detail="A person with this name already exists")
+        # 1. Update existing face
+        existing.last_seen = person.timestamp
+        existing.sighting_count = (existing.sighting_count or 0) + 1
+        if category and category != "Uncategorized":
+            existing.category = category
+            
+        # 2. Update the source event
+        if person.event_id:
+            from src.database import Event
+            event = db.query(Event).filter(Event.id == person.event_id).first()
+            if event:
+                # Append to faces if others already detected? 
+                if event.faces_detected:
+                    names = event.faces_detected.split(",")
+                    if name not in names:
+                        names.append(name)
+                        event.faces_detected = ",".join(names)
+                else:
+                    event.faces_detected = name
+        
+        # 3. Cleanup
+        db.delete(person)
+        db.commit()
+        return {"status": "success", "message": f"Added to {name}'s history"}
     
     # Capture the image from the unlabeled entry
     if not os.path.exists(person.image_path):

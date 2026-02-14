@@ -117,8 +117,8 @@ def perform_analysis(camera_id="default"):
         # Get known faces for AI context
         known_faces = analysis.face_manager.get_known_faces()
         
-        analysis_result, person_detected, recognized_names = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
-        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected}, Recognized: {recognized_names})")
+        analysis_result, person_detected, recognized_names, unknown_count = analysis.ai_analyzer.analyze_image(frame_bytes, prompt, known_faces=known_faces)
+        logger.info(f"AI Analysis ({camera_id}): {analysis_result} (Person: {person_detected}, Recognized: {recognized_names}, Unknown: {unknown_count})")
 
         # 4. Save Event to DB
         timestamp = datetime.now()
@@ -142,7 +142,8 @@ def perform_analysis(camera_id="default"):
                 prompt_used=prompt
             )
             db.add(event)
-            
+            db.flush() # Get event ID
+
             # Update sighting stats for recognized people
             if recognized_names:
                 for name in recognized_names:
@@ -152,8 +153,14 @@ def perform_analysis(camera_id="default"):
                         face.sighting_count = (face.sighting_count or 0) + 1
                         logger.info(f"Updated sighting stats for {name}.")
             
-            # If AI detected a NEW person, save to unlabeled_persons for user labeling
-            if person_detected:
+            # If AI detected a truly NEW person, save to unlabeled_persons for user labeling
+            # Logic: If Gemini specifically recognized some people, only trigger discovery if it ALSO sees an unknown person.
+            should_discover = person_detected
+            if recognized_names and unknown_count == 0:
+                should_discover = False
+                logger.info("Skipping discovery because all detected people were recognized.")
+
+            if should_discover:
                 # We also save a separate copy or just reuse the event image for labeling
                 unlabeled = UnlabeledPerson(
                     image_path=filepath,
@@ -162,7 +169,7 @@ def perform_analysis(camera_id="default"):
                     event_id=event.id
                 )
                 db.add(unlabeled)
-                logger.info("New person detected - added to Unlabeled queue.")
+                logger.info(f"New person detected (Unknown: {unknown_count}) - added to Unlabeled queue.")
 
             db.commit()
             logger.info(f"Event saved to DB: ID {event.id}")

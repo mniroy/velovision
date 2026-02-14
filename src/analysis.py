@@ -141,7 +141,8 @@ class AIAnalyzer:
             inputs.append("\nIMPORTANT:")
             inputs.append("1. If you see someone you don't recognize among the known people, start your response with 'PERSON_DETECTED: YES'. Otherwise start with 'PERSON_DETECTED: NO'.")
             inputs.append("2. If you identify any known people from the reference images, list their names exactly as provided in the format 'RECOGNIZED_PEOPLE: Name1, Name2'.")
-            inputs.append("3. Provide the descriptive analysis after these tags.")
+            inputs.append("3. Count how many people are in the image that you CANNOT identify from the reference images. List this count as 'UNKNOWN_COUNT: X'.")
+            inputs.append("4. Provide the descriptive analysis after these tags.")
             inputs.append(main_image)
             
             response = self.model.generate_content(inputs)
@@ -152,21 +153,32 @@ class AIAnalyzer:
             
             # Extract recognized people
             recognized_names = []
-            if "RECOGNIZED_PEOPLE:" in text:
-                try:
-                    # Look for the line containing RECOGNIZED_PEOPLE
-                    for line in text.split('\n'):
-                        if "RECOGNIZED_PEOPLE:" in line:
-                            names_str = line.split("RECOGNIZED_PEOPLE:")[1].strip()
-                            recognized_names = [n.strip() for n in names_str.split(",") if n.strip()]
-                            break
-                except:
-                    pass
+            unknown_count = 0
             
-            return text, detected, recognized_names
+            lines = text.split('\n')
+            for line in lines:
+                if "RECOGNIZED_PEOPLE:" in line:
+                    try:
+                        names_str = line.split("RECOGNIZED_PEOPLE:")[1].strip()
+                        recognized_names = [n.strip() for n in names_str.split(",") if n.strip()]
+                    except: pass
+                if "UNKNOWN_COUNT:" in line:
+                    try:
+                        count_str = line.split("UNKNOWN_COUNT:")[1].strip()
+                        # Extract digits only
+                        import re
+                        match = re.search(r'\d+', count_str)
+                        if match:
+                            unknown_count = int(match.group())
+                    except: pass
+            
+            # Final detected flag based on Gemini's count if available, otherwise fallback to its own YES/NO
+            is_new_person = unknown_count > 0 or ("PERSON_DETECTED: YES" in text)
+
+            return text, is_new_person, recognized_names, unknown_count
         except Exception as e:
             logger.error(f"AI Analysis failed: {e}")
-            return f"Error: {str(e)}", False, []
+            return f"Error: {str(e)}", False, [], 0
 
     def analyze_multi_images(self, images_data, global_prompt):
         """

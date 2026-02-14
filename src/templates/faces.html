@@ -102,8 +102,9 @@
                 <input type="hidden" name="id" id="labelId">
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Who is this?</label>
-                    <input type="text" name="name" required placeholder="Full Name"
+                    <input type="text" name="name" id="labelName" required placeholder="Full Name" list="knownNames"
                         class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-[#dfffad] focus:outline-none">
+                    <datalist id="knownNames"></datalist>
                 </div>
                 <div>
                     <label class="block text-sm text-gray-400 mb-1">Category</label>
@@ -338,6 +339,12 @@
             document.querySelectorAll('.cat-pill').forEach(b => {
                 b.classList.toggle('active', b.dataset.cat === activeFilter);
             });
+
+            // Update datalist for name labeling
+            const datalist = document.getElementById('knownNames');
+            if (datalist) {
+                datalist.innerHTML = allFaces.map(f => `<option value="${f.name}">`).join('');
+            }
 
             renderFaces();
         } catch (err) { grid.innerHTML = '<p class="text-red-500 text-center col-span-full">Failed to load faces.</p>'; }
