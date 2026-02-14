@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics - Velo Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #262626;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-200">
+
+    <!-- Sidebar (Shared) -->
+    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
+        <div class="mb-10 flex items-center gap-3">
+            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-home w-5"></i><span>Dashboard</span>
+            </a>
+            <a href="timeline.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Timeline</span>
+            </a>
+            <a href="faces.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-users w-5"></i><span>Faces</span>
+            </a>
+            <a href="cameras.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
+            </a>
+            <a href="analytics.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#2d2d2d] text-white font-medium">
+                <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
+            </a>
+            <a href="messages.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-brands fa-whatsapp w-5"></i><span>Messages</span>
+            </a>
+            <a href="ai_settings.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-brain w-5"></i><span>AI Settings</span>
+            </a>
+        </nav>
+        <div class="space-y-2 pb-6">
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-[#1a1a1a] relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-semibold">System Analytics</h2>
+                <p class="text-gray-400 text-sm mt-1">Detection trends and system health</p>
+            </div>
+            <div class="bg-[#262626] rounded-xl p-1 flex items-center">
+                <button
+                    class="bg-[#dfffad] text-[#1a1a1a] px-3 py-1 rounded-lg text-xs font-bold shadow-sm">Week</button>
+                <button class="text-gray-400 hover:text-white px-3 py-1 rounded-lg text-xs font-medium">Month</button>
+                <button class="text-gray-400 hover:text-white px-3 py-1 rounded-lg text-xs font-medium">Year</button>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Metric 1 -->
+            <div class="card rounded-2xl p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="bg-blue-500/20 text-blue-400 p-3 rounded-full"><i class="fa-solid fa-user-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-gray-400 text-xs">Total Detections</p>
+                        <h3 class="text-2xl font-bold">1,245</h3>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-blue-500 h-full w-[65%]"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2"><span class="text-green-400">+12%</span> vs last week</p>
+            </div>
+
+            <!-- Metric 2 -->
+            <div class="card rounded-2xl p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="bg-[#dfffad]/20 text-[#dfffad] p-3 rounded-full"><i class="fa-solid fa-brain"></i></div>
+                    <div>
+                        <p class="text-gray-400 text-xs">AI Operations</p>
+                        <h3 class="text-2xl font-bold">850</h3>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-[#dfffad] h-full w-[45%]"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Running efficiently</p>
+            </div>
+
+            <!-- Metric 3 -->
+            <div class="card rounded-2xl p-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <div class="bg-red-500/20 text-red-500 p-3 rounded-full"><i
+                            class="fa-solid fa-triangle-exclamation"></i></div>
+                    <div>
+                        <p class="text-gray-400 text-xs">Unknowns</p>
+                        <h3 class="text-2xl font-bold">42</h3>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-red-500 h-full w-[15%]"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">Requires review</p>
+            </div>
+        </div>
+
+        <!-- Main Charts Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+            <!-- Chart: Activity by Hour (Spans 2 cols) -->
+            <div class="card rounded-2xl p-6 h-80 lg:col-span-2 flex flex-col">
+                <h3 class="text-lg font-semibold mb-6">Activity by Hour</h3>
+                <div class="flex-1 flex items-end gap-2 justify-between px-2">
+                    <!-- Bars -->
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[20%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[10%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[5%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[40%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-[#dfffad] rounded-t h-[80%] group relative shadow-[0_0_15px_rgba(223,255,173,0.3)]">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[60%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[30%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                    <div
+                        class="w-full bg-gray-700/50 rounded-t h-[15%] group relative hover:bg-gray-600 transition-colors">
+                    </div>
+                </div>
+                <div class="flex justify-between text-xs text-gray-500 mt-2">
+                    <span>12AM</span>
+                    <span>6AM</span>
+                    <span>12PM</span>
+                    <span>6PM</span>
+                    <span>11PM</span>
+                </div>
+            </div>
+
+            <!-- Chart: Events by Camera -->
+            <div class="card rounded-2xl p-6 h-80 flex flex-col">
+                <h3 class="text-lg font-semibold mb-4">Events by Camera</h3>
+                <div class="flex-1 flex flex-col justify-center space-y-4">
+                    <!-- Cam 1 -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-300">Front Door</span>
+                            <span class="font-bold">64%</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-[#dfffad] h-full w-[64%]"></div>
+                        </div>
+                    </div>
+                    <!-- Cam 2 -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-300">Backyard</span>
+                            <span class="font-bold">25%</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-blue-500 h-full w-[25%]"></div>
+                        </div>
+                    </div>
+                    <!-- Cam 3 -->
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span class="text-gray-300">Garage</span>
+                            <span class="font-bold">11%</span>
+                        </div>
+                        <div class="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
+                            <div class="bg-purple-500 h-full w-[11%]"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Secondary Stats Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+            <!-- Common Objects -->
+            <div class="card rounded-2xl p-6 h-64 flex flex-col">
+                <h3 class="text-lg font-semibold mb-4">Detected Objects</h3>
+                <div class="flex flex-wrap gap-2 content-start">
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-[#dfffad] rounded-lg text-sm font-medium border border-gray-700">Person
+                        <span class="text-xs opacity-50 ml-1">420</span></span>
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-blue-400 rounded-lg text-sm font-medium border border-gray-700">Car
+                        <span class="text-xs opacity-50 ml-1">128</span></span>
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-purple-400 rounded-lg text-sm font-medium border border-gray-700">Package
+                        <span class="text-xs opacity-50 ml-1">45</span></span>
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-pink-400 rounded-lg text-sm font-medium border border-gray-700">Cat
+                        <span class="text-xs opacity-50 ml-1">32</span></span>
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-yellow-400 rounded-lg text-sm font-medium border border-gray-700">Dog
+                        <span class="text-xs opacity-50 ml-1">18</span></span>
+                    <span
+                        class="px-3 py-1 bg-gray-800 text-green-400 rounded-lg text-sm font-medium border border-gray-700">Bicycle
+                        <span class="text-xs opacity-50 ml-1">12</span></span>
+                </div>
+            </div>
+
+            <!-- Top Visitors (Condensed) -->
+            <div class="card rounded-2xl p-6 h-64 flex flex-col">
+                <h3 class="text-lg font-semibold mb-4">Top Visitors</h3>
+                <div class="space-y-3 overflow-y-auto pr-2">
+                    <div class="flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name=Royyan&background=0D8ABC&color=fff"
+                            class="w-8 h-8 rounded-full">
+                        <div class="flex-1 text-sm font-medium">Royyan</div>
+                        <div class="text-xs font-bold text-[#dfffad]">42x</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name=Mom&background=random" class="w-8 h-8 rounded-full">
+                        <div class="flex-1 text-sm font-medium">Mom</div>
+                        <div class="text-xs font-bold text-gray-400">18x</div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <img src="https://ui-avatars.com/api/?name=Dave&background=random" class="w-8 h-8 rounded-full">
+                        <div class="flex-1 text-sm font-medium">Dave</div>
+                        <div class="text-xs font-bold text-gray-400">12x</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Health -->
+            <div class="card rounded-2xl p-6 h-64 flex flex-col">
+                <h3 class="text-lg font-semibold mb-4">System Health</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-sm text-gray-400"><i class="fa-solid fa-microchip mr-2"></i>CPU Usage</span>
+                        <span class="text-sm font-mono text-green-400">12%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-green-500 h-full w-[12%]"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm text-gray-400"><i class="fa-solid fa-memory mr-2"></i>Memory</span>
+                        <span class="text-sm font-mono text-yellow-400">2.1 GB</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-yellow-500 h-full w-[45%]"></div>
+                    </div>
+                    <div class="flex justify-between items-center mt-2">
+                        <span class="text-sm text-gray-400"><i class="fa-solid fa-hard-drive mr-2"></i>Storage</span>
+                        <span class="text-sm font-mono text-blue-400">45%</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-blue-500 h-full w-[45%]"></div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+</body>
+
+</html>

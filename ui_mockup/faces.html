@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faces - Velo Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #262626;
+            border: 1px solid #333;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            border-color: #444;
+        }
+
+        /* Modal Transitions */
+        .modal {
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .lime-accent {
+            color: #dfffad;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-200">
+
+    <!-- Sidebar (Shared) -->
+    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
+        <div class="mb-10 flex items-center gap-3">
+            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-home w-5"></i><span>Dashboard</span>
+            </a>
+            <a href="timeline.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Timeline</span>
+            </a>
+            <a href="faces.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#2d2d2d] text-white font-medium">
+                <i class="fa-solid fa-users w-5"></i><span>Faces</span>
+            </a>
+            <a href="cameras.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
+            </a>
+            <a href="analytics.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
+            </a>
+            <a href="messages.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-brands fa-whatsapp w-5"></i><span>Messages</span>
+            </a>
+            <a href="ai_settings.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-brain w-5"></i><span>AI Settings</span>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-[#1a1a1a] relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-semibold">Face Recognition</h2>
+                <p class="text-gray-400 text-sm mt-1">Manage known individuals and review unknowns</p>
+            </div>
+            <button onclick="openModal('addFaceModal')"
+                class="bg-[#dfffad] text-[#1a1a1a] px-4 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
+                <i class="fa-solid fa-plus text-xs"></i> Add New Person
+            </button>
+        </header>
+
+        <!-- Unknown Faces Review Grid -->
+        <section class="mb-12">
+            <h3 class="text-xl font-medium mb-4 text-white flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-orange-500"></span> Recent Unknowns
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                <!-- Unknown 1 -->
+                <div class="card rounded-2xl overflow-hidden group relative flex flex-col">
+                    <div class="relative h-40 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300"
+                            class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        <span
+                            class="absolute bottom-2 left-2 text-[10px] text-orange-300 font-mono bg-orange-900/50 px-1.5 rounded border border-orange-500/30">98%
+                            Face Score</span>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col">
+                        <p class="text-xs text-gray-400 mb-2 font-medium"><i class="fa-regular fa-clock mr-1"></i>
+                            Today, 10:42 AM</p>
+                        <div class="mt-auto flex gap-2">
+                            <button
+                                onclick="openLabelModal('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=300')"
+                                class="bg-[#dfffad] text-[#1a1a1a] flex-1 py-1.5 rounded-lg text-xs font-bold hover:brightness-90">Identify</button>
+                            <button
+                                class="bg-red-500/10 text-red-400 flex-1 py-1.5 rounded-lg text-xs font-bold hover:bg-red-500/20">Ignore</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Unknown 2 -->
+                <div class="card rounded-2xl overflow-hidden group relative flex flex-col">
+                    <div class="relative h-40 overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300"
+                            class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                        <span
+                            class="absolute bottom-2 left-2 text-[10px] text-orange-300 font-mono bg-orange-900/50 px-1.5 rounded border border-orange-500/30">92%
+                            Face Score</span>
+                    </div>
+                    <div class="p-3 flex-1 flex flex-col">
+                        <p class="text-xs text-gray-400 mb-2 font-medium"><i class="fa-regular fa-clock mr-1"></i>
+                            Yesterday, 4:15 PM</p>
+                        <div class="mt-auto flex gap-2">
+                            <button
+                                onclick="openLabelModal('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=300')"
+                                class="bg-[#dfffad] text-[#1a1a1a] flex-1 py-1.5 rounded-lg text-xs font-bold hover:brightness-90">Identify</button>
+                            <button
+                                class="bg-red-500/10 text-red-400 flex-1 py-1.5 rounded-lg text-xs font-bold hover:bg-red-500/20">Ignore</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- Known Faces Section -->
+        <section>
+            <h3 class="text-xl font-medium mb-4 text-white pt-6 border-t border-gray-800 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span> Known Faces
+            </h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+
+                <!-- Known Face 1 -->
+                <div class="card rounded-2xl p-4 flex flex-col items-center relative group cursor-pointer"
+                    onclick="openEditFaceModal('Royyan', 'Owner', 'https://ui-avatars.com/api/?name=Royyan&background=0D8ABC&color=fff&size=128')">
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="text-gray-400 hover:text-white p-1"><i
+                                class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                    <div class="w-24 h-24 rounded-full overflow-hidden border-2 border-[#dfffad] mb-3 p-1 bg-[#262626]">
+                        <img src="https://ui-avatars.com/api/?name=Royyan&background=0D8ABC&color=fff&size=128"
+                            class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <h4 class="font-semibold text-lg text-white">Royyan</h4>
+                    <p class="text-xs text-[#dfffad] font-medium bg-[#dfffad]/10 px-2 py-0.5 rounded-full mt-1">Owner
+                    </p>
+                    <div class="w-full mt-4 flex justify-between text-[10px] text-gray-500 font-mono">
+                        <span>42 Sightings</span>
+                        <span>15 Images</span>
+                    </div>
+                </div>
+
+                <!-- Known Face 2 -->
+                <div class="card rounded-2xl p-4 flex flex-col items-center relative group cursor-pointer"
+                    onclick="openEditFaceModal('Sarah', 'Resident', 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=300')">
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="text-gray-400 hover:text-white p-1"><i
+                                class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                    <div
+                        class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600 mb-3 p-1 bg-[#262626] group-hover:border-[#dfffad] transition-colors">
+                        <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=300"
+                            class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <h4 class="font-semibold text-lg text-white">Sarah</h4>
+                    <p class="text-xs text-blue-400 font-medium bg-blue-400/10 px-2 py-0.5 rounded-full mt-1">Resident
+                    </p>
+                    <div class="w-full mt-4 flex justify-between text-[10px] text-gray-500 font-mono">
+                        <span>18 Sightings</span>
+                        <span>8 Images</span>
+                    </div>
+                </div>
+
+                <!-- Known Face 3 -->
+                <div class="card rounded-2xl p-4 flex flex-col items-center relative group cursor-pointer"
+                    onclick="openEditFaceModal('Dave', 'Visitor', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=300')">
+                    <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button class="text-gray-400 hover:text-white p-1"><i
+                                class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                    <div
+                        class="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-600 mb-3 p-1 bg-[#262626] group-hover:border-[#dfffad] transition-colors">
+                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=300"
+                            class="w-full h-full object-cover rounded-full">
+                    </div>
+                    <h4 class="font-semibold text-lg text-white">Dave</h4>
+                    <p class="text-xs text-purple-400 font-medium bg-purple-400/10 px-2 py-0.5 rounded-full mt-1">
+                        Visitor</p>
+                    <div class="w-full mt-4 flex justify-between text-[10px] text-gray-500 font-mono">
+                        <span>5 Sightings</span>
+                        <span>3 Images</span>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <!-- Overlay -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity"
+        onclick="closeAllModals()"></div>
+
+    <!-- Edit/Configure Face Modal -->
+    <div id="editFaceModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#2d2d2d] border border-gray-700 w-full max-w-2xl rounded-3xl shadow-2xl z-50 hidden opacity-0 transition-all scale-95 duration-200">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Configure Person</h3>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3">
+            <!-- Left: Image Management -->
+            <div class="p-6 border-r border-gray-700 md:col-span-1 flex flex-col items-center">
+                <div
+                    class="w-32 h-32 rounded-full overflow-hidden border-4 border-[#333] shadow-xl mb-4 relative group">
+                    <img id="editFaceImage" src="" class="w-full h-full object-cover">
+                    <div
+                        class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                        <i class="fa-solid fa-camera text-white"></i>
+                    </div>
+                </div>
+                <h4 id="editFaceNameDisplay" class="text-xl font-bold mb-1">Name</h4>
+                <p id="editFaceRoleDisplay" class="text-sm text-gray-400 mb-6">Role</p>
+
+                <div class="w-full space-y-2">
+                    <button
+                        class="w-full bg-[#333] hover:bg-[#444] text-white py-2 rounded-xl text-xs font-medium transition-colors flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-upload"></i> Upload Photo
+                    </button>
+                    <button
+                        class="w-full bg-[#333] hover:bg-red-500/20 hover:text-red-400 text-gray-400 py-2 rounded-xl text-xs font-medium transition-colors">
+                        Delete Person
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Details & Training -->
+            <div class="p-6 md:col-span-2 space-y-5">
+
+                <!-- Basic Info -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Full Name</label>
+                        <input id="editFaceNameInput" type="text"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-gray-400 mb-1">Role / Tag</label>
+                        <select id="editFaceRoleInput"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                            <option value="Owner">Owner</option>
+                            <option value="Resident">Resident</option>
+                            <option value="Visitor">Visitor</option>
+                            <option value="Staff">Staff</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Training Data -->
+                <div>
+                    <h5 class="text-sm font-medium mb-3 flex justify-between items-center">
+                        Training Images <span class="text-xs text-gray-500 font-normal">15 Faces</span>
+                    </h5>
+                    <div class="grid grid-cols-5 gap-2">
+                        <!-- Mini Thumbnails -->
+                        <div class="aspect-square rounded-lg overflow-hidden bg-gray-800 relative group">
+                            <img src="https://ui-avatars.com/api/?name=R" class="w-full h-full object-cover opacity-60">
+                        </div>
+                        <div class="aspect-square rounded-lg overflow-hidden bg-gray-800 relative group">
+                            <img src="https://ui-avatars.com/api/?name=R" class="w-full h-full object-cover opacity-60">
+                        </div>
+                        <div class="aspect-square rounded-lg overflow-hidden bg-gray-800 relative group">
+                            <img src="https://ui-avatars.com/api/?name=R" class="w-full h-full object-cover opacity-60">
+                        </div>
+                        <div class="aspect-square rounded-lg overflow-hidden bg-gray-800 relative group">
+                            <img src="https://ui-avatars.com/api/?name=R" class="w-full h-full object-cover opacity-60">
+                        </div>
+                        <button
+                            class="aspect-square rounded-lg border-2 border-dashed border-gray-700 hover:border-gray-500 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-2">Add more clear face photos to improve recognition
+                        accuracy.</p>
+                </div>
+
+                <!-- Alerts Preference -->
+                <div class="pt-4 border-t border-gray-700 flex items-center justify-between">
+                    <div>
+                        <h5 class="text-sm font-medium">Alert Priority</h5>
+                        <p class="text-xs text-gray-500">How urgent is it when this person is seen?</p>
+                    </div>
+                    <div class="flex bg-[#1a1a1a] p-1 rounded-lg">
+                        <button
+                            class="px-3 py-1 rounded text-xs font-medium text-gray-400 hover:text-white hover:bg-[#333] transition-colors">Ignore</button>
+                        <button
+                            class="px-3 py-1 rounded text-xs font-bold bg-[#dfffad] text-black shadow-sm">Normal</button>
+                        <button
+                            class="px-3 py-1 rounded text-xs font-medium text-red-400 hover:bg-red-500/10 transition-colors">High</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3 bg-[#262626] rounded-b-3xl">
+            <button onclick="closeAllModals()"
+                class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+            <button onclick="closeAllModals()"
+                class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20">Save
+                Changes</button>
+        </div>
+    </div>
+
+    <!-- Identify/Label Modal -->
+    <div id="labelModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#2d2d2d] border border-gray-700 w-full max-w-sm rounded-3xl shadow-2xl z-50 hidden opacity-0 transition-all scale-95 duration-200">
+        <div class="p-6 relative">
+            <button onclick="closeAllModals()" class="absolute top-4 right-4 text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark"></i></button>
+            <div class="text-center">
+                <div class="w-full h-48 rounded-2xl overflow-hidden mb-4 border border-gray-600">
+                    <img id="labelFaceImage" src="" class="w-full h-full object-cover">
+                </div>
+                <h3 class="text-xl font-semibold mb-1">Identify This Person</h3>
+                <p class="text-xs text-gray-400 mb-6">Seen Today at 10:42 AM</p>
+
+                <div class="space-y-3">
+                    <input type="text" placeholder="Start typing name..."
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none text-center">
+
+                    <div class="text-xs text-gray-500 uppercase tracking-widest my-2">- OR -</div>
+
+                    <button
+                        class="w-full bg-[#333] hover:bg-[#444] text-white py-3 rounded-xl text-sm font-medium transition-colors">
+                        Add as New Person
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.remove('hidden');
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // Trigger reflow
+            overlay.classList.remove('opacity-0');
+            modal.classList.remove('opacity-0');
+            modal.classList.remove('scale-95');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeAllModals() {
+            const modals = document.querySelectorAll('[id$="Modal"]');
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.add('opacity-0');
+            modals.forEach(modal => {
+                modal.classList.add('opacity-0');
+                modal.classList.add('scale-95');
+            });
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                modals.forEach(modal => modal.classList.add('hidden'));
+                document.body.classList.remove('modal-open');
+            }, 200);
+        }
+
+        function openEditFaceModal(name, role, imageUrl) {
+            document.getElementById('editFaceImage').src = imageUrl;
+            document.getElementById('editFaceNameDisplay').innerText = name;
+            document.getElementById('editFaceNameInput').value = name;
+            document.getElementById('editFaceRoleDisplay').innerText = role;
+            document.getElementById('editFaceRoleInput').value = role;
+
+            openModal('editFaceModal');
+        }
+
+        function openLabelModal(imageUrl) {
+            document.getElementById('labelFaceImage').src = imageUrl;
+            openModal('labelModal');
+        }
+    </script>
+</body>
+
+</html>

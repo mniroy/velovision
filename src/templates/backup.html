@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+{% block title %}Backup & Restore - Velo Vision{% endblock %}
+
+{% block extra_style %}
+.backup-card {
+background: linear-gradient(135deg, #262626 0%, #1f1f1f 100%);
+border: 1px solid rgba(255,255,255,0.05);
+transition: all 0.3s ease;
+}
+.backup-card:hover {
+border-color: rgba(223, 255, 173, 0.2);
+transform: translateY(-2px);
+box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.action-btn {
+transition: all 0.3s ease;
+position: relative;
+overflow: hidden;
+}
+.action-btn::after {
+content: '';
+position: absolute;
+top: 50%; left: 50%;
+width: 0; height: 0;
+background: rgba(255,255,255,0.1);
+border-radius: 50%;
+transform: translate(-50%, -50%);
+transition: width 0.6s, height 0.6s;
+}
+.action-btn:hover::after {
+width: 300px; height: 300px;
+}
+.inventory-item {
+border-left: 3px solid transparent;
+transition: all 0.2s;
+}
+.inventory-item:hover {
+border-left-color: #dfffad;
+background: rgba(255,255,255,0.02);
+}
+.progress-ring {
+animation: spin 1.5s linear infinite;
+}
+@keyframes spin {
+to { transform: rotate(360deg); }
+}
+.restore-zone {
+border: 2px dashed rgba(255,255,255,0.1);
+transition: all 0.3s;
+}
+.restore-zone.dragover {
+border-color: #dfffad;
+background: rgba(223, 255, 173, 0.05);
+}
+.fade-in {
+animation: fadeIn 0.5s ease-out;
+}
+@keyframes fadeIn {
+from { opacity: 0; transform: translateY(10px); }
+to { opacity: 1; transform: translateY(0); }
+}
+{% endblock %}
+
+{% block content %}
+<div class="p-8 md:p-12 max-w-6xl mx-auto">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-10 fade-in">
+        <div>
+            <h1 class="text-4xl font-bold tracking-tight">Backup & Restore</h1>
+            <p class="text-gray-500 text-sm mt-2">Safeguard your entire configuration. One file, full recovery.</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="bg-[#262626] px-4 py-2 rounded-xl border border-gray-800 flex items-center gap-2">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">System Online</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Inventory -->
+    <div class="mb-8 fade-in" style="animation-delay: 0.1s">
+        <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Data Inventory</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="inventoryGrid">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <!-- Main Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+        <!-- Backup Card -->
+        <div class="backup-card rounded-2xl p-8 fade-in" style="animation-delay: 0.2s">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-[#dfffad]/10 flex items-center justify-center">
+                    <i class="fa-solid fa-cloud-arrow-down text-[#dfffad] text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">Create Backup</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Download a complete snapshot of your system</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 mb-8">
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <i class="fa-solid fa-check text-[#dfffad] text-xs w-4"></i>
+                    <span>All camera configurations & credentials</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <i class="fa-solid fa-check text-[#dfffad] text-xs w-4"></i>
+                    <span>AI model settings & API keys</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <i class="fa-solid fa-check text-[#dfffad] text-xs w-4"></i>
+                    <span>WhatsApp integration config</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <i class="fa-solid fa-check text-[#dfffad] text-xs w-4"></i>
+                    <span>Patrol schedules & triggers</span>
+                </div>
+                <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <i class="fa-solid fa-check text-[#dfffad] text-xs w-4"></i>
+                    <span>Face database & event history</span>
+                </div>
+            </div>
+
+            <button id="backupBtn" onclick="createBackup()"
+                class="action-btn w-full bg-[#dfffad] text-black font-bold py-4 rounded-xl hover:bg-[#c8f080] text-sm uppercase tracking-widest">
+                <span id="backupBtnText">
+                    <i class="fa-solid fa-download mr-2"></i> Download Backup
+                </span>
+            </button>
+            <p id="backupStatus" class="text-xs text-gray-600 text-center mt-3"></p>
+        </div>
+
+        <!-- Restore Card -->
+        <div class="backup-card rounded-2xl p-8 fade-in" style="animation-delay: 0.3s">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-orange-500/10 flex items-center justify-center">
+                    <i class="fa-solid fa-cloud-arrow-up text-orange-400 text-xl"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-bold">Restore Backup</h3>
+                    <p class="text-xs text-gray-500 mt-0.5">Upload a backup file to restore your system</p>
+                </div>
+            </div>
+
+            <div id="restoreZone" class="restore-zone rounded-2xl p-8 text-center mb-6 cursor-pointer"
+                onclick="document.getElementById('restoreFile').click()"
+                ondragover="event.preventDefault(); this.classList.add('dragover')"
+                ondragleave="this.classList.remove('dragover')" ondrop="handleDrop(event)">
+                <input type="file" id="restoreFile" accept=".zip" class="hidden" onchange="handleFileSelect(event)">
+                <div id="dropContent">
+                    <i class="fa-solid fa-file-zipper text-3xl text-gray-600 mb-4"></i>
+                    <p class="text-sm text-gray-400 font-medium">Drop your backup file here</p>
+                    <p class="text-xs text-gray-600 mt-1">or click to browse (.zip)</p>
+                </div>
+                <div id="fileInfo" class="hidden">
+                    <i class="fa-solid fa-file-circle-check text-3xl text-[#dfffad] mb-3"></i>
+                    <p id="fileName" class="text-sm text-white font-bold"></p>
+                    <p id="fileSize" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+            </div>
+
+            <button id="restoreBtn" onclick="restoreBackup()" disabled
+                class="action-btn w-full bg-orange-500 text-white font-bold py-4 rounded-xl hover:bg-orange-600 disabled:opacity-30 disabled:cursor-not-allowed text-sm uppercase tracking-widest">
+                <span id="restoreBtnText">
+                    <i class="fa-solid fa-upload mr-2"></i> Restore System
+                </span>
+            </button>
+            <p id="restoreStatus" class="text-xs text-gray-600 text-center mt-3"></p>
+        </div>
+    </div>
+
+    <!-- Warning Banner -->
+    <div class="bg-red-500/5 border border-red-500/20 rounded-2xl p-6 flex items-start gap-4 fade-in"
+        style="animation-delay: 0.4s">
+        <div class="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <i class="fa-solid fa-triangle-exclamation text-red-400"></i>
+        </div>
+        <div>
+            <h4 class="font-bold text-red-400 text-sm">Important Notice</h4>
+            <p class="text-xs text-gray-500 mt-1 leading-relaxed">
+                Restoring a backup will <strong class="text-red-400">overwrite all current settings</strong>, including
+                cameras, AI config,
+                WhatsApp integration, face database, and event history. The application will restart automatically after
+                restore.
+                Make sure to create a backup of your current system before restoring an older one.
+            </p>
+        </div>
+    </div>
+
+    <!-- Backup History -->
+    <div class="mt-8 fade-in" style="animation-delay: 0.5s">
+        <h2 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-4">Recent Activity</h2>
+        <div id="activityLog" class="space-y-2">
+            <div class="text-sm text-gray-600 text-center py-6">No backup activity yet this session</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let selectedFile = null;
+
+    // Load data inventory on page load
+    async function loadInventory() {
+        try {
+            const res = await fetch('/api/backup/info');
+            const data = await res.json();
+
+            const grid = document.getElementById('inventoryGrid');
+            grid.innerHTML = '';
+
+            const items = [
+                { icon: 'fa-video', label: 'Cameras', value: data.cameras || 0, color: '#dfffad' },
+                { icon: 'fa-brain', label: 'AI Provider', value: data.ai_provider || 'None', color: '#818cf8' },
+                { icon: 'fa-users', label: 'Known Faces', value: data.faces || 0, color: '#f59e0b' },
+                { icon: 'fa-clock', label: 'Events', value: data.events || 0, color: '#06b6d4' },
+            ];
+
+            items.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'inventory-item bg-[#262626] rounded-xl p-4 border border-gray-800/50';
+                el.innerHTML = `
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fa-solid ${item.icon} text-xs" style="color: ${item.color}"></i>
+                        <span class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">${item.label}</span>
+                    </div>
+                    <p class="text-2xl font-bold">${item.value}</p>
+                `;
+                grid.appendChild(el);
+            });
+        } catch (err) {
+            console.error('Failed to load inventory:', err);
+        }
+    }
+
+    async function createBackup() {
+        const btn = document.getElementById('backupBtn');
+        const btnText = document.getElementById('backupBtnText');
+        const status = document.getElementById('backupStatus');
+
+        btn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Creating Backup...';
+        status.innerText = 'Compressing data...';
+
+        try {
+            const res = await fetch('/api/backup/create');
+            if (!res.ok) throw new Error('Backup creation failed');
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+
+            // Extract filename from Content-Disposition header
+            const disposition = res.headers.get('Content-Disposition');
+            let filename = 'velovision_backup.zip';
+            if (disposition) {
+                const match = disposition.match(/filename="?([^"]+)"?/);
+                if (match) filename = match[1];
+            }
+
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const sizeKB = (blob.size / 1024).toFixed(1);
+            status.innerHTML = `<span class="text-green-500">✓ Downloaded (${sizeKB} KB)</span>`;
+            addActivity('backup', `Backup created: ${filename} (${sizeKB} KB)`);
+        } catch (err) {
+            console.error(err);
+            status.innerHTML = '<span class="text-red-400">✗ Backup failed</span>';
+        } finally {
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="fa-solid fa-download mr-2"></i> Download Backup';
+        }
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.target.closest('#restoreZone').classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file) selectFile(file);
+    }
+
+    function handleFileSelect(e) {
+        const file = e.target.files[0];
+        if (file) selectFile(file);
+    }
+
+    function selectFile(file) {
+        if (!file.name.endsWith('.zip')) {
+            alert('Please select a .zip backup file');
+            return;
+        }
+        selectedFile = file;
+
+        document.getElementById('dropContent').classList.add('hidden');
+        document.getElementById('fileInfo').classList.remove('hidden');
+        document.getElementById('fileName').innerText = file.name;
+        document.getElementById('fileSize').innerText = `${(file.size / 1024).toFixed(1)} KB`;
+        document.getElementById('restoreBtn').disabled = false;
+    }
+
+    async function restoreBackup() {
+        if (!selectedFile) return;
+
+        if (!confirm('⚠️ This will OVERWRITE all current settings and data. The app will restart. Continue?')) {
+            return;
+        }
+
+        const btn = document.getElementById('restoreBtn');
+        const btnText = document.getElementById('restoreBtnText');
+        const status = document.getElementById('restoreStatus');
+
+        btn.disabled = true;
+        btnText.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Restoring...';
+        status.innerText = 'Uploading and extracting backup data...';
+
+        try {
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            const res = await fetch('/api/backup/restore', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+
+            if (res.ok && result.status === 'ok') {
+                status.innerHTML = '<span class="text-green-500">✓ Restore complete! Reloading...</span>';
+                addActivity('restore', `Restored from: ${selectedFile.name}`);
+
+                // Wait for app to restart, then reload
+                setTimeout(() => {
+                    window.location.reload();
+                }, 3000);
+            } else {
+                throw new Error(result.message || 'Restore failed');
+            }
+        } catch (err) {
+            console.error(err);
+            status.innerHTML = `<span class="text-red-400">✗ ${err.message}</span>`;
+            btn.disabled = false;
+            btnText.innerHTML = '<i class="fa-solid fa-upload mr-2"></i> Restore System';
+        }
+    }
+
+    function addActivity(type, message) {
+        const log = document.getElementById('activityLog');
+        const isFirst = log.querySelector('.text-center');
+        if (isFirst) log.innerHTML = '';
+
+        const now = new Date().toLocaleTimeString();
+        const icon = type === 'backup'
+            ? '<i class="fa-solid fa-cloud-arrow-down text-[#dfffad]"></i>'
+            : '<i class="fa-solid fa-cloud-arrow-up text-orange-400"></i>';
+
+        const el = document.createElement('div');
+        el.className = 'flex items-center gap-3 bg-[#262626] rounded-xl px-4 py-3 border border-gray-800/50 fade-in';
+        el.innerHTML = `
+            ${icon}
+            <span class="text-sm text-gray-300 flex-1">${message}</span>
+            <span class="text-[10px] text-gray-600 font-mono">${now}</span>
+        `;
+        log.prepend(el);
+    }
+
+    // Init
+    loadInventory();
+</script>
+{% endblock %}

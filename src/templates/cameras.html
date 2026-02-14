@@ -1,0 +1,416 @@
+{% extends "base.html" %}
+
+{% block title %}Cameras - Velo Vision{% endblock %}
+
+{% block extra_style %}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; }
+.status-active { background-color: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.4); }
+.toast { transform: translateY(100px); opacity: 0; transition: all 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
+.toast.show { transform: translateY(0); opacity: 1; }
+input[type="checkbox"] { accent-color: #dfffad; }
+.dash-toggle.active { background-color: #dfffad; color: #1a1a1a; }
+.dash-toggle:not(.active) { background-color: #333; color: #777; }
+{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <header class="flex justify-between items-center mb-10">
+        <div>
+            <h2 class="text-3xl font-semibold">Camera Management</h2>
+            <div id="ai-status" class="flex items-center gap-2 text-xs mt-1">
+                <span class="text-gray-500">AI Status:</span>
+                <span id="ai-badge" class="font-bold">Checking...</span>
+            </div>
+        </div>
+        <button onclick="openModal()"
+            class="bg-[#dfffad] text-[#1a1a1a] px-5 py-2 rounded-full text-sm font-bold flex items-center gap-2 hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20">
+            <i class="fa-solid fa-plus text-xs"></i> Add Camera
+        </button>
+    </header>
+
+    <div id="cameras-list" class="space-y-4 max-w-4xl">
+        <div class="text-center py-20 text-gray-600">Loading resources...</div>
+    </div>
+</div>
+
+<!-- Camera Configuration Modal -->
+<div id="cameraModal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#262626] border border-gray-700 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#262626]">
+            <h3 id="modalTitle" class="text-xl font-semibold text-white">Edit Camera Configuration</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <form id="cameraForm" class="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Friendly
+                        Name</label>
+                    <input type="text" id="camName" required placeholder="Front Door" oninput="generateId()"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Camera ID
+                        (URL ID)</label>
+                    <input type="text" id="camId" required placeholder="front_door"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                </div>
+            </div>
+
+            <!-- Credential Helper -->
+            <div class="bg-[#1a1a1a] p-4 rounded-xl border border-gray-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <h4 class="text-[10px] font-bold text-gray-500 uppercase tracking-widest">Stream URL Builder
+                        (Optional)
+                    </h4>
+                    <span class="text-[10px] text-gray-600 cursor-pointer hover:text-white"
+                        onclick="clearBuilder()">Clear</span>
+                </div>
+                <div class="grid grid-cols-1 gap-3">
+                    <div>
+                        <label
+                            class="block text-[8px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Protocol</label>
+                        <select id="h_proto" onchange="buildUrl()"
+                            class="w-full bg-[#262626] border border-gray-700 rounded px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none uppercase font-bold">
+                            <option value="rtsp">RTSP (Real-Time Streaming Protocol)</option>
+                            <option value="http">HTTP (MJPEG / Stream)</option>
+                            <option value="https">HTTPS (Secure Stream)</option>
+                            <option value="onvif">ONVIF (Service URL)</option>
+                            <option value="rtmp">RTMP</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <input type="text" id="h_user" placeholder="Username" oninput="buildUrl()"
+                            class="w-full bg-[#262626] border border-gray-700 rounded px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none">
+                    </div>
+                    <div>
+                        <input type="text" id="h_pass" placeholder="Password" oninput="buildUrl()"
+                            class="w-full bg-[#262626] border border-gray-700 rounded px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="col-span-2 flex items-center bg-[#262626] border border-gray-700 rounded px-3 py-2">
+                        <span class="text-gray-500 text-xs font-mono select-none">@</span>
+                        <input type="text" id="h_host" placeholder="192.168.1.x" oninput="buildUrl()"
+                            class="flex-1 bg-transparent border-none text-xs text-white focus:ring-0 focus:outline-none font-mono ml-2">
+                    </div>
+                    <div>
+                        <input type="text" id="h_port" placeholder="554" oninput="buildUrl()"
+                            class="w-full bg-[#262626] border border-gray-700 rounded px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none text-center font-mono">
+                    </div>
+                </div>
+                <div>
+                    <input type="text" id="h_path" placeholder="/stream1" oninput="buildUrl()"
+                        class="w-full bg-[#262626] border border-gray-700 rounded px-3 py-2 text-xs text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-[10px] text-gray-500 mb-1 font-bold uppercase tracking-widest">Stream URL /
+                    Device ID</label>
+                <input type="text" id="camSource" required placeholder="rtsp://user:pass@ip:port/..."
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                <p class="text-[10px] text-gray-600 mt-1">* For USB cameras, just enter the index number (e.g. 0)</p>
+            </div>
+
+            <div class="flex items-center gap-3 bg-[#1a1a1a] p-3 rounded-xl border border-gray-800">
+                <input type="checkbox" id="onDashboard" class="w-4 h-4">
+                <label for="onDashboard" class="text-sm font-medium text-gray-300">Show this camera on the
+                    dashboard</label>
+            </div>
+
+
+        </form>
+
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3 bg-[#262626]">
+            <button onclick="closeModal()"
+                class="px-6 py-2 text-gray-400 hover:text-white transition-colors">Cancel</button>
+            <button type="submit" form="cameraForm" id="submitBtn"
+                class="bg-[#dfffad] text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                Changes</button>
+        </div>
+    </div>
+</div>
+
+<div id="toastContainer" class="fixed bottom-8 right-8 z-[100] space-y-4"></div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let allCameras = {};
+
+    function showToast(msg) {
+        const toast = document.createElement('div');
+        toast.className = "toast flex items-center gap-3 px-6 py-4 rounded-2xl bg-[#dfffad] text-black font-bold shadow-2xl";
+        toast.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${msg}</span>`;
+        document.getElementById('toastContainer').appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 500); }, 3000);
+    }
+
+    function copyUrl() {
+        const url = document.getElementById('webUrl').value;
+        navigator.clipboard.writeText(url);
+        showToast("Copied to clipboard!");
+    }
+
+    async function triggerAnalysis(id) {
+        showToast("Starting manual analysis...");
+        try {
+            const res = await fetch(`/api/trigger/${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                let msg = "Analysis Success!";
+                if (data.whatsapp && data.whatsapp.sent) {
+                    msg += ` Delivered to ${data.whatsapp.recipients} contact(s).`;
+                }
+                showToast(msg);
+                loadCameras(); // refresh thumbnails
+            } else {
+                showToast("Analysis Failed: " + (data.message || "Unknown error"));
+            }
+        } catch (e) { showToast("Network Error"); }
+    }
+
+    async function deleteCamera(id) {
+        if (!confirm(`Permanentely delete camera '${id}'?`)) return;
+        try {
+            const res = await fetch(`/api/cameras/${id}`, { method: 'DELETE' });
+            if (res.ok) { showToast("Camera Removed"); loadCameras(); }
+        } catch (e) { showToast("Network Error"); }
+    }
+
+    async function toggleDashboard(id) {
+        const cam = allCameras[id];
+        const newState = !cam.on_dashboard;
+        const data = {
+            ...cam,
+            id: id,
+            on_dashboard: newState,
+            prompt: cam.analysis_prompt,
+            schedule_enabled: cam.schedule_enabled,
+            schedule_interval_hrs: cam.schedule_interval_hrs
+        };
+        const res = await fetch('/api/cameras', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+        if (res.ok) { showToast(newState ? "Pinned to Dashboard" : "Unpinned from Dashboard"); loadCameras(); }
+    }
+
+    async function loadCameras() {
+        try {
+            const [cRes, sRes] = await Promise.all([fetch('/api/cameras'), fetch('/api/settings')]);
+            const config = await sRes.json();
+            allCameras = config.cameras || {};
+
+            const badge = document.getElementById('ai-badge');
+            if (config.ai && config.ai.api_key && config.ai.api_key.length > 5) {
+                badge.className = "text-green-500 font-bold";
+                badge.innerText = "AUTHENTICATED";
+            } else {
+                badge.className = "text-red-500 font-bold";
+                badge.innerText = "NO API KEY";
+            }
+
+            const list = document.getElementById('cameras-list');
+            list.innerHTML = '';
+
+            Object.entries(allCameras).forEach(([id, cam]) => {
+                const isDash = cam.on_dashboard !== false;
+                const card = document.createElement('div');
+                card.className = "card rounded-2xl p-6 flex flex-col md:flex-row gap-6 items-start hover:border-gray-600 transition-colors";
+                card.innerHTML = `
+                     <div class="w-full md:w-64 aspect-video bg-black rounded-xl overflow-hidden relative group cursor-pointer border border-white/5" onclick="enlargeCamera('${id}', '${cam.name}')">
+                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="if(!this.dataset.retry) this.dataset.retry=0; if(this.dataset.retry<3){this.dataset.retry++;setTimeout(()=>{this.src='/api/snapshot?camera_id=${id}&t='+Date.now()},2000)}">
+                         <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                         <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div class="bg-black/60 backdrop-blur-md w-10 h-10 rounded-full flex items-center justify-center border border-white/10">
+                                <i class="fa-solid fa-expand text-white text-xs"></i>
+                            </div>
+                         </div>
+                         <div class="absolute top-2 right-2 bg-black/60 px-2 py-0.5 rounded text-[10px] flex items-center gap-1.5 font-bold">
+                             <div class="status-dot status-active"></div> LIVE
+                         </div>
+                     </div>
+                     <div class="flex-1 w-full flex flex-col justify-between self-stretch">
+                         <div class="flex justify-between items-start">
+                             <div>
+                                 <h3 class="text-xl font-semibold">${cam.name}</h3>
+                                 <p class="text-[10px] text-gray-500 font-mono mt-1">ID: ${id}</p>
+                                 <div class="flex gap-2 mt-3">
+                                     <button onclick="toggleDashboard('${id}')" class="dash-toggle ${isDash ? 'active' : ''} px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest transition-all">
+                                         <i class="fa-solid fa-plus mr-1"></i> Dashboard
+                                     </button>
+                                     ${cam.schedule_enabled ? '<span class="bg-blue-500/10 text-blue-400 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-400/20">Auto Poll</span>' : ''}
+                                 </div>
+                             </div>
+                             <div class="flex gap-2">
+                                 <button onclick="openModal('${id}')" class="bg-[#333] hover:bg-white hover:text-black text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center"><i class="fa-solid fa-pen"></i></button>
+                                 <button onclick="deleteCamera('${id}')" class="bg-[#333] hover:bg-red-500 text-white w-10 h-10 rounded-xl transition-all flex items-center justify-center"><i class="fa-solid fa-trash"></i></button>
+                             </div>
+                         </div>
+                     </div>`;
+                list.appendChild(card);
+            });
+        } catch (err) { console.error(err); }
+    }
+
+    function buildUrl() {
+        const proto = document.getElementById('h_proto').value;
+        const user = document.getElementById('h_user').value.trim();
+        const pass = document.getElementById('h_pass').value.trim();
+        const host = document.getElementById('h_host').value.trim();
+        const port = document.getElementById('h_port').value.trim();
+        const path = document.getElementById('h_path').value.trim();
+
+        let auth = '';
+        if (user || pass) auth = `${user}:${pass}@`;
+
+        let portStr = '';
+        if (port) portStr = `:${port}`;
+
+        let pathStr = path;
+        // Make sure path starts with / if it's not empty and doesn't have it
+        if (path && !path.startsWith('/')) {
+            pathStr = `/${path}`;
+        }
+
+        const fullUrl = `${proto}://${auth}${host}${portStr}${pathStr}`;
+        document.getElementById('camSource').value = fullUrl;
+    }
+
+    function clearBuilder() {
+        document.getElementById('h_proto').value = 'rtsp';
+        document.getElementById('h_user').value = '';
+        document.getElementById('h_pass').value = '';
+        document.getElementById('h_host').value = '';
+        document.getElementById('h_port').value = '';
+        document.getElementById('h_path').value = '';
+    }
+
+    function generateId() {
+        const nameInput = document.getElementById('camName');
+        const idInput = document.getElementById('camId');
+
+        // Only auto-generate if the ID input is enabled (i.e. adding new camera)
+        if (!idInput.disabled) {
+            const val = nameInput.value;
+            // Convert to snake_case: lowercase, replace spaces/special chars with underscores
+            const slug = val.toLowerCase()
+                .replace(/[^a-z0-9]+/g, '_') // Replace non-alphanumeric with _
+                .replace(/^_+|_+$/g, '');   // Trim leading/trailing _
+
+            idInput.value = slug;
+        }
+    }
+
+    function openModal(editId = null) {
+        const form = document.getElementById('cameraForm');
+        const idInput = document.getElementById('camId');
+        form.reset();
+        idInput.disabled = false;
+
+        if (!editId) {
+            document.getElementById('modalTitle').innerText = "Add New Camera";
+            document.getElementById('onDashboard').checked = true;
+            clearBuilder();
+        } else if (allCameras[editId]) {
+            document.getElementById('modalTitle').innerText = "Edit Camera Settings";
+            const cam = allCameras[editId];
+            idInput.value = editId; idInput.disabled = true;
+            document.getElementById('camName').value = cam.name;
+            document.getElementById('camSource').value = cam.source;
+            document.getElementById('onDashboard').checked = cam.on_dashboard !== false;
+        }
+        document.getElementById('cameraModal').classList.remove('hidden');
+    }
+    function closeModal() { document.getElementById('cameraModal').classList.add('hidden'); }
+
+    document.getElementById('cameraForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerText;
+        btn.disabled = true;
+
+        const data = {
+            id: document.getElementById('camId').value,
+            name: document.getElementById('camName').value,
+            source: document.getElementById('camSource').value,
+            on_dashboard: document.getElementById('onDashboard').checked
+        };
+
+        try {
+            // Step 1: Test Connection
+            if (data.source) {
+                // If button already says "Force Save", skip test and proceed
+                if (btn.innerText === "Force Save") {
+                    // fall through to save
+                } else {
+                    btn.innerText = "Testing Connection...";
+                    // For USB devices (numbers), we can pass them directly or as strings, backend handles it.
+                    // But let's verify if backend endpoint accepts strings that are digits.
+                    const testRes = await fetch('/api/cameras/test', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ source: data.source })
+                    });
+
+                    let testResult = { status: 'error' }; // Default error state
+                    try {
+                        testResult = await testRes.json();
+                    } catch (e) {
+                        // If JSON parsing fails, it's an invalid server response
+                        testResult.message = "Invalid server response during test";
+                    }
+
+                    if (testRes.status !== 200 || testResult.status !== 'ok') {
+                        showToast(`Connection Failed: ${testResult.message || 'Check URL/Network'}`);
+                        btn.innerText = "Force Save";
+                        btn.classList.add('bg-red-500', 'text-white'); // Optional styling for warning
+                        btn.disabled = false; // Re-enable button to allow force save
+                        return; // Stop here if connection fails, wait for user to force save
+                    }
+
+                    // Specific logic for ONVIF resolution or URL refinement
+                    if (testResult.resolved_source) {
+                        data.source = testResult.resolved_source;
+                        document.getElementById('camSource').value = testResult.resolved_source;
+                        showToast(testResult.message || "Refined to RTSP URL");
+                    } else {
+                        showToast("Connection Verified!");
+                    }
+                }
+            }
+
+            // Step 2: Save Config
+            btn.innerText = "Saving...";
+            btn.classList.remove('bg-red-500', 'text-white'); // Remove warning styling if saving now
+            const res = await fetch('/api/cameras', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (res.ok) {
+                showToast("Config Synchronized!");
+                closeModal();
+                // Delay reload to allow camera stream to initialize
+                setTimeout(() => loadCameras(), 2500);
+            } else {
+                showToast("Failed to save configuration.");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Network Error");
+        } finally {
+            btn.innerText = "Save Changes";
+            btn.disabled = false;
+        }
+    }
+
+    loadCameras();
+</script>
+{% endblock %}

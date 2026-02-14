@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  velovision:
+    build: .
+    container_name: velovision
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=http://localhost:8000
+      - TZ=Asia/Jakarta
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./data:/data
+      - ./src:/app/src
+    restart: unless-stopped

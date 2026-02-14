@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline - Velo Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #262626;
+        }
+
+        .lime-text {
+            color: #dfffad;
+        }
+
+        .lime-bg {
+            background-color: #dfffad;
+            color: #1a1a1a;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            rounded-full;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #444;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-200">
+
+    <!-- Sidebar (Shared) -->
+    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
+        <div class="mb-10 flex items-center gap-3">
+            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-home w-5"></i><span>Dashboard</span>
+            </a>
+            <a href="timeline.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#2d2d2d] text-white font-medium">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Timeline</span>
+            </a>
+            <a href="faces.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-users w-5"></i><span>Faces</span>
+            </a>
+            <a href="cameras.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
+            </a>
+            <a href="analytics.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
+            </a>
+            <a href="messages.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-brands fa-whatsapp w-5"></i>
+                <span>Messages</span>
+            </a>
+            <a href="ai_settings.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-brain w-5"></i><span>AI Settings</span>
+            </a>
+        </nav>
+        <div class="space-y-2 pb-6">
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-[#1a1a1a] relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-semibold">Event Timeline</h2>
+                <p class="text-gray-400 text-sm mt-1">Review activity history</p>
+            </div>
+            <!-- Filters -->
+            <div class="flex gap-3">
+                <div class="relative">
+                    <select
+                        class="appearance-none bg-[#262626] border border-gray-700 text-white py-2 px-4 pr-8 rounded-lg focus:outline-none focus:border-gray-500">
+                        <option>All Cameras</option>
+                        <option>Front Door</option>
+                        <option>Driveway</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                        <i class="fa-solid fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
+                <div class="relative">
+                    <input type="date"
+                        class="bg-[#262626] border border-gray-700 text-white py-2 px-4 rounded-lg focus:outline-none focus:border-gray-500 color-scheme-dark">
+                </div>
+            </div>
+        </header>
+
+        <!-- Timeline List -->
+        <div class="space-y-6 max-w-5xl mx-auto">
+
+            <!-- Date Separator -->
+            <div class="flex items-center gap-4">
+                <div class="h-px bg-gray-800 flex-1"></div>
+                <span class="text-gray-500 text-sm font-medium">Today, Feb 13</span>
+                <div class="h-px bg-gray-800 flex-1"></div>
+            </div>
+
+            <!-- Event Item 1 -->
+            <div
+                class="card rounded-2xl p-4 flex gap-6 hover:shadow-lg transition-all group border border-transparent hover:border-gray-700">
+                <!-- Image Snapshot -->
+                <div class="relative w-48 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1595846519845-68e298c2edd8?q=80&w=600"
+                        class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                    <div
+                        class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white">
+                        10:42 AM</div>
+                </div>
+
+                <!-- Content -->
+                <div class="flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-lg font-semibold text-white">Person Detected at Front Door</h3>
+                            <span
+                                class="bg-[#dfffad] text-[#1a1a1a] text-xs font-bold px-2 py-1 rounded">DELIVERY</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-1">
+                            Use custom AI analysis: "A delivery driver in a red vest is placing a cardboard box on the
+                            porch."
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-4 mt-4">
+                        <!-- Identified Face -->
+                        <div class="flex items-center gap-2 bg-[#333] px-3 py-1 rounded-full border border-gray-700">
+                            <img src="https://ui-avatars.com/api/?name=Unknown&background=random"
+                                class="w-5 h-5 rounded-full">
+                            <span class="text-xs text-gray-300">Unknown</span>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex gap-2 ml-auto">
+                            <button class="text-gray-400 hover:text-white p-2 transition-colors"
+                                title="Download Image"><i class="fa-solid fa-download"></i></button>
+                            <button class="text-gray-400 hover:text-white p-2 transition-colors" title="Share"><i
+                                    class="fa-solid fa-share-nodes"></i></button>
+                            <button class="text-gray-400 hover:text-red-400 p-2 transition-colors" title="Delete"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Item 2 -->
+            <div
+                class="card rounded-2xl p-4 flex gap-6 hover:shadow-lg transition-all group border border-transparent hover:border-gray-700">
+                <div class="relative w-48 h-32 rounded-xl overflow-hidden flex-shrink-0">
+                    <img src="https://images.unsplash.com/photo-1542596594-649edbc13630?q=80&w=600"
+                        class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-500">
+                    <div
+                        class="absolute top-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-0.5 rounded text-xs text-white">
+                        08:15 AM</div>
+                </div>
+                <div class="flex-1 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h3 class="text-lg font-semibold text-white">Royyan Leaving</h3>
+                            <span
+                                class="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded">FAMILIAR</span>
+                        </div>
+                        <p class="text-gray-400 text-sm mt-1">
+                            "Royyan is walking away from the front door carrying a backpack."
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-4 mt-4">
+                        <div
+                            class="flex items-center gap-2 bg-[#dfffad]/10 px-3 py-1 rounded-full border border-[#dfffad]/30">
+                            <img src="https://ui-avatars.com/api/?name=Royyan&background=0D8ABC&color=fff"
+                                class="w-5 h-5 rounded-full">
+                            <span class="text-xs lime-text">Royyan</span>
+                        </div>
+                        <div class="flex gap-2 ml-auto">
+                            <button class="text-gray-400 hover:text-white p-2"><i
+                                    class="fa-solid fa-download"></i></button>
+                            <button class="text-gray-400 hover:text-white p-2"><i
+                                    class="fa-solid fa-share-nodes"></i></button>
+                            <button class="text-gray-400 hover:text-red-400 p-2"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date Separator -->
+            <div class="flex items-center gap-4 pt-4">
+                <div class="h-px bg-gray-800 flex-1"></div>
+                <span class="text-gray-500 text-sm font-medium">Yesterday, Feb 12</span>
+                <div class="h-px bg-gray-800 flex-1"></div>
+            </div>
+            <!-- Empty State / Load More -->
+            <div class="text-center py-8">
+                <button class="text-gray-500 hover:text-white text-sm font-medium transition-colors">Load older
+                    events...</button>
+            </div>
+
+        </div>
+    </main>
+</body>
+
+</html>

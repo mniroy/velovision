@@ -1,0 +1,584 @@
+{% extends "base.html" %}
+
+{% block title %}Messages - Velo Vision{% endblock %}
+
+{% block extra_style %}
+.card { background-color: #262626; border: 1px solid #333; transition: all 0.2s; }
+.card:hover { border-color: #444; }
+.modal-open { overflow: hidden; }
+.modal-active { display: flex !important; }
+.history-item { border-left: 2px solid #333; position: relative; }
+.history-item::before { content: ''; position: absolute; left: -5px; top: 12px; width: 8px; height: 8px; border-radius:
+50%; background: #333; }
+.history-item.success { border-left-color: #10b981; }
+.history-item.success::before { background: #10b981; }
+{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <header class="flex justify-between items-center mb-10">
+        <div>
+            <h2 class="text-3xl font-semibold">Notification Recipients</h2>
+            <p class="text-gray-400 text-sm mt-1">Manage who receives alerts via WhatsApp (GOWA)</p>
+        </div>
+        <button onclick="openAddModal()"
+            class="bg-[#dfffad] text-[#1a1a1a] px-5 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
+            <i class="fa-solid fa-plus text-xs"></i> Add Recipient
+        </button>
+    </header>
+
+    <!-- Connectivity Status -->
+    <div class="card rounded-2xl p-6 mb-8 flex flex-col md:flex-row items-center justify-between gap-6">
+        <div class="flex items-center gap-4">
+            <div id="wa-status-icon"
+                class="w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl transition-colors">
+                <i class="fa-brands fa-whatsapp"></i>
+            </div>
+            <div>
+                <h3 class="font-semibold text-lg">GOWA Service</h3>
+                <p id="wa-status-text" class="text-sm text-gray-400 flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-gray-600"></span> Disconnected
+                </p>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <button onclick="openConfigModal()" class="text-sm text-gray-400 hover:text-white underline">Configure
+                Gateway</button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- People -->
+        <div>
+            <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-user text-[#dfffad] text-sm"></i> People
+            </h3>
+            <div id="people-list" class="space-y-3">
+                <div class="text-center py-10 text-gray-600 italic text-sm">No individual recipients configured</div>
+            </div>
+        </div>
+
+        <!-- Groups -->
+        <div>
+            <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-users text-[#dfffad] text-sm"></i> Groups
+            </h3>
+            <div id="groups-list" class="space-y-3">
+                <div class="text-center py-10 text-gray-600 italic text-sm">No group recipients configured</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="modalOverlay"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] hidden flex items-center justify-center p-4">
+    <!-- Add/Edit Recipient Modal -->
+    <div id="recipientModal"
+        class="bg-[#262626] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 id="modalTitle" class="text-xl font-semibold">Add Recipient</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <form id="recipientForm" class="p-6 space-y-4">
+            <input type="hidden" id="editIndex" value="-1">
+
+            <div class="flex gap-4 mb-4">
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="type" value="person" class="peer hidden" checked>
+                    <div
+                        class="bg-[#1a1a1a] border border-gray-700 rounded-xl p-3 text-center peer-checked:border-[#dfffad] peer-checked:text-[#dfffad] transition-all">
+                        <i class="fa-solid fa-user mb-1 block"></i> Person
+                    </div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="type" value="group" class="peer hidden">
+                    <div
+                        class="bg-[#1a1a1a] border border-gray-700 rounded-xl p-3 text-center peer-checked:border-[#dfffad] peer-checked:text-[#dfffad] transition-all">
+                        <i class="fa-solid fa-users mb-1 block"></i> Group
+                    </div>
+                </label>
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Name / Label</label>
+                <input type="text" id="recipientName" required placeholder="e.g. John Doe"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div>
+                <label id="valueLabel" class="block text-xs text-gray-400 mb-1">WhatsApp ID</label>
+                <div class="flex gap-2">
+                    <input type="text" id="recipientValue" required placeholder="+62..."
+                        class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                    <button type="button" id="browseGroupsBtn" onclick="browseGroups()"
+                        class="hidden bg-[#333] hover:bg-[#444] text-white px-4 py-3 rounded-xl transition-all border border-gray-700"
+                        title="Browse Groups">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <p id="valueHint" class="text-[10px] text-gray-500 mt-2 italic">Use country code for people (e.g.
+                    628...). Select 'Group' to browse joined groups.</p>
+            </div>
+
+            <div class="p-6 border-t border-gray-700 flex justify-end gap-3 -mx-6 -mb-6 mt-6">
+                <button type="button" onclick="closeModal()"
+                    class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+                <button type="submit"
+                    class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Configure Gateway Modal -->
+    <div id="configModal"
+        class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">GOWA Gateway Configuration</h3>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-6 space-y-6">
+            <div class="flex items-center gap-4 bg-gray-800/30 p-4 rounded-2xl border border-white/5">
+                <div class="flex-1">
+                    <p class="text-sm font-semibold">Enable Notifications</p>
+                    <p class="text-[10px] text-gray-500">Enable or disable all WhatsApp alerts</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="waEnabled" class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#dfffad]">
+                    </div>
+                </label>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">API
+                        Endpoint URL</label>
+                    <input type="text" id="waUrl" placeholder="https://api.gowa.me"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Username</label>
+                        <input type="text" id="waUser" placeholder="admin"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                    </div>
+                    <div>
+                        <label
+                            class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Password</label>
+                        <input type="password" id="waPass" placeholder="••••••••"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-500 mb-1 uppercase font-black tracking-widest">Session
+                        ID</label>
+                    <input type="text" id="waSession" placeholder="default"
+                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                </div>
+            </div>
+
+            <div class="pt-2 flex justify-between items-center">
+                <button onclick="checkConnection()"
+                    class="text-xs bg-[#333] hover:bg-[#444] text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+            </div>
+
+            <div class="p-6 border-t border-gray-700 flex justify-end gap-3 -mx-6 -mb-6 mt-6">
+                <button onclick="closeModal()"
+                    class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+                <button onclick="saveConfig()"
+                    class="bg-[#dfffad] text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                    Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal"
+        class="bg-[#262626] border border-gray-700 w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <div>
+                <h3 id="historyTitle" class="text-xl font-semibold">Message History</h3>
+                <p id="historySubtitle" class="text-xs text-gray-500"></p>
+            </div>
+            <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div id="history-content" class="p-6 space-y-6 max-h-[70vh] overflow-y-auto scrollbar-hide">
+            <!-- Items injected here -->
+        </div>
+    </div>
+
+    <!-- Group Search Modal -->
+    <div id="groupSearchModal"
+        class="bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden hidden"
+        onclick="event.stopPropagation()">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center bg-[#1e1e1e]/50">
+            <h3 class="text-xl font-semibold">Select WhatsApp Group</h3>
+            <button onclick="closeModal('groupSearchModal')" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+        <div class="p-4">
+            <div class="relative mb-4">
+                <i class="fa-solid fa-search absolute left-3 top-3 text-gray-500 text-xs"></i>
+                <input type="text" id="groupSearchInput" onkeyup="filterGroups()" placeholder="Search joined groups..."
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 pl-9 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+            <div id="groups-browse-list" class="space-y-2 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Groups injected here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="toast"
+    class="fixed bottom-8 right-8 bg-[#dfffad] text-black px-6 py-3 rounded-2xl font-bold shadow-2xl transform translate-y-28 opacity-0 transition-all duration-300 z-[200]">
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    let currentRecipients = [];
+    let waConfig = {};
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg;
+        t.classList.remove('translate-y-28', 'opacity-0');
+        setTimeout(() => t.classList.add('translate-y-28', 'opacity-0'), 3000);
+    }
+
+    async function loadData() {
+        try {
+            const res = await fetch('/api/settings');
+            const config = await res.json();
+            waConfig = config.whatsapp || {};
+
+            // Setup Config Modal
+            document.getElementById('waEnabled').checked = waConfig.enabled || false;
+            document.getElementById('waUrl').value = waConfig.api_url || 'https://api.gowa.me';
+            document.getElementById('waUser').value = waConfig.username || '';
+            document.getElementById('waPass').value = waConfig.password || '';
+            document.getElementById('waSession').value = waConfig.session_id || 'default';
+
+            // Parse Recipients
+            try {
+                currentRecipients = JSON.parse(waConfig.recipients || '[]');
+            } catch (e) {
+                // Backward compatibility: check if it was a plain string of numbers
+                if (typeof waConfig.recipients === 'string' && waConfig.recipients.length > 0) {
+                    currentRecipients = waConfig.recipients.split(',').map(num => ({
+                        name: 'Legacy Contact',
+                        value: num.trim(),
+                        type: num.includes('@g.us') ? 'group' : 'person'
+                    }));
+                } else {
+                    currentRecipients = [];
+                }
+            }
+            renderRecipients();
+            checkStatusSilent();
+        } catch (e) { console.error(e); }
+    }
+
+    function renderRecipients() {
+        const peopleList = document.getElementById('people-list');
+        const groupsList = document.getElementById('groups-list');
+
+        const people = currentRecipients.filter(r => r.type === 'person');
+        const groups = currentRecipients.filter(r => r.type === 'group');
+
+        peopleList.innerHTML = people.length ? '' : '<div class="text-center py-10 text-gray-600 italic text-sm">No individual recipients configured</div>';
+        groupsList.innerHTML = groups.length ? '' : '<div class="text-center py-10 text-gray-600 italic text-sm">No group recipients configured</div>';
+
+        currentRecipients.forEach((r, index) => {
+            const container = r.type === 'person' ? peopleList : groupsList;
+            const div = document.createElement('div');
+            div.className = "card rounded-xl p-4 flex items-center justify-between group cursor-pointer hover:bg-white/5 hover:border-white/10 transition-all";
+            div.onclick = (e) => {
+                if (e.target.closest('button')) return;
+                showHistory(r.value, r.name);
+            };
+
+            const icon = r.type === 'person' ?
+                `<img src="https://ui-avatars.com/api/?name=${encodeURIComponent(r.name)}&background=0D8ABC&color=fff" class="w-10 h-10 rounded-full">` :
+                `<div class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold"><i class="fa-solid fa-users"></i></div>`;
+
+            div.innerHTML = `
+                <div class="flex items-center gap-4">
+                    ${icon}
+                    <div>
+                        <h4 class="font-medium">${r.name}</h4>
+                        <p class="text-xs text-gray-500">${r.value}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onclick="openEditModal(${index})" class="p-2 text-gray-400 hover:text-white transition-colors"><i class="fa-solid fa-pen"></i></button>
+                    <button onclick="deleteRecipient(${index})" class="p-2 text-gray-400 hover:text-red-500 transition-colors"><i class="fa-solid fa-trash"></i></button>
+                </div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function updateBrowseBtn() {
+        const type = Array.from(document.getElementsByName('type')).find(r => r.checked).value;
+        const btn = document.getElementById('browseGroupsBtn');
+        const label = document.getElementById('valueLabel');
+        if (type === 'group') {
+            btn.classList.remove('hidden');
+            label.innerText = "Group ID";
+        } else {
+            btn.classList.add('hidden');
+            label.innerText = "WhatsApp ID";
+        }
+    }
+
+    function openAddModal() {
+        document.getElementById('modalTitle').innerText = "Add Recipient";
+        document.getElementById('editIndex').value = "-1";
+        document.getElementById('recipientForm').reset();
+        updateBrowseBtn();
+        openModal('recipientModal');
+    }
+
+    function openEditModal(index) {
+        const r = currentRecipients[index];
+        document.getElementById('modalTitle').innerText = "Edit Recipient";
+        document.getElementById('editIndex').value = index;
+        document.getElementById('recipientName').value = r.name;
+        document.getElementById('recipientValue').value = r.value;
+        const radios = document.getElementsByName('type');
+        for (let rd of radios) { if (rd.value === r.type) rd.checked = true; }
+        updateBrowseBtn();
+        openModal('recipientModal');
+    }
+
+    async function deleteRecipient(index) {
+        if (!confirm("Remove this recipient?")) return;
+        currentRecipients.splice(index, 1);
+        await saveRecipients();
+    }
+
+    document.getElementById('recipientForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const index = parseInt(document.getElementById('editIndex').value);
+        const data = {
+            name: document.getElementById('recipientName').value,
+            value: document.getElementById('recipientValue').value,
+            type: document.querySelector('input[name="type"]:checked').value
+        };
+
+        if (index === -1) currentRecipients.push(data);
+        else currentRecipients[index] = data;
+
+        await saveRecipients();
+        closeModal();
+    }
+
+    async function saveRecipients() {
+        const data = { whatsapp: { recipients: JSON.stringify(currentRecipients) } };
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showToast("Recipients updated");
+                renderRecipients();
+            }
+        } catch (e) { showToast("Error saving recipients"); }
+    }
+
+    async function saveConfig() {
+        const data = {
+            whatsapp: {
+                enabled: document.getElementById('waEnabled').checked,
+                api_url: document.getElementById('waUrl').value,
+                username: document.getElementById('waUser').value,
+                password: document.getElementById('waPass').value,
+                session_id: document.getElementById('waSession').value
+            }
+        };
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (res.ok) {
+                showToast("GOWA Configuration saved");
+                waConfig = data.whatsapp;
+                closeModal();
+                checkStatusSilent();
+            }
+        } catch (e) { showToast("Error saving config"); }
+    }
+
+    async function checkConnection() {
+        showToast("Testing connection...");
+        try {
+            const res = await fetch('/api/whatsapp/status');
+            const data = await res.json();
+            if (data.connected) showToast("Connection Successful!");
+            else if (data.status === "unauthorized") showToast("Error: Unauthorized (Check Username/Password)");
+            else showToast("Failed: " + (data.status || "Unknown error"));
+        } catch (e) { showToast("Cannot reach Velo Vision Backend"); }
+    }
+
+    async function checkStatusSilent() {
+        const icon = document.getElementById('wa-status-icon');
+        const text = document.getElementById('wa-status-text');
+
+        if (!waConfig.enabled) {
+            icon.className = "w-12 h-12 rounded-full bg-gray-800 flex items-center justify-center text-gray-500 text-xl";
+            text.innerHTML = '<span class="w-2 h-2 rounded-full bg-gray-600"></span> Notifications Disabled';
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/whatsapp/status');
+            const data = await res.json();
+
+            if (data.connected) {
+                icon.className = "w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-xl";
+                text.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Connected`;
+            } else {
+                icon.className = "w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xl";
+                text.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-500 font-bold uppercase text-[8px] mr-1"></span> ${data.status.toUpperCase()}`;
+            }
+        } catch (e) {
+            icon.className = "w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 text-xl";
+            text.innerHTML = '<span class="w-2 h-2 rounded-full bg-red-500"></span> Server Offline';
+        }
+    }
+
+    function openModal(id) {
+        document.getElementById('modalOverlay').classList.remove('hidden');
+        document.getElementById(id).classList.remove('hidden');
+        document.body.classList.add('modal-open');
+    }
+    function openConfigModal() { openModal('configModal'); }
+    function closeModal(id = null) {
+        if (id) {
+            document.getElementById(id).classList.add('hidden');
+            // If it was the top-most modal, but parent modal is still open, keep overlay
+            if (id === 'groupSearchModal') return;
+        }
+        document.getElementById('modalOverlay').classList.add('hidden');
+        document.getElementById('recipientModal').classList.add('hidden');
+        document.getElementById('configModal').classList.add('hidden');
+        document.getElementById('historyModal').classList.add('hidden');
+        document.getElementById('groupSearchModal').classList.add('hidden');
+        document.body.classList.remove('modal-open');
+    }
+
+    // Toggle Browse button based on type
+    document.getElementsByName('type').forEach(radio => {
+        radio.addEventListener('change', updateBrowseBtn);
+    });
+
+    let allGroups = [];
+    async function browseGroups() {
+        const list = document.getElementById('groups-browse-list');
+        list.innerHTML = '<div class="flex justify-center py-10"><i class="fa-solid fa-circle-notch animate-spin text-2xl text-gray-600"></i></div>';
+        openModal('groupSearchModal');
+
+        try {
+            const res = await fetch('/api/whatsapp/groups');
+            allGroups = await res.json();
+            renderBrowseGroups(allGroups);
+        } catch (e) {
+            list.innerHTML = '<div class="text-center py-10 text-red-500">Failed to fetch groups</div>';
+        }
+    }
+
+    function renderBrowseGroups(groups) {
+        const list = document.getElementById('groups-browse-list');
+        if (!groups.length) {
+            list.innerHTML = '<div class="text-center py-10 text-gray-600">No groups found</div>';
+            return;
+        }
+        list.innerHTML = groups.map(g => `
+            <div onclick="selectGroup('${g.id}', '${g.name}')" 
+                class="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer group">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs"><i class="fa-solid fa-users"></i></div>
+                    <div>
+                        <p class="text-sm font-medium text-white group-hover:text-[#dfffad]">${g.name}</p>
+                        <p class="text-[10px] text-gray-500">${g.id}</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-plus text-gray-600 group-hover:text-[#dfffad]"></i>
+            </div>
+        `).join('');
+    }
+
+    function filterGroups() {
+        const q = document.getElementById('groupSearchInput').value.toLowerCase();
+        const filtered = allGroups.filter(g => g.name.toLowerCase().includes(q) || g.id.toLowerCase().includes(q));
+        renderBrowseGroups(filtered);
+    }
+
+    function selectGroup(id, name) {
+        document.getElementById('recipientValue').value = id;
+        if (!document.getElementById('recipientName').value) {
+            document.getElementById('recipientName').value = name;
+        }
+        closeModal('groupSearchModal');
+    }
+
+    async function showHistory(val, name) {
+        const content = document.getElementById('history-content');
+        const title = document.getElementById('historyTitle');
+        const subtitle = document.getElementById('historySubtitle');
+
+        title.innerText = `History: ${name}`;
+        subtitle.innerText = val;
+        content.innerHTML = '<div class="flex justify-center py-20 text-gray-500"><i class="fa-solid fa-circle-notch animate-spin text-3xl"></i></div>';
+
+        openModal('historyModal');
+
+        try {
+            const res = await fetch(`/api/whatsapp/history/${encodeURIComponent(val)}`);
+            const data = await res.json();
+
+            if (!data.length) {
+                content.innerHTML = '<div class="text-center py-20 text-gray-600">No message history found for this recipient.</div>';
+                return;
+            }
+
+            content.innerHTML = data.map(item => `
+                <div class="history-item ${item.status === 'success' ? 'success' : ''} pl-6 py-2">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        ${item.image_url ? `<img src="${item.image_url}" class="w-24 h-16 object-cover rounded-lg border border-white/5 flex-shrink-0">` : ''}
+                        <div class="flex-1">
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-[10px] font-black uppercase text-gray-500 tracking-widest">${new Date(item.timestamp).toLocaleString()}</span>
+                                <span class="px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-tighter ${item.status === 'success' ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}">
+                                    ${item.status}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-300 line-clamp-2 italic">"${item.analysis}"</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } catch (e) {
+            content.innerHTML = '<div class="text-center py-20 text-red-500">Error loading history.</div>';
+        }
+    }
+
+    loadData();
+</script>
+{% endblock %}

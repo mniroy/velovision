@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Settings - Velo Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #262626;
+            border: 1px solid #333;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-200">
+
+    <!-- Sidebar (Shared) -->
+    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
+        <div class="mb-10 flex items-center gap-3">
+            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-home w-5"></i><span>Dashboard</span>
+            </a>
+            <a href="timeline.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Timeline</span>
+            </a>
+            <a href="faces.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-users w-5"></i><span>Faces</span>
+            </a>
+            <a href="cameras.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
+            </a>
+            <a href="analytics.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
+            </a>
+            <a href="messages.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-brands fa-whatsapp w-5"></i><span>Messages</span>
+            </a>
+            <a href="ai_settings.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#2d2d2d] text-white font-medium">
+                <i class="fa-solid fa-brain w-5"></i><span>AI Settings</span>
+            </a>
+        </nav>
+        <div class="space-y-2 pb-6">
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-[#1a1a1a] relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-semibold">AI Configuration</h2>
+                <p class="text-gray-400 text-sm mt-1">Manage AI providers and monitor usage</p>
+            </div>
+            <button
+                class="bg-[#dfffad] text-[#1a1a1a] px-5 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all shadow-lg shadow-[#dfffad]/20">
+                Save Changes
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Configuration -->
+            <div class="lg:col-span-2 space-y-6">
+
+                <!-- Provider Selection -->
+                <section class="card rounded-2xl p-6">
+                    <h3 class="text-xl font-medium mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-microchip text-[#dfffad]"></i> AI Provider
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Service Provider</label>
+                            <select
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-white focus:border-[#dfffad] focus:outline-none">
+                                <option value="openai">OpenAI</option>
+                                <option value="gemini" selected>Google Gemini</option>
+                                <option value="ollama">Ollama</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">API Key</label>
+                            <div class="relative">
+                                <input type="password" value="sk-proj-........................"
+                                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-white focus:border-[#dfffad] focus:outline-none font-mono pr-10">
+                                <button class="absolute right-3 top-2.5 text-gray-500 hover:text-white"><i
+                                        class="fa-solid fa-eye"></i></button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Model Name</label>
+                            <input type="text" value="gemini-2.0-flash-exp"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-white focus:border-[#dfffad] focus:outline-none font-mono">
+                            <p class="text-xs text-gray-500 mt-1">Recommended for fast vision analysis. Default:
+                                gemini-2.0-flash-exp (or gemini-1.5-flash for stable)</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Advanced Params -->
+                <section class="card rounded-2xl p-6">
+                    <h3 class="text-xl font-medium mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-blue-400"></i> Parameters
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Max Tokens</label>
+                            <input type="number" value="300"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-white focus:border-[#dfffad] focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-1">Temperature</label>
+                            <input type="number" step="0.1" value="0.7"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-white focus:border-[#dfffad] focus:outline-none">
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Usage Stats -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Token Usage Card -->
+                <div class="card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-purple-400"></i> Token Usage
+                    </h3>
+
+                    <div class="space-y-6">
+                        <!-- Total -->
+                        <div class="text-center py-4 border-b border-gray-700/50">
+                            <span class="block text-gray-400 text-sm uppercase tracking-wide">This Month</span>
+                            <span class="block text-4xl font-bold text-white mt-1">1.2M</span>
+                            <span class="text-xs text-gray-500">Tokens Processed</span>
+                        </div>
+
+                        <!-- Breakdown -->
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Input (Images/Text)</span>
+                                    <span class="text-gray-400 font-mono">850k</span>
+                                </div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-blue-500 h-full w-[70%]"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span class="text-gray-300">Output (Analysis)</span>
+                                    <span class="text-gray-400 font-mono">350k</span>
+                                </div>
+                                <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                    <div class="bg-[#dfffad] h-full w-[30%]"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cost Estimate -->
+                        <div
+                            class="bg-gray-800/30 rounded-xl p-4 flex items-center justify-between border border-gray-700/50">
+                            <span class="text-sm text-gray-400">Est. Cost</span>
+                            <span class="text-xl font-bold text-[#dfffad]">$0.42</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rate Limits -->
+                <div class="card rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold mb-4">Rate Limits</h3>
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm text-gray-400">Requests / Minute</span>
+                        <span class="text-sm font-bold">12 / 60</span>
+                    </div>
+                    <div class="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                        <div class="bg-green-500 h-full w-[20%]"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Within safe operational limits.</p>
+                </div>
+
+            </div>
+
+        </div>
+    </main>
+</body>
+
+</html>

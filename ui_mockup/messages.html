@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Messages - Velo Vision</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+
+        .card {
+            background-color: #262626;
+            border: 1px solid #333;
+        }
+
+        /* Modal Transitions */
+        .modal {
+            transition: opacity 0.25s ease;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body class="flex h-screen overflow-hidden text-gray-200">
+
+    <!-- Sidebar (Shared) -->
+    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
+        <div class="mb-10 flex items-center gap-3">
+            <h1 class="text-2xl font-semibold tracking-wide">Velo Vision</h1>
+        </div>
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-home w-5"></i><span>Dashboard</span>
+            </a>
+            <a href="timeline.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Timeline</span>
+            </a>
+            <a href="faces.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-users w-5"></i><span>Faces</span>
+            </a>
+            <a href="cameras.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-video w-5"></i><span>Cameras</span>
+            </a>
+            <a href="analytics.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-chart-simple w-5"></i><span>Analytics</span>
+            </a>
+            <a href="messages.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl bg-[#2d2d2d] text-white font-medium">
+                <i class="fa-brands fa-whatsapp w-5"></i><span>Messages</span>
+            </a>
+            <a href="ai_settings.html"
+                class="flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-[#2d2d2d] transition-colors">
+                <i class="fa-solid fa-brain w-5"></i><span>AI Settings</span>
+            </a>
+        </nav>
+        <div class="space-y-2 pb-6">
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-8 overflow-y-auto bg-[#1a1a1a] relative">
+        <header class="flex justify-between items-center mb-10">
+            <div>
+                <h2 class="text-3xl font-semibold">Notification Recipient</h2>
+                <p class="text-gray-400 text-sm mt-1">Manage who receives alerts via WhatsApp (GOWA)</p>
+            </div>
+            <button onclick="openModal('addRecipientModal')"
+                class="bg-[#dfffad] text-[#1a1a1a] px-5 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
+                <i class="fa-solid fa-plus text-xs"></i> Add Recipient
+            </button>
+        </header>
+
+        <!-- Connectivity Status -->
+        <div class="card rounded-2xl p-6 mb-8 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center text-green-500 text-xl">
+                    <i class="fa-brands fa-whatsapp"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-lg">GOWA Service</h3>
+                    <p class="text-sm text-gray-400 flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full bg-green-500"></span> Connected to api.gowa.me
+                    </p>
+                </div>
+            </div>
+            <button onclick="openModal('configureGatewayModal')"
+                class="text-sm text-gray-400 hover:text-white underline">Configure Gateway</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            <!-- Individual People -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4">People</h3>
+                <div class="space-y-3">
+                    <!-- Person 1 -->
+                    <div class="card rounded-xl p-4 flex items-center justify-between group">
+                        <div class="flex items-center gap-4">
+                            <img src="https://ui-avatars.com/api/?name=Royyan&background=0D8ABC&color=fff"
+                                class="w-10 h-10 rounded-full">
+                            <div>
+                                <h4 class="font-medium">Royyan</h4>
+                                <p class="text-xs text-gray-500">+62 812-3456-7890</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal('person', 'Royyan', '+62 812-3456-7890')"
+                                class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-pen"></i></button>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <!-- Person 2 -->
+                    <div class="card rounded-xl p-4 flex items-center justify-between group">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold">
+                                W</div>
+                            <div>
+                                <h4 class="font-medium">Wife</h4>
+                                <p class="text-xs text-gray-500">+62 813-9876-5432</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal('person', 'Wife', '+62 813-9876-5432')"
+                                class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-pen"></i></button>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Groups -->
+            <div>
+                <h3 class="text-xl font-semibold mb-4">Groups</h3>
+                <div class="space-y-3">
+                    <!-- Group 1 -->
+                    <div class="card rounded-xl p-4 flex items-center justify-between group">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Family Home</h4>
+                                <p class="text-xs text-gray-500">Group ID: 12036302@g.us</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal('group', 'Family Home', '12036302@g.us')"
+                                class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-pen"></i></button>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                    <!-- Group 2 -->
+                    <div class="card rounded-xl p-4 flex items-center justify-between group">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="w-10 h-10 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-medium">Security Alerts</h4>
+                                <p class="text-xs text-gray-500">Group ID: 12036311@g.us</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="openEditModal('group', 'Security Alerts', '12036311@g.us')"
+                                class="p-2 text-gray-400 hover:text-white"><i class="fa-solid fa-pen"></i></button>
+                            <button class="p-2 text-gray-400 hover:text-red-500"><i
+                                    class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Overlay -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity"
+        onclick="closeAllModals()"></div>
+
+    <!-- Add Recipient Modal -->
+    <div id="addRecipientModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#262626] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl z-50 hidden opacity-0 transition-opacity scale-95 duration-200">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Add Recipient</h3>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <!-- Type Selector -->
+            <div class="flex gap-4 mb-4">
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="recipientType" class="peer hidden" checked
+                        onchange="toggleForm('person')">
+                    <div
+                        class="bg-[#1a1a1a] border border-gray-700 rounded-xl p-3 text-center peer-checked:border-[#dfffad] peer-checked:text-[#dfffad] transition-all">
+                        <i class="fa-solid fa-user mb-1 block"></i> Person
+                    </div>
+                </label>
+                <label class="flex-1 cursor-pointer">
+                    <input type="radio" name="recipientType" class="peer hidden" onchange="toggleForm('group')">
+                    <div
+                        class="bg-[#1a1a1a] border border-gray-700 rounded-xl p-3 text-center peer-checked:border-[#dfffad] peer-checked:text-[#dfffad] transition-all">
+                        <i class="fa-solid fa-users mb-1 block"></i> Group
+                    </div>
+                </label>
+            </div>
+
+            <!-- Form Fields -->
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Name / Label</label>
+                <input type="text" placeholder="e.g. John Doe"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div id="personInput">
+                <label class="block text-xs text-gray-400 mb-1">WhatsApp Number</label>
+                <input type="text" placeholder="+62..."
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div id="groupInput" class="hidden">
+                <label class="block text-xs text-gray-400 mb-1">Group ID (@g.us)</label>
+                <div class="flex gap-2">
+                    <input id="addGroupIdInput" type="text" placeholder="123456789@g.us"
+                        class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    <button onclick="openModal('groupSearchModal')"
+                        class="bg-[#333] hover:bg-[#444] text-white px-3 py-2 rounded-lg transition-colors border border-gray-700"
+                        title="Browse Groups">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <p class="text-[10px] text-gray-500 mt-1">Found in GOWA logs or <a href="#"
+                        onclick="openModal('groupSearchModal')" class="text-[#dfffad] hover:underline">browse connected
+                        groups</a>.</p>
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Sender Device (Optional)</label>
+                <select
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    <option value="">Default (First Available)</option>
+                    <option value="my_iphone">My iPhone (Personal)</option>
+                    <option value="office_phone">Office Phone</option>
+                </select>
+                <p class="text-[10px] text-gray-500 mt-1">Which connected status to use for sending.</p>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="closeAllModals()"
+                class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+            <button onclick="closeAllModals()"
+                class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Add</button>
+        </div>
+    </div>
+
+    <!-- Edit Recipient Modal -->
+    <div id="editRecipientModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#262626] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl z-50 hidden opacity-0 transition-opacity scale-95 duration-200">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Edit Recipient</h3>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <div class="p-6 space-y-4">
+            <!-- Note: Type is usually fixed on edit, but we can display the icon -->
+            <div class="flex items-center gap-2 mb-2 text-[#dfffad]">
+                <i id="editIcon" class="fa-solid fa-user"></i> <span id="editTypeLabel"
+                    class="text-sm font-medium uppercase tracking-wide">Person</span>
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Name / Label</label>
+                <input id="editName" type="text"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div>
+                <label id="editValueLabel" class="block text-xs text-gray-400 mb-1">WhatsApp Number</label>
+                <input id="editValue" type="text"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">Sender Device (Optional)</label>
+                <select id="editDeviceId"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+                    <option value="">Default (First Available)</option>
+                    <option value="my_iphone">My iPhone (Personal)</option>
+                    <option value="office_phone">Office Phone</option>
+                </select>
+                <p class="text-[10px] text-gray-500 mt-1">Which connected status to use for sending.</p>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="closeAllModals()"
+                class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+            <button onclick="closeAllModals()"
+                class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                Changes</button>
+        </div>
+    </div>
+
+    <!-- Configure Gateway Modal -->
+    <div id="configureGatewayModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl z-50 hidden opacity-0 transition-opacity scale-95 duration-200">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">GOWA Gateway Configuration</h3>
+            <button onclick="closeAllModals()" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <div class="p-6 space-y-5">
+            <div class="bg-gray-800/50 rounded-xl p-4 flex items-start gap-3 border border-gray-700/50">
+                <i class="fa-solid fa-circle-info text-blue-400 mt-1"></i>
+                <div class="text-sm text-gray-300">
+                    Ensure your GOWA instance is running and accessible. You can use the official hosted API or a
+                    self-hosted Docker container.
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">API Endpoint URL</label>
+                <input type="text" value="https://api.gowa.me/api/send"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+            </div>
+
+            <div>
+                <label class="block text-xs text-gray-400 mb-1">API Key / Token (Optional)</label>
+                <input type="password" value="sk-gowa-secret-token"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 text-sm text-white focus:border-[#dfffad] focus:outline-none font-mono">
+            </div>
+
+            <div class="pt-2">
+                <button
+                    class="text-xs bg-[#333] hover:bg-[#444] text-white px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plug"></i> Test Connection
+                </button>
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
+            <button onclick="closeAllModals()"
+                class="px-5 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-[#333] transition-colors font-medium">Cancel</button>
+            <button onclick="closeAllModals()"
+                class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
+                Configuration</button>
+        </div>
+    </div>
+
+    <!-- Group Search Modal -->
+    <div id="groupSearchModal"
+        class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-[#262626] border border-gray-700 w-full max-w-lg rounded-3xl shadow-2xl z-[60] hidden opacity-0 transition-opacity scale-95 duration-200">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Select WhatsApp Group</h3>
+            <button onclick="closeModal('groupSearchModal')" class="text-gray-400 hover:text-white"><i
+                    class="fa-solid fa-xmark text-xl"></i></button>
+        </div>
+
+        <div class="p-4">
+            <div class="relative mb-4">
+                <i class="fa-solid fa-search absolute left-3 top-2.5 text-gray-500 text-xs"></i>
+                <input type="text" placeholder="Search groups..."
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded px-3 py-2 pl-9 text-sm text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+
+            <div class="space-y-2 max-h-64 overflow-y-auto pr-2">
+                <!-- Mock Group 1 -->
+                <div class="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer group"
+                    onclick="selectGroup('12036302@g.us', 'Family Home')">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-white group-hover:text-[#dfffad]">Family Home</p>
+                            <p class="text-[10px] text-gray-500">12036302@g.us</p>
+                        </div>
+                    </div>
+                    <button
+                        class="w-8 h-8 rounded-full bg-[#333] group-hover:bg-[#dfffad] group-hover:text-black flex items-center justify-center transition-colors"><i
+                            class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <!-- Mock Group 2 -->
+                <div class="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer group"
+                    onclick="selectGroup('12036311@g.us', 'Security Alerts')">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-orange-500/20 text-orange-400 flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-white group-hover:text-[#dfffad]">Security Alerts</p>
+                            <p class="text-[10px] text-gray-500">12036311@g.us</p>
+                        </div>
+                    </div>
+                    <button
+                        class="w-8 h-8 rounded-full bg-[#333] group-hover:bg-[#dfffad] group-hover:text-black flex items-center justify-center transition-colors"><i
+                            class="fa-solid fa-plus"></i></button>
+                </div>
+
+                <!-- Mock Group 3 -->
+                <div class="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl border border-gray-800 hover:border-gray-600 transition-colors cursor-pointer group"
+                    onclick="selectGroup('12036304@g.us', 'Neighborhood Watch')">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="w-8 h-8 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-binoculars"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-white group-hover:text-[#dfffad]">Neighborhood Watch</p>
+                            <p class="text-[10px] text-gray-500">12036304@g.us</p>
+                        </div>
+                    </div>
+                    <button
+                        class="w-8 h-8 rounded-full bg-[#333] group-hover:bg-[#dfffad] group-hover:text-black flex items-center justify-center transition-colors"><i
+                            class="fa-solid fa-plus"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const overlay = document.getElementById('modalOverlay');
+
+            // If opening search modal, ensure overlay is visible (it might already be if parent modal is open)
+            overlay.classList.remove('hidden');
+            overlay.classList.remove('opacity-0');
+
+            modal.classList.remove('hidden');
+            void modal.offsetWidth; // Trigger reflow
+            modal.classList.remove('opacity-0');
+            modal.classList.remove('scale-95');
+
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.add('opacity-0');
+            modal.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                // Only hide overlay/body scroll if NO other modals are open
+                const openModals = document.querySelectorAll('.modal:not(.hidden)');
+                // This check is tricky with transitions. Simplified: if closing 'groupSearchModal', don't close overlay.
+                if (modalId === 'groupSearchModal') {
+                    // Keep overlay for parent modal
+                } else {
+                    // closeAllModals logic usually handles this better, but this is fine for mockup
+                }
+            }, 200);
+        }
+
+        function closeAllModals() {
+            const modals = document.querySelectorAll('[id$="Modal"]');
+            const overlay = document.getElementById('modalOverlay');
+            overlay.classList.add('opacity-0');
+            modals.forEach(modal => {
+                modal.classList.add('opacity-0');
+                modal.classList.add('scale-95');
+            });
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                modals.forEach(modal => modal.classList.add('hidden'));
+                document.body.classList.remove('modal-open');
+            }, 200);
+        }
+
+        function selectGroup(id, name) {
+            const idInput = document.getElementById('addGroupIdInput');
+            if (idInput) idInput.value = id;
+
+            // Try to fill name if empty
+            const inputs = document.querySelectorAll('#addRecipientModal input[type="text"]');
+            if (inputs[0] && !inputs[0].value) inputs[0].value = name;
+
+            closeModal('groupSearchModal');
+        }
+
+        function openEditModal(type, name, value) {
+            const modal = document.getElementById('editRecipientModal');
+
+            // Set values
+            document.getElementById('editName').value = name;
+            document.getElementById('editValue').value = value;
+
+            if (type === 'person') {
+                document.getElementById('editIcon').className = 'fa-solid fa-user';
+                document.getElementById('editTypeLabel').innerText = 'Person';
+                document.getElementById('editValueLabel').innerText = 'WhatsApp Number';
+            } else {
+                document.getElementById('editIcon').className = 'fa-solid fa-users';
+                document.getElementById('editTypeLabel').innerText = 'Group';
+                document.getElementById('editValueLabel').innerText = 'Group ID';
+            }
+
+            openModal('editRecipientModal');
+        }
+
+        function toggleForm(type) {
+            if (type === 'person') {
+                document.getElementById('personInput').classList.remove('hidden');
+                document.getElementById('groupInput').classList.add('hidden');
+            } else {
+                document.getElementById('personInput').classList.add('hidden');
+                document.getElementById('groupInput').classList.remove('hidden');
+            }
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Faces - Velo Vision{% endblock %}
+
+{% block content %}
+<div class="p-8">
+    <header class="flex justify-between items-center mb-10">
+        <div>
+            <h2 class="text-3xl font-semibold">Face Recognition</h2>
+            <p class="text-gray-400 text-sm mt-1">Manage known individuals</p>
+        </div>
+        <button onclick="document.getElementById('addFaceModal').classList.remove('hidden')"
+            class="bg-[#dfffad] text-[#1a1a1a] px-4 py-2 rounded-full text-sm font-bold hover:brightness-90 transition-all flex items-center gap-2 shadow-lg shadow-[#dfffad]/20">
+            <i class="fa-solid fa-plus text-xs"></i> Add New Person
+        </button>
+    </header>
+
+    <!-- Category Filter Pills -->
+    <div class="flex flex-wrap gap-2 mb-8">
+        <button onclick="filterByCategory('all')" data-cat="all"
+            class="cat-pill active px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">All</button>
+    </div>
+
+    <div id="faces-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        <div class="col-span-full text-center py-12 text-gray-500">
+            <i class="fa-solid fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading faces...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Add Face Modal -->
+<div id="addFaceModal"
+    class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-[#2d2d2d] border border-gray-700 w-full max-w-md rounded-3xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-700 flex justify-between items-center">
+            <h3 class="text-xl font-semibold">Add New Person</h3>
+            <button onclick="document.getElementById('addFaceModal').classList.add('hidden')"
+                class="text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+        <form id="addFaceForm" class="p-6 space-y-4">
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Name</label>
+                <input type="text" name="name" required placeholder="e.g. Royyan"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-[#dfffad] focus:outline-none">
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Category</label>
+                <select name="category" id="addFaceCategory"
+                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-3 text-white focus:border-[#dfffad] focus:outline-none">
+                    <option value="Uncategorized">Uncategorized</option>
+                    <option value="Family">Family</option>
+                    <option value="Friend">Friend</option>
+                    <option value="Courier">Courier</option>
+                    <option value="Neighbor">Neighbor</option>
+                    <option value="Staff">Staff</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm text-gray-400 mb-1">Photo (Face visible)</label>
+                <input type="file" name="file" accept="image/*" required
+                    class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#333] file:text-white hover:file:bg-[#444]">
+            </div>
+            <div class="pt-4 flex justify-end gap-3">
+                <button type="button" onclick="document.getElementById('addFaceModal').classList.add('hidden')"
+                    class="px-5 py-2 rounded-xl text-gray-400 hover:text-white font-medium">Cancel</button>
+                <button type="submit" id="submitBtn"
+                    class="bg-[#dfffad] text-[#1a1a1a] px-6 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Upload
+                    & Train</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const categoryColors = {
+        'Family': { bg: 'bg-emerald-500/20', text: 'text-emerald-400', border: 'border-emerald-500/30' },
+        'Friend': { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
+        'Courier': { bg: 'bg-amber-500/20', text: 'text-amber-400', border: 'border-amber-500/30' },
+        'Neighbor': { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
+        'Staff': { bg: 'bg-cyan-500/20', text: 'text-cyan-400', border: 'border-cyan-500/30' },
+        'Uncategorized': { bg: 'bg-gray-500/20', text: 'text-gray-400', border: 'border-gray-500/30' },
+    };
+
+    let allFaces = [];
+    let allCategories = [];
+    let activeFilter = 'all';
+
+    function getCatStyle(cat) {
+        return categoryColors[cat] || categoryColors['Uncategorized'];
+    }
+
+    function filterByCategory(cat) {
+        activeFilter = cat;
+        document.querySelectorAll('.cat-pill').forEach(b => {
+            b.classList.toggle('active', b.dataset.cat === cat);
+        });
+        renderFaces();
+    }
+
+    function renderFaces() {
+        const grid = document.getElementById('faces-grid');
+        const filtered = activeFilter === 'all' ? allFaces : allFaces.filter(f => f.category === activeFilter);
+
+        if (filtered.length === 0) {
+            grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">${activeFilter === 'all' ? 'No known faces yet.' : `No faces in "${activeFilter}" category.`}</div>`;
+            return;
+        }
+
+        grid.innerHTML = '';
+        filtered.forEach(face => {
+            const style = getCatStyle(face.category);
+            const card = document.createElement('div');
+            card.className = 'card rounded-2xl p-5 flex flex-col items-center relative group border border-gray-800 hover:border-gray-600 transition-all';
+            card.innerHTML = `
+                <div class="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-600 mb-3 p-0.5 bg-[#262626] group-hover:border-[#dfffad] transition-all">
+                    <div class="w-full h-full rounded-full bg-gray-800 flex items-center justify-center text-xl font-bold text-gray-500">${face.name[0].toUpperCase()}</div>
+                </div>
+                <h4 class="font-semibold text-base text-white mb-2">${face.name}</h4>
+                <select onchange="updateCategory('${face.name}', this.value)" class="w-full bg-[#1a1a1a] border ${style.border} rounded-lg px-3 py-1.5 text-xs ${style.text} font-bold text-center focus:outline-none focus:border-[#dfffad] cursor-pointer mb-2 transition-all">
+                    ${allCategories.map(c => `<option value="${c}" ${c === face.category ? 'selected' : ''} class="text-white bg-[#1a1a1a]">${c}</option>`).join('')}
+                </select>
+                <button onclick="deleteFace('${face.name}')" class="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"><i class="fa-solid fa-trash mr-1"></i> Delete</button>`;
+            grid.appendChild(card);
+        });
+    }
+
+    async function loadFaces() {
+        const grid = document.getElementById('faces-grid');
+        try {
+            const [facesRes, catRes] = await Promise.all([
+                fetch('/api/faces'),
+                fetch('/api/faces/categories')
+            ]);
+            const facesData = await facesRes.json();
+            const catData = await catRes.json();
+
+            allFaces = facesData.faces || [];
+            allCategories = catData.categories || ['Uncategorized'];
+
+            // Build category pills
+            const pillContainer = document.querySelector('.flex.flex-wrap.gap-2.mb-8');
+            pillContainer.innerHTML = '<button onclick="filterByCategory(\'all\')" data-cat="all" class="cat-pill active px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">All</button>';
+            allCategories.forEach(c => {
+                const style = getCatStyle(c);
+                const count = allFaces.filter(f => f.category === c).length;
+                if (count > 0 || ['Family', 'Friend', 'Courier', 'Neighbor', 'Staff'].includes(c)) {
+                    pillContainer.innerHTML += `<button onclick="filterByCategory('${c}')" data-cat="${c}" class="cat-pill px-4 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all">${c} <span class="ml-1 opacity-60">${count}</span></button>`;
+                }
+            });
+
+            // Update active filter
+            document.querySelectorAll('.cat-pill').forEach(b => {
+                b.classList.toggle('active', b.dataset.cat === activeFilter);
+            });
+
+            renderFaces();
+        } catch (err) { grid.innerHTML = '<p class="text-red-500 text-center col-span-full">Failed to load faces.</p>'; }
+    }
+
+    async function updateCategory(name, category) {
+        try {
+            const res = await fetch(`/api/faces/${encodeURIComponent(name)}/category`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ category })
+            });
+            if (res.ok) loadFaces();
+        } catch (e) { console.error('Update category error:', e); }
+    }
+
+    async function deleteFace(name) {
+        if (confirm(`Delete ${name}?`)) {
+            await fetch(`/api/faces/${name}`, { method: 'DELETE' });
+            loadFaces();
+        }
+    }
+
+    document.getElementById('addFaceForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.innerText = 'Uploading...'; btn.disabled = true;
+        const formData = new FormData(e.target);
+        const name = formData.get('name');
+        const category = formData.get('category');
+        formData.delete('category');
+        try {
+            const res = await fetch(`/api/faces?name=${encodeURIComponent(name)}&category=${encodeURIComponent(category)}`, { method: 'POST', body: formData });
+            if (res.ok) { document.getElementById('addFaceModal').classList.add('hidden'); e.target.reset(); loadFaces(); }
+        } finally { btn.innerText = 'Upload & Train'; btn.disabled = false; }
+    };
+    loadFaces();
+</script>
+{% endblock %}
