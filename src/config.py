@@ -73,7 +73,7 @@ def apply_timezone():
     os.environ['TZ'] = tz
     try:
         time.tzset()
-        logger.info(f"System timezone set to: {tz}")
+        logger.info(f"System timezone successfully set to: {tz}")
     except AttributeError:
         # Windows doesn't have tzset
         logger.warning("time.tzset() not available on this platform.")

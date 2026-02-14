@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 scheduler = BackgroundScheduler()
 
-# Initialize Analysis components on startup
-@router.on_event("startup")
+# Initialize Analysis components
 def start_scheduler():
     analysis.init_analysis()
     whatsapp.init_whatsapp()
-    scheduler.start()
+    if not scheduler.running:
+        scheduler.start()
     sync_schedules()
     logger.info("Scheduler started.")
 
