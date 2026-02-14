@@ -1,5 +1,5 @@
 import cv2
-import face_recognition
+# import face_recognition  # Deferred to lazy loading for low-RAM stability
 import numpy as np
 import os
 import google.generativeai as genai
@@ -28,6 +28,7 @@ class FaceManager:
             if filename.lower().endswith(('.jpg', '.jpeg', '.png')):
                 filepath = os.path.join(self.faces_dir, filename)
                 try:
+                    import face_recognition
                     image = face_recognition.load_image_file(filepath)
                     encodings = face_recognition.face_encodings(image)
                     if encodings:
@@ -48,6 +49,7 @@ class FaceManager:
                 f.write(image_bytes)
             
             # Load and encode
+            import face_recognition
             image = face_recognition.load_image_file(filepath)
             encodings = face_recognition.face_encodings(image)
             
@@ -85,6 +87,7 @@ class FaceManager:
             return False, str(e)
 
     def identify_faces(self, frame_rgb):
+        import face_recognition
         # Resize frame for faster processing
         small_frame = cv2.resize(frame_rgb, (0, 0), fx=0.25, fy=0.25)
         
