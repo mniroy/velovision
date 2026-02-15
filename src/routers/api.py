@@ -769,7 +769,6 @@ def update_camera(cam_data: dict):
         "source": cam_data.get("source", 0),
         "analysis_prompt": cam_data.get("prompt", ""),
         "message_instruction": cam_data.get("message_instruction", ""),
-        "whatsapp_trigger_phrase": cam_data.get("whatsapp_trigger_phrase", ""),
         "webhook_enabled": cam_data.get("webhook_enabled", False),
         "webhook_url": cam_data.get("webhook_url", ""),
         "schedule_enabled": cam_data.get("schedule_enabled", False),
@@ -837,7 +836,7 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
             
         # Extract sender
         if "key" in payload and "remoteJid" in payload["key"]:
-            sender = payload["key"]["remoteJid"]
+            sender = payload["key"].get("remoteJid")
         elif "from" in payload:
             sender = payload["from"]
             
@@ -856,42 +855,10 @@ async def whatsapp_webhook(request: Request, background_tasks: BackgroundTasks):
         logger.info(f"WA Message from {participant_number}: {text}")
         
 
-        # Check Patrol Trigger
-        patrol_config = config.get("patrol", {})
-        patrol_trigger = patrol_config.get("whatsapp_trigger_phrase", "").strip()
-        
-        # Priority 1: Home Patrol
-        if patrol_trigger and patrol_trigger.lower() in text.lower():
-            logger.info("Matched Home Patrol Trigger")
-            recipients = patrol_config.get("recipients") or config.get("whatsapp", {}).get("recipients", [])
-            if is_authorized(sender, recipients):
-                logger.info(f"Triggering Home Patrol via WhatsApp from {participant_number}")
-                background_tasks.add_task(triggers.perform_home_patrol)
-                return {"status": "triggered", "action": "home_patrol"}
-            else:
-                logger.warning(f"Unauthorized Home Patrol attempt from {participant_number}")
-                return {"status": "unauthorized"}
-
-        # Priority 2: Individual Camera Triggers
-        if "check" in text.lower() or "look" in text.lower() or "liat" in text.lower(): # Optimization: only check cams if some intent keyword is present, or just always check
-            # Actually, user might set any trigger phrase, so we should check all
-            pass
-
-        cameras = config.get("cameras", {})
-        for cam_id, cam_conf in cameras.items():
-            cam_trigger = cam_conf.get("whatsapp_trigger_phrase", "").strip()
-            if cam_trigger and cam_trigger.lower() in text.lower():
-                logger.info(f"Matched Camera Trigger for {cam_id}")
-                recipients = cam_conf.get("recipients") or config.get("whatsapp", {}).get("recipients", [])
-                if is_authorized(sender, recipients):
-                    logger.info(f"Triggering analysis for {cam_id} via WhatsApp from {participant_number}")
-                    background_tasks.add_task(triggers.perform_analysis, cam_id)
-                    return {"status": "triggered", "action": "camera_analysis", "camera": cam_id}
-                else:
-                    logger.warning(f"Unauthorized camera trigger attempt for {cam_id} from {participant_number}")
-                    return {"status": "unauthorized"}
-
-
+        # Individual Camera Triggers (Intent-based)
+        if "check" in text.lower() or "look" in text.lower() or "liat" in text.lower():
+             # Basic intent-based triggering logic can be added here if needed in future
+             pass
 
         return {"status": "processed", "message": "No trigger matched"}
 

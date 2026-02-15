@@ -194,14 +194,7 @@
                         class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar"
                         placeholder="Delivery style for summary..."></textarea>
                 </div>
-                <div>
-                    <label
-                        class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest leading-none">WhatsApp
-                        Trigger Phrase</label>
-                    <input type="text" id="patrol-trigger"
-                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none"
-                        placeholder="e.g. how is home right now">
-                </div>
+
                 <div class="pt-4 border-t border-white/5 space-y-3">
                     <div class="flex items-center justify-between">
                         <label
@@ -888,7 +881,7 @@
 
         document.getElementById('patrol-prompt').value = patrolConfig.prompt || '';
         document.getElementById('patrol-msg').value = patrolConfig.message_instruction || '';
-        document.getElementById('patrol-trigger').value = patrolConfig.whatsapp_trigger_phrase || '';
+
         document.getElementById('patrol-schedEnable').checked = !!patrolConfig.schedule_enabled;
         document.getElementById('patrol-schedHrs').value = patrolConfig.schedule_interval_hrs || 6;
         document.getElementById('patrol-webEnable').checked = !!patrolConfig.webhook_enabled;
@@ -1082,10 +1075,7 @@
                             <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">Room / Location</label>
                             <input type="text" id="room-${id}" value="${cam.room || ''}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none" placeholder="e.g. Living Room, Backyard">
                         </div>
-                        <div>
-                            <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">WhatsApp Trigger Phrase</label>
-                            <input type="text" id="trigger-${id}" value="${cam.whatsapp_trigger_phrase || ''}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none" placeholder="e.g. is someone at the front door">
-                        </div>
+
                         <div>
                             <label class="block text-[10px] text-gray-500 mb-2 font-black uppercase tracking-widest">AI Context</label>
                             <textarea id="prompt-${id}" rows="3" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-2xl px-4 py-3 text-xs text-white focus:border-white focus:outline-none resize-none custom-scrollbar" placeholder="What should the AI look for?">${cam.analysis_prompt || ''}</textarea>
@@ -1221,8 +1211,6 @@
                 allCameras[id].analysis_prompt = document.getElementById(`prompt-${id}`).value;
                 allCameras[id].message_instruction = document.getElementById(`msg-${id}`).value;
                 allCameras[id].room = document.getElementById(`room-${id}`).value;
-                const triggerEl = document.getElementById(`trigger-${id}`);
-                if (triggerEl) allCameras[id].whatsapp_trigger_phrase = triggerEl.value;
                 allCameras[id].webhook_enabled = document.getElementById(`webEnable-${id}`).checked;
                 allCameras[id].mqtt_enabled = document.getElementById(`mqttEnable-${id}`).checked;
                 allCameras[id].schedule_enabled = document.getElementById(`schedEnable-${id}`).checked;
@@ -1231,7 +1219,7 @@
 
             patrolConfig.prompt = document.getElementById('patrol-prompt').value;
             patrolConfig.message_instruction = document.getElementById('patrol-msg').value;
-            patrolConfig.whatsapp_trigger_phrase = document.getElementById('patrol-trigger').value;
+
             patrolConfig.schedule_enabled = document.getElementById('patrol-schedEnable').checked;
             patrolConfig.schedule_interval_hrs = document.getElementById('patrol-schedHrs').value;
             patrolConfig.webhook_enabled = document.getElementById('patrol-webEnable').checked;

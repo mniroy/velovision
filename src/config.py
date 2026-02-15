@@ -53,7 +53,6 @@ def get_default_config():
         "patrol": {
             "prompt": "Perform a holistic security patrol of the entire property using these camera snapshots. Summarize the state of the home. If everything is normal, say 'All Clear'. If there are any anomalies or people detected, describe them clearly.",
             "message_instruction": "",
-            "whatsapp_trigger_phrase": "",
             "recipients": [],
             "webhook_enabled": False,
             "mqtt_enabled": False,
