@@ -35,7 +35,7 @@ def _ensure_cameras_initialized():
                 logger.error(f"Failed to add camera {cam_id}: {e}")
 
 @router.get("/video_feed")
-def video_feed(camera_id: str = "default"):
+async def video_feed(camera_id: str = "default", fps: int = 20):
     cam = camera_manager.get_camera(camera_id)
     if not cam:
         cameras = list(camera_manager.cameras.values())
@@ -44,7 +44,7 @@ def video_feed(camera_id: str = "default"):
         else:
             raise HTTPException(status_code=404, detail="Camera not found")
             
-    return StreamingResponse(generate_frames(cam), media_type="multipart/x-mixed-replace; boundary=frame")
+    return StreamingResponse(generate_frames(cam, fps=fps), media_type="multipart/x-mixed-replace; boundary=frame")
 
 @router.get("/snapshot")
 def get_snapshot(camera_id: str = "default"):

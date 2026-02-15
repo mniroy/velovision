@@ -145,7 +145,13 @@
             color: #1a1a1a;
         }
 
-        {% block extra_style %}{% endblock %}
+            {
+            % block extra_style %
+        }
+
+            {
+            % endblock %
+        }
     </style>
 </head>
 
@@ -217,8 +223,55 @@
         {% block content %}{% endblock %}
     </main>
 
+    <!-- Global Modal: Camera Enlarge -->
+    <div id="enlargeModal"
+        class="fixed inset-0 bg-black/90 backdrop-blur-md z-[500] hidden flex items-center justify-center p-4 md:p-10"
+        onclick="closeEnlarge()">
+        <div class="relative w-full max-w-6xl aspect-video bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 group"
+            onclick="event.stopPropagation()">
+            <img id="enlargedImg" src="" class="w-full h-full object-contain">
+
+            <div class="absolute top-8 left-8 flex flex-col gap-2">
+                <div class="flex items-center gap-3">
+                    <span
+                        class="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]"></span>
+                    <h3 id="enlargedTitle"
+                        class="text-h2 font-black text-white uppercase tracking-[0.2em] drop-shadow-lg">Camera</h3>
+                </div>
+                <div
+                    class="bg-black/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 inline-flex items-center gap-2 w-fit">
+                    <i class="fa-solid fa-tower-broadcast text-[10px] text-gray-400"></i>
+                    <span class="text-[10px] font-black uppercase tracking-widest text-gray-300">Live Secure
+                        Stream</span>
+                </div>
+            </div>
+
+            <button onclick="closeEnlarge()"
+                class="absolute top-8 right-8 w-12 h-12 bg-white/5 hover:bg-white/15 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all border border-white/10 group-hover:scale-110">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="absolute bottom-8 right-8">
+                <div
+                    class="bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-3">
+                    <i class="fa-solid fa-circle-info text-blue-400"></i>
+                    <span class="text-[10px] font-bold text-gray-300 uppercase tracking-widest">Press ESC to exit</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Global Scripts -->
     <script>
+        // ESC key listener for modals
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeEnlarge();
+                // Close other modals if they have standard close hooks
+                if (typeof closeModal === 'function') closeModal();
+            }
+        });
+
         function toggleNotifications() {
             const panel = document.getElementById('notifPanel');
             if (panel) panel.classList.toggle('open');
@@ -231,16 +284,44 @@
             const img = document.getElementById('enlargedImg');
             const title = document.getElementById('enlargedTitle');
             if (modal && img && title) {
-                img.src = `/api/video_feed?camera_id=${id}`;
+                // Remove stream=live as it causes loading issues in some browsers
+                // Just use camera_id and a simple cache buster if needed
+                img.src = `/api/video_feed?camera_id=${id}&t=${Date.now()}`;
                 title.innerText = name;
                 modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                // Set stream indicator
+                const indicator = modal.querySelector('.fa-tower-broadcast');
+                if (indicator) indicator.className = 'fa-solid fa-tower-broadcast text-[10px] text-red-400';
+                const label = modal.querySelector('span.text-[10px]');
+                if (label) label.innerText = 'Live Secure Stream';
+            }
+        }
+
+        function enlargeImage(url, name) {
+            const modal = document.getElementById('enlargeModal');
+            const img = document.getElementById('enlargedImg');
+            const title = document.getElementById('enlargedTitle');
+            if (modal && img && title) {
+                img.src = url;
+                title.innerText = name;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                // Set static indicator
+                const indicator = modal.querySelector('.fa-tower-broadcast');
+                if (indicator) indicator.className = 'fa-solid fa-image text-[10px] text-blue-400';
+                const label = modal.querySelector('span.text-[10px]');
+                if (label) label.innerText = 'Logged Capture';
             }
         }
 
         function closeEnlarge() {
             const modal = document.getElementById('enlargeModal');
             const img = document.getElementById('enlargedImg');
-            if (modal) modal.classList.add('hidden');
+            if (modal) {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
             if (img) img.src = '';
         }
 
@@ -248,11 +329,13 @@
             if (img.dataset.retry === undefined) img.dataset.retry = 0;
             const retryCount = parseInt(img.dataset.retry);
 
-            if (retryCount < 2) {
+            if (retryCount < 5) {
                 img.dataset.retry = retryCount + 1;
                 const src = img.src;
-                const baseSrc = src.split('&t=')[0];
-                setTimeout(() => { img.src = baseSrc + '&t=' + Date.now(); }, 3000);
+                const baseSrc = src.split(/[&?]t=/)[0];
+                setTimeout(() => {
+                    img.src = baseSrc + (baseSrc.includes('?') ? '&' : '?') + 't=' + Date.now();
+                }, 3000);
             } else {
                 const container = img.parentElement;
                 img.classList.add('hidden');
@@ -276,8 +359,9 @@
             if (img && label) {
                 img.dataset.retry = 0;
                 img.classList.remove('hidden');
-                const baseSrc = img.src.split('&t=')[0];
-                img.src = baseSrc + '&t=' + Date.now();
+                const src = img.src;
+                const baseSrc = src.split(/[&?]t=/)[0];
+                img.src = baseSrc + (baseSrc.includes('?') ? '&' : '?') + 't=' + Date.now();
                 label.remove();
             }
         }

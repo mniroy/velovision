@@ -76,8 +76,8 @@
         <div class="col-span-12 lg:col-span-4 h-full">
             <div id="latest-event-card"
                 class="card rounded-3xl p-6 flex flex-col h-full relative overflow-hidden group">
-                <h3 class="text-h2 font-bold mb-4">Latest Detection</h3>
-                <div id="latest-content" class="flex-1 flex flex-col items-center justify-center">
+                <h3 class="text-h2 font-bold mb-4">Recent Detections</h3>
+                <div id="latest-content" class="flex-1 flex flex-col gap-4 mt-2">
                     <i class="fa-solid fa-video-slash text-gray-600 text-3xl"></i>
                 </div>
                 <div class="mt-4">
@@ -235,6 +235,10 @@
                     div.innerHTML = `
                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" onerror="handleImageError(this)">
                         <div class="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-caption font-black tracking-widest text-white border border-white/10 uppercase">${cam.name}</div>
+                        <div class="absolute top-4 right-4 flex items-center gap-1.5 bg-black/40 backdrop-blur-md px-2 py-1 rounded-full border border-white/10">
+                            <span class="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_5px_rgba(34,197,94,0.5)]"></span>
+                            <span class="text-[8px] font-black text-white tracking-widest uppercase">Live View</span>
+                        </div>
                         <div class="absolute bottom-4 right-4 bg-white/10 backdrop-blur-md w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/20 transition-colors">
                             <i class="fa-solid fa-expand text-[10px]"></i>
                         </div>
@@ -243,31 +247,62 @@
                 });
             }
 
-            // Update Latest Event Card
-            if (stats.latest_event) {
-                const latest = stats.latest_event;
-                const latestContent = document.getElementById('latest-content');
-                if (latestContent) {
-                    const faceLabel = latest.faces && latest.faces.length > 0 ? latest.faces.join(', ') : 'Activity Detected';
-                    const analysisText = latest.analysis_text || '';
-                    const truncated = analysisText.length > 150 ? analysisText.substring(0, 150) + '…' : analysisText;
+            // Update Recent Detections Card
+            const latestContent = document.getElementById('latest-content');
+            if (latestContent && Array.isArray(recentEvents) && recentEvents.length > 0) {
+                latestContent.innerHTML = '';
+                // Show top 4 recent events
+                recentEvents.slice(0, 4).forEach((ev, idx) => {
+                    const isAction = ev.type !== undefined;
+                    const title = isAction ? (ev.type === 'home_patrol' ? 'Home Patrol' : 'Person Finder') : (ev.camera_id || 'Camera');
+                    const faceLabel = isAction ? (ev.type === 'home_patrol' ? 'System patrol' : 'Searching...') : (ev.faces && ev.faces.length > 0 ? ev.faces.join(', ') : 'Motion Detected');
+                    const description = ev.analysis_text || ev.summary || '';
+                    const image = ev.image_url;
 
-                    latestContent.innerHTML = `
-                        <div class="w-full space-y-3">
-                            <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5">
-                                <img src="${latest.image_url}" class="w-full h-full object-cover transition-transform group-hover:scale-105" onerror="handleImageError(this)">
-                                <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-caption font-black tracking-widest text-white border border-white/10 uppercase">${latest.camera_id}</div>
-                            </div>
-                            <div>
-                                <div class="flex items-center justify-between mb-1">
-                                    <p class="text-body font-bold text-white capitalize">${faceLabel}</p>
-                                    <p class="text-caption text-gray-500 italic">${new Date(latest.timestamp).toLocaleTimeString()}</p>
+                    if (idx === 0) {
+                        // Featured Latest
+                        latestContent.innerHTML += `
+                            <div class="w-full space-y-3 pb-4 mb-2 border-b border-white/5">
+                                <div class="relative w-full aspect-video rounded-2xl overflow-hidden border border-white/5 cursor-pointer group" onclick="enlargeImage('${image}', '${title}')">
+                                    <img src="${image}" class="w-full h-full object-cover transition-transform group-hover:scale-105" onerror="handleImageError(this)">
+                                    <div class="absolute inset-0 bg-white/0 group-hover:bg-white/10 flex items-center justify-center transition-all">
+                                        <i class="fa-solid fa-expand text-white text-xl opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    </div>
+                                    <div class="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] font-black tracking-widest text-white border border-white/10 uppercase">${title}</div>
                                 </div>
-                                ${truncated ? `<p class="text-body text-gray-400 leading-relaxed">${truncated}</p>` : ''}
+                                <div>
+                                    <div class="flex items-center justify-between mb-1">
+                                        <p class="text-body font-bold text-white capitalize">${faceLabel}</p>
+                                        <p class="text-caption text-gray-500 italic">${new Date(ev.timestamp).toLocaleTimeString()}</p>
+                                    </div>
+                                    <p class="text-body text-gray-400 leading-relaxed line-clamp-2">${description}</p>
+                                </div>
                             </div>
-                        </div>
-                    `;
-                }
+                        `;
+                    } else {
+                        // Smaller entries
+                        latestContent.innerHTML += `
+                            <div class="flex gap-4 items-center group/item cursor-pointer hover:bg-white/5 p-2 rounded-xl transition-colors" onclick="enlargeImage('${image}', '${title}')">
+                                <div class="relative w-16 h-12 flex-shrink-0">
+                                    <img src="${image}" class="w-full h-full rounded-lg object-cover border border-gray-800" onerror="handleImageError(this)">
+                                    ${isAction ? '<div class="absolute inset-0 bg-blue-500/10 rounded-lg"></div>' : ''}
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover/item:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+                                        <i class="fa-solid fa-expand text-white text-[10px]"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <p class="text-caption font-bold text-white uppercase tracking-tight truncate">${title}: ${faceLabel}</p>
+                                        <p class="text-[10px] text-gray-600 whitespace-nowrap">${new Date(ev.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    </div>
+                                    <p class="text-caption text-gray-500 line-clamp-1">${description}</p>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+            } else if (latestContent) {
+                latestContent.innerHTML = '<div class="flex-1 flex flex-col items-center justify-center text-gray-600 italic">No recent activity</div>';
             }
         } catch (e) { console.error("Dashboard Load Error:", e); }
     }

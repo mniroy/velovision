@@ -1043,9 +1043,11 @@
 
             card.innerHTML = `
                 <div class="w-full xl:w-72 shrink-0 space-y-4">
-                    <div class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer">
+                    <div class="aspect-video bg-black rounded-2xl overflow-hidden relative group border border-white/5 cursor-pointer" onclick="enlargeCamera('${id}', '${cam.name}')">
                         <img src="/api/snapshot?camera_id=${id}&t=${Date.now()}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90 group-hover:opacity-100" onerror="this.src='https://images.unsplash.com/photo-1557683316-973673baf926?w=400&h=225&fit=crop'">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all"></div>
+                        <div class="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all flex items-center justify-center">
+                            <i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                        </div>
                         <div class="absolute top-2 right-2 flex gap-1.5">
                             <div class="bg-black/60 px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest text-white border border-white/20 backdrop-blur-md">
                                 <i class="fa-solid fa-bolt mr-1"></i> Diagnostic
