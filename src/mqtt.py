@@ -499,7 +499,40 @@ class MQTTClient:
                 "unique_id": f"{node_id}_meter_{m_id}"
             })
 
-        # 6. Per-Camera Sensors & Cameras
+        # 6. Global Trigger Buttons
+        # Doorbell IQ Trigger
+        if config.get("doorbell_iq", {}).get("mqtt_enabled"):
+            self._publish_ha_config(disc_prefix, "button", "trigger_doorbell", {
+                "name": "VeloVision Trigger Doorbell IQ",
+                "command_topic": f"{self.base_topic}/trigger/doorbell_iq",
+                "payload_press": '{"action": "run"}',
+                "icon": "mdi:doorbell-video",
+                "device": device_info,
+                "unique_id": f"{node_id}_trigger_doorbell"
+            })
+
+        # Home Patrol Trigger
+        if config.get("patrol", {}).get("mqtt_enabled"):
+            self._publish_ha_config(disc_prefix, "button", "trigger_patrol", {
+                "name": "VeloVision Trigger Home Patrol",
+                "command_topic": f"{self.base_topic}/trigger/patrol",
+                "payload_press": '{"action": "run"}',
+                "icon": "mdi:shield-search",
+                "device": device_info,
+                "unique_id": f"{node_id}_trigger_patrol"
+            })
+
+        # Utility Meter Trigger
+        self._publish_ha_config(disc_prefix, "button", "trigger_utility_meter", {
+            "name": "VeloVision Trigger Utility Read",
+            "command_topic": f"{self.base_topic}/trigger/utility_meter",
+            "payload_press": '{"action": "run"}',
+            "icon": "mdi:counter",
+            "device": device_info,
+            "unique_id": f"{node_id}_trigger_utility"
+        })
+
+        # 7. Per-Camera Sensors & Cameras
         for cam_id, cam_cfg in config.get("cameras", {}).items():
             if not cam_cfg.get("enabled", True):
                 continue
@@ -519,8 +552,6 @@ class MQTTClient:
             })
 
             # Camera Entity (Latest Snapshot)
-            # Note: HA MQTT Camera expects raw bytes, but we send base64 currently. 
-            # We'll use a snapshot topic for the camera entity.
             self._publish_ha_config(disc_prefix, "camera", f"{clean_id}_snapshot", {
                 "name": f"VeloVision {cam_name} Snapshot",
                 "topic": f"{self.base_topic}/cameras/{cam_id}/snapshot",
@@ -528,7 +559,18 @@ class MQTTClient:
                 "unique_id": f"{node_id}_{clean_id}_snapshot"
             })
 
-        logger.info(f"Published HA discovery for {len(config.get('cameras', {}))} cameras and system sensors.")
+            # Per-Camera Analyze Button
+            if cam_cfg.get("mqtt_enabled"):
+                self._publish_ha_config(disc_prefix, "button", f"trigger_analyze_{clean_id}", {
+                    "name": f"VeloVision Analyze {cam_name}",
+                    "command_topic": f"{self.base_topic}/trigger/analyze/{cam_id}",
+                    "payload_press": '{"action": "run"}',
+                    "icon": "mdi:magnify",
+                    "device": device_info,
+                    "unique_id": f"{node_id}_trigger_analyze_{clean_id}"
+                })
+
+        logger.info(f"Published HA discovery for {len(config.get('cameras', {}))} cameras and system triggers.")
 
     def _publish_ha_config(self, prefix, component, object_id, payload):
         """Helper to publish HA MQTT discovery config."""
