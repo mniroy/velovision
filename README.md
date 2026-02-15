@@ -18,47 +18,40 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 - **Connection testing** — Validate camera feeds before saving
 - **Live dashboard feeds** — Real-time snapshots from all cameras at a glance
 
-![Cameras](docs/screenshots/cameras.png)
-
 ### System Configuration
 - **Unified Settings hub** — Manage system timezone, AI engine parameters, and service provider credentials in one place.
 - **Service management** — Configure Google Gemini or OpenAI vision models with ease.
 - **Configurable engine parameters** — Tune model selection, token limits, and temperature.
 
-![Settings](docs/screenshots/settings.png)
 
 ### Vision AI Tools
 Advanced intelligence modules designed for specific home security and monitoring tasks:
 
-#### 🔔 Doorbell IQ
+#### Doorbell IQ
 - **Visitor Analysis** — AI identifies who is at the door, their appearance, and suspicious behavior.
 - **Package Detection** — Automated alerts for package deliveries and pickups.
 - **Multi-Channel Alerts** — Smart notifications via WhatsApp (with image), Webhook, and MQTT.
 - **Trigger Versatility** — Activate via physical doorbell button (MQTT), dedicated Webhook, or WhatsApp phrase.
 
-#### 📊 Utility Meter
+#### Utility Meter
 - **Multi-Meter Tracking** — Monitor multiple physical meters (Electricity, Water, Gas) simultaneously.
 - **Optical Reading** — AI reads physical analog or digital digits from camera snapshots.
 - **Flexible Scheduling** — Automated meter readings on Hourly or Daily intervals.
 - **Digital Records** — Parses physical readings into digital values sent directly to your phone.
 
-#### 🛡️ Home Patrol
+#### Home Patrol
 - **Holistic property patrol** — AI reviews all cameras simultaneously and summarizes the state of the home.
 - **Per-camera intelligence** — Custom review context and notification rules per camera.
 - **Periodic scheduling** — Automated patrols on configurable intervals.
 
-#### 🔍 People Finder
+#### People Finder
 - **Targeted Tracking** — Search all camera feeds specifically for registered individuals.
 - **Arrival Alerts** — Get notified exactly when a family member or expected guest arrives home.
-
-![Vision AI](docs/screenshots/patrol.png)
 
 ### WhatsApp Notifications (GOWA)
 - **Real-time alerts** — Receive detection alerts on WhatsApp via the GOWA service
 - **Recipient management** — Add individual contacts or group recipients
 - **Configurable gateway** — Connect to your own GOWA WhatsApp gateway instance
-
-![Messages](docs/screenshots/messages.png)
 
 ### Event Timeline
 - **Activity history** — Browse all detection events with timestamps and AI descriptions
@@ -66,21 +59,15 @@ Advanced intelligence modules designed for specific home security and monitoring
 - **Date picker** — Navigate to any date in the event history
 - **Event actions** — Download snapshots or delete events
 
-![Timeline](docs/screenshots/timeline.png)
-
 ### Face Recognition
 - **Known person registry** — Add and categorize known individuals (Family, Friend, Neighbor, Courier, Staff)
 - **Face encoding** — Upload photos to build recognition profiles
 - **Category filtering** — Filter faces by category
 
-![Faces](docs/screenshots/faces.png)
-
 ### Analytics Dashboard
 - **Detection charts** — Visualize activity trends over time (Week, Month, YTD, All)
 - **Category breakdown** — Filter by detection categories
 - **Event statistics** — Track total events and patterns
-
-![Analytics](docs/screenshots/analytics.png)
 
 ### Backup & Recovery (Integrated)
 - **One-click backup** — Download a complete snapshot of your entire system configuration from the Settings hub.
@@ -89,20 +76,6 @@ Advanced intelligence modules designed for specific home security and monitoring
 
 ---
 
-## Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| **Backend** | Python 3.11, FastAPI, Uvicorn |
-| **AI Engine** | Google Gemini AI / OpenAI |
-| **Computer Vision** | OpenCV, scikit-image, dlib |
-| **Face Recognition** | face-recognition (dlib) |
-| **Database** | SQLAlchemy (SQLite) |
-| **Frontend** | Jinja2 Templates, Tailwind CSS |
-| **Messaging** | WhatsApp (GOWA), MQTT, Webhooks |
-| **Camera Protocols** | RTSP, ONVIF, HTTP |
-| **Scheduling** | APScheduler |
-| **Deployment** | Docker (Multi-platform: amd64/arm64) |
 
 ---
 
@@ -147,29 +120,7 @@ Advanced intelligence modules designed for specific home security and monitoring
     - Navigate to **Messages** → Configure WhatsApp gateway (optional)
     - Navigate to **AI Patrol** → Set up patrol schedules
 
----
 
-### Portainer Stack Configuration
-
-For deployment via **Portainer**, use the following stack configuration:
-
-```yaml
-version: '3.8'
-
-services:
-  velovision:
-    image: mniroy/velovision:latest
-    container_name: velovision
-    ports:
-      - "8000:8000"
-    environment:
-      - TZ=Asia/Jakarta
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - ./data:/data
-    restart: unless-stopped
-```
 
 #### Environment Variables
 
