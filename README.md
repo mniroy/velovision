@@ -29,14 +29,31 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 
 ![Settings](docs/screenshots/settings.png)
 
-### AI Patrol
-- **Holistic property patrol** — AI reviews all cameras simultaneously and summarizes the state of the home
-- **Per-camera intelligence** — Custom review context and notification rules per camera
-- **Periodic scheduling** — Automated patrols on configurable intervals (e.g., every 6 hours)
-- **WhatsApp triggers** — Respond to natural language queries like "how is home right now"
-- **Webhook triggers** — Trigger patrols via REST API endpoints
+### Vision AI Tools
+Advanced intelligence modules designed for specific home security and monitoring tasks:
 
-![AI Patrol](docs/screenshots/patrol.png)
+#### 🔔 Doorbell IQ
+- **Visitor Analysis** — AI identifies who is at the door, their appearance, and suspicious behavior.
+- **Package Detection** — Automated alerts for package deliveries and pickups.
+- **Multi-Channel Alerts** — Smart notifications via WhatsApp (with image), Webhook, and MQTT.
+- **Trigger Versatility** — Activate via physical doorbell button (MQTT), dedicated Webhook, or WhatsApp phrase.
+
+#### 📊 Utility Meter
+- **Multi-Meter Tracking** — Monitor multiple physical meters (Electricity, Water, Gas) simultaneously.
+- **Optical Reading** — AI reads physical analog or digital digits from camera snapshots.
+- **Flexible Scheduling** — Automated meter readings on Hourly or Daily intervals.
+- **Digital Records** — Parses physical readings into digital values sent directly to your phone.
+
+#### 🛡️ Home Patrol
+- **Holistic property patrol** — AI reviews all cameras simultaneously and summarizes the state of the home.
+- **Per-camera intelligence** — Custom review context and notification rules per camera.
+- **Periodic scheduling** — Automated patrols on configurable intervals.
+
+#### 🔍 People Finder
+- **Targeted Tracking** — Search all camera feeds specifically for registered individuals.
+- **Arrival Alerts** — Get notified exactly when a family member or expected guest arrives home.
+
+![Vision AI](docs/screenshots/patrol.png)
 
 ### WhatsApp Notifications (GOWA)
 - **Real-time alerts** — Receive detection alerts on WhatsApp via the GOWA service
@@ -84,10 +101,10 @@ A self-hosted, Docker-based surveillance platform with multi-camera management, 
 | **Face Recognition** | face-recognition (dlib) |
 | **Database** | SQLAlchemy (SQLite) |
 | **Frontend** | Jinja2 Templates, Tailwind CSS |
-| **Messaging** | WhatsApp via GOWA Gateway |
+| **Messaging** | WhatsApp (GOWA), MQTT, Webhooks |
 | **Camera Protocols** | RTSP, ONVIF, HTTP |
 | **Scheduling** | APScheduler |
-| **Deployment** | Docker, Docker Compose |
+| **Deployment** | Docker (Multi-platform: amd64/arm64) |
 
 ---
 
@@ -188,6 +205,7 @@ velovision/
 │   ├── ai_analyzer.py         # AI vision analysis (Gemini/OpenAI)
 │   ├── face_manager.py        # Face recognition engine
 │   ├── patrol_triggers.py     # Automated patrol scheduling
+│   ├── mqtt.py                # MQTT client & trigger handlers
 │   ├── routers/
 │   │   ├── api.py             # REST API endpoints
 │   │   └── ui.py              # HTML page routes
