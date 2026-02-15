@@ -263,29 +263,51 @@ class AIAnalyzer:
 
             inputs.append(f"PATROL TASK:\n{global_prompt}")
             
-            # Build camera name to ID mapping
-            cam_id_map = {}
+            # Group images by Room if available
+            room_groups = {}
             for item in images_data:
-                img = Image.open(io.BytesIO(item["image_bytes"]))
-                cam_label = item['camera_name']
-                cam_id_map[cam_label] = item.get('camera_id', cam_label)
-                inputs.append(f"Camera: {cam_label}")
-                inputs.append(img)
+                room = item.get("room")
+                # Normalize room
+                if room and str(room).strip():
+                    group_key = f"Room: {str(room).strip()}"
+                else:
+                    group_key = f"Camera: {item['camera_name']}"
+                
+                if group_key not in room_groups:
+                    room_groups[group_key] = []
+                room_groups[group_key].append(item)
+
+            inputs.append(f"PATROL TASK:\n{global_prompt}")
+            
+            # Add images grouped by location
+            cam_id_map = {}
+            for group_name, items in room_groups.items():
+                inputs.append(f"\nLOCATION: {group_name}")
+                for item in items:
+                    img = Image.open(io.BytesIO(item["image_bytes"]))
+                    cam_label = item['camera_name']
+                    cam_id_map[cam_label] = item.get('camera_id', cam_label)
+                    inputs.append(f"View from {cam_label}:")
+                    inputs.append(img)
             
             inputs.append("\nIMPORTANT INSTRUCTIONS:")
-            inputs.append("1. For each camera, identify ALL people visible. If they match a reference image, state their name. Otherwise mark as 'Unknown'.")
-            inputs.append("2. Determine which camera shows the PRIMARY ACTIVITY (most people, most movement, or most noteworthy scene).")
-            inputs.append("3. Start your response with a JSON block in this exact format:")
+            inputs.append("1. Analyze the home holistically. If multiple cameras show the same room, combine their insights for that room.")
+            inputs.append("2. For each camera view, identify ALL people visible. If they match a reference image, state their name. Otherwise mark as 'Unknown'.")
+            inputs.append("3. Determine which LOCATION (Room or Camera) shows the PRIMARY ACTIVITY.")
+            inputs.append("4. Start your response with a JSON block in this exact format:")
             inputs.append("```json")
             inputs.append("{")
-            inputs.append('  "primary_camera": "Camera Name with main activity",')
-            inputs.append('  "cameras": {')
-            inputs.append('    "Camera Name": [{"name": "PersonName or Unknown", "status": "Known or Unknown"}],')
-            inputs.append('    "Camera Name 2": []')
+            inputs.append('  "primary_activity_location": "Name of room or camera with most activity",')
+            inputs.append('  "locations": {')
+            inputs.append('    "Room: Living Room": {')
+            inputs.append('       "status": "All Clear / Activity Detected",')
+            inputs.append('       "people": [{"name": "PersonName", "status": "Known"}],')
+            inputs.append('       "cameras_involved": ["Cam1", "Cam2"]')
+            inputs.append('    }')
             inputs.append("  }")
             inputs.append("}")
             inputs.append("```")
-            inputs.append("4. After the JSON block, provide your descriptive patrol summary. Mention recognized people by name.")
+            inputs.append("5. After the JSON block, provide your descriptive patrol summary. Focus on locations/rooms rather than listing every camera individually.")
             
             response = self.model.generate_content(inputs)
             text = response.text
@@ -300,27 +322,63 @@ class AIAnalyzer:
                     json_str = text.split("```json")[1].split("```")[0].strip()
                     parsed = json.loads(json_str)
                     
-                    # Resolve primary camera name to ID
-                    primary_name = parsed.get("primary_camera", "")
-                    primary_camera_id = cam_id_map.get(primary_name)
-                    # Fallback: fuzzy match if exact name doesn't match
-                    if not primary_camera_id:
-                        for cam_name, cam_id in cam_id_map.items():
-                            if cam_name.lower() in primary_name.lower() or primary_name.lower() in cam_name.lower():
-                                primary_camera_id = cam_id
-                                break
+                    # 1. Resolve Primary Camera from "primary_activity_location"
+                    # If location has multiple cameras, pick the first one
+                    primary_loc = parsed.get("primary_activity_location", "")
+                    
+                    # 2. Map location results back to detections_by_camera
+                    locations = parsed.get("locations", {})
+                    
+                    for loc_name, details in locations.items():
+                        people = details.get("people", [])
+                        
+                        # Find which cameras are in this location
+                        involved_cams = details.get("cameras_involved", [])
+                        
+                        # Use all cameras mapped to this room/location if AI didn't specify
+                        if not involved_cams:
+                            # Try to match loc_name to our room_groups keys
+                            # loc_name might be "Room: Living Room" or just "Living Room"
+                            # Our keys are "Room: Living Room" or "Camera: Name"
+                            
+                            # Exact match key
+                            if loc_name in room_groups:
+                                involved_cams = [x['camera_name'] for x in room_groups[loc_name]]
+                            else:
+                                # Fuzzy match
+                                for group_key, items in room_groups.items():
+                                    if loc_name.lower() in group_key.lower():
+                                        involved_cams = [x['camera_name'] for x in items]
+                                        break
+                        
+                        # Assign people detections to these cameras
+                        # (Since we don't know exactly which camera saw whom in a multi-cam room, 
+                        #  we assign to all of them or just the first to avoid duplicates in total count.
+                        #  Better: Assign to the first camera in the room to represent the room's activity.)
+                        if involved_cams:
+                            # Resolve first camera name to ID
+                            first_cam_name = involved_cams[0]
+                            cam_id = cam_id_map.get(first_cam_name)
+                            if not cam_id:
+                                # Fuzzy lookup
+                                for cn, ci in cam_id_map.items():
+                                    # Check if one string contains the other (case-insensitive)
+                                    if cn.lower() in first_cam_name.lower() or first_cam_name.lower() in cn.lower():
+                                        cam_id = ci
+                                        break
+                            
+                            if cam_id:
+                                detections_by_camera[cam_id] = people
+                                
+                                # Check if this was the primary location
+                                # Matches if any part of the location name matches the primary location string
+                                # e.g. primary="Living Room", loc="Room: Living Room" -> match
+                                if primary_loc:
+                                    norm_primary = str(primary_loc).lower()
+                                    norm_loc = str(loc_name).lower()
+                                    if norm_primary in norm_loc or norm_loc in norm_primary:
+                                        primary_camera_id = cam_id
 
-                    # Resolve per-camera detections to use camera IDs
-                    cameras_data = parsed.get("cameras", {})
-                    for cam_name, people_list in cameras_data.items():
-                        resolved_id = cam_id_map.get(cam_name)
-                        if not resolved_id:
-                            for cn, ci in cam_id_map.items():
-                                if cn.lower() in cam_name.lower() or cam_name.lower() in cn.lower():
-                                    resolved_id = ci
-                                    break
-                        if resolved_id:
-                            detections_by_camera[resolved_id] = people_list
             except Exception as je:
                 logger.warning(f"Could not parse patrol detections JSON: {je}")
 
@@ -370,25 +428,44 @@ class AIAnalyzer:
             if custom_prompt:
                 inputs.append(f"\nADDITIONAL INSTRUCTIONS: {custom_prompt}")
 
-            # Add camera feeds
-            cam_id_map = {}
+            # Group images by Room if available
+            room_groups = {}
             for item in images_data:
-                img = Image.open(io.BytesIO(item["image_bytes"]))
-                cam_label = item['camera_name']
-                cam_id_map[cam_label] = item.get('camera_id', cam_label)
-                inputs.append(f"Camera: {cam_label}")
-                inputs.append(img)
+                room = item.get("room")
+                # Normalize room
+                if room and str(room).strip():
+                    group_key = f"Room: {str(room).strip()}"
+                else:
+                    group_key = f"Camera: {item['camera_name']}"
+                
+                if group_key not in room_groups:
+                    room_groups[group_key] = []
+                room_groups[group_key].append(item)
+
+            inputs.append(f"\nLOCATION CONTEXT: The cameras are installed in these locations. If multiple cameras cover the same room, combine their views.")
+
+            # Add camera feeds grouped by location
+            cam_id_map = {}
+            for group_name, items in room_groups.items():
+                inputs.append(f"\nLOCATION: {group_name}")
+                for item in items:
+                    img = Image.open(io.BytesIO(item["image_bytes"]))
+                    cam_label = item['camera_name']
+                    cam_id_map[cam_label] = item.get('camera_id', cam_label)
+                    inputs.append(f"View from {cam_label}:")
+                    inputs.append(img)
 
             inputs.append(f"\nTASK: Search for the target people ({', '.join(target_names)}) in ALL camera feeds above.")
-            inputs.append("For each camera, report whether each target person is found or not.")
-            inputs.append("If found, describe what they are doing and their location within the scene.")
+            inputs.append("For each location, report whether any target person is found.")
+            inputs.append("If found, describe what they are doing and their exact location within the room.")
             inputs.append("Start your response with a JSON block in this exact format:")
             inputs.append("```json")
             inputs.append("{")
-            inputs.append('  "cameras": {')
-            inputs.append('    "Camera Name": {')
+            inputs.append('  "locations": {')
+            inputs.append('    "Room: Living Room": {')
             inputs.append('      "found": [{"name": "PersonName", "activity": "description of what they are doing", "confidence": "high/medium/low"}],')
-            inputs.append('      "not_found": ["PersonName2"]')
+            inputs.append('      "not_found": ["PersonName2"],')
+            inputs.append('      "cameras_involved": ["Cam1", "Cam2"]')
             inputs.append("    }")
             inputs.append("  }")
             inputs.append("}")
@@ -406,20 +483,50 @@ class AIAnalyzer:
                     json_str = text.split("```json")[1].split("```")[0].strip()
                     parsed = json.loads(json_str)
 
-                    cameras_data = parsed.get("cameras", {})
-                    for cam_name, cam_results in cameras_data.items():
-                        resolved_id = cam_id_map.get(cam_name)
-                        if not resolved_id:
-                            for cn, ci in cam_id_map.items():
-                                if cn.lower() in cam_name.lower() or cam_name.lower() in cn.lower():
-                                    resolved_id = ci
-                                    break
-                        if resolved_id:
-                            results_by_camera[resolved_id] = {
-                                "camera_name": cam_name,
-                                "found": cam_results.get("found", []),
-                                "not_found": cam_results.get("not_found", [])
-                            }
+                    locations_data = parsed.get("locations", {})
+                    # Backward compatibility if AI outputs old structure
+                    if not locations_data:
+                         locations_data = parsed.get("cameras", {})
+
+                    for loc_name, loc_results in locations_data.items():
+                        # Determine involved cameras
+                        involved_cams = loc_results.get("cameras_involved", [])
+                        
+                        if not involved_cams:
+                            # Fallback: assume loc_name is camera name or fuzzy match room
+                            if loc_name in room_groups:
+                                involved_cams = [x['camera_name'] for x in room_groups[loc_name]]
+                            else:
+                                matched = False
+                                for group_key, items in room_groups.items():
+                                    if loc_name.lower() in group_key.lower():
+                                        involved_cams = [x['camera_name'] for x in items]
+                                        matched = True
+                                        break
+                                if not matched:
+                                     # Last resort: treat loc_name as camera name directly
+                                     involved_cams = [loc_name]
+                        
+                        # Use the location name as camera name if we can't map it, or use the first camera
+                        if involved_cams:
+                            first_cam_name = involved_cams[0]
+                            # Resolve to ID
+                            cam_id = cam_id_map.get(first_cam_name)
+                            if not cam_id:
+                                for cn, ci in cam_id_map.items():
+                                    if cn.lower() in first_cam_name.lower() or first_cam_name.lower() in cn.lower():
+                                        cam_id = ci
+                                        break
+                            
+                            if cam_id:
+                                # We assign the findings to this camera ID.
+                                # The "camera_name" field in value will show the Location Name to be helpful
+                                results_by_camera[cam_id] = {
+                                    "camera_name": loc_name, # Use location name for display context
+                                    "found": loc_results.get("found", []),
+                                    "not_found": loc_results.get("not_found", [])
+                                }
+
             except Exception as je:
                 logger.warning(f"Could not parse person finder JSON: {je}")
 

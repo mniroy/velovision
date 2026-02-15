@@ -341,7 +341,8 @@ def perform_home_patrol():
                 entry = {
                     "image_bytes": frame_bytes,
                     "camera_name": cam_config.get("name", cam_id),
-                    "camera_id": cam_id
+                    "camera_id": cam_id,
+                    "room": cam_config.get("room")
                 }
                 images_data.append(entry)
                 images_by_cam_id[cam_id] = frame_bytes
@@ -487,7 +488,8 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
                 entry = {
                     "image_bytes": frame_bytes,
                     "camera_name": cam_config.get("name", cam_id),
-                    "camera_id": cam_id
+                    "camera_id": cam_id,
+                    "room": cam_config.get("room")
                 }
                 images_data.append(entry)
                 images_by_cam_id[cam_id] = frame_bytes
@@ -733,7 +735,4 @@ def meter_read_trigger(meter_id: str = None):
     """
     Trigger Utility Meter reading immediately.
     """
-    import threading
-    # Run in background to avoid timeout
-    threading.Thread(target=perform_meter_read, args=(meter_id,), daemon=True).start()
-    return {"status": "success", "message": "Utility Meter analysis triggered in background."}
+    return perform_meter_read(meter_id)
