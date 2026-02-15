@@ -315,11 +315,6 @@ def trigger_analysis_manual(camera_id: str):
     """
     Manually trigger analysis and wait for result.
     """
-    cam_cfg = config.get("cameras", {}).get(camera_id, {})
-    if not cam_cfg.get("webhook_enabled", True): # Default to True for internal use, but config UI will set it
-        logger.warning(f"Webhook trigger ignored for {camera_id}: webhook_enabled is false")
-        return {"status": "error", "message": "Webhook trigger is disabled for this camera"}
-
     result = perform_analysis(camera_id)
     return result
 
@@ -328,10 +323,6 @@ def patrol_summarize():
     """
     Home Patrol: Capture snapshots from all cameras and summarize.
     """
-    if not config.get("patrol", {}).get("webhook_enabled", True):
-        logger.warning("Webhook Home Patrol trigger ignored: webhook_enabled is false")
-        return {"status": "error", "message": "Webhook trigger is disabled for Home Patrol"}
-        
     return perform_home_patrol()
 
 def perform_home_patrol():
@@ -459,10 +450,6 @@ def person_finder(data: dict):
     Person Finder: Search for specific people across all cameras.
     data: {"names": ["Alice", "Bob"], "prompt": "optional custom instructions"}
     """
-    if not config.get("person_finder", {}).get("webhook_enabled", True):
-        logger.warning("Webhook Person Finder trigger ignored: webhook_enabled is false")
-        return {"status": "error", "message": "Webhook trigger is disabled for Person Finder"}
-
     names = data.get("names", [])
     custom_prompt = data.get("prompt", "")
     
@@ -585,10 +572,6 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
 @router.post("/doorbell/analyze")
 def doorbell_analyze_trigger():
     """Trigger Doorbell IQ analysis."""
-    if not config.get("doorbell_iq", {}).get("webhook_enabled", True):
-        logger.warning("Webhook Doorbell IQ trigger ignored: webhook_enabled is false")
-        return {"status": "error", "message": "Webhook trigger is disabled for Doorbell IQ"}
-        
     return perform_doorbell_analysis()
 
 def perform_doorbell_analysis():
