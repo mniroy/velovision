@@ -27,6 +27,7 @@ def load_config():
                 return defaults
             # Ensure all default keys exist
             deep_merge(defaults, user_config)
+            logger.info(f"Loaded config from {CONFIG_PATH}. MQTT Enabled: {defaults.get('mqtt', {}).get('enabled')}")
             return defaults
     except Exception as e:
         logger.error(f"Error loading config: {e}")

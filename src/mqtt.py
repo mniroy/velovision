@@ -150,10 +150,15 @@ class MQTTClient:
         if not self.client:
             return False
         try:
+            logger.info(f"MQTT attempting to connect to {self.broker_host}:{self.broker_port}...")
             self.client.connect(self.broker_host, self.broker_port, keepalive=60)
             self.client.loop_start()
             # Wait briefly for connection
-            time.sleep(1)
+            time.sleep(1.5)
+            if self.connected:
+                logger.info(f"MQTT initial connection check: SUCCESS")
+            else:
+                logger.warning(f"MQTT initial connection check: PENDING (loop is running)")
             return self.connected
         except Exception as e:
             logger.error(f"MQTT Connect failed: {e}")
@@ -504,7 +509,7 @@ def init_mqtt():
     client_id = mqtt_config.get("client_id", "velovision")
     base_topic = mqtt_config.get("base_topic", "velovision")
 
-    logger.info(f"Initializing MQTT client: {broker}:{port} (ID: {client_id})")
+    logger.info(f"Initializing MQTT client: {broker}:{port} (ID: {client_id}, Topic: {base_topic})")
 
     # Disconnect existing client
     if client:
