@@ -147,9 +147,10 @@ class FaceManager:
         return [], []
 
 class AIAnalyzer:
-    def __init__(self, api_key=None, model_name="gemini-1.5-flash"):
+    def __init__(self, api_key=None, model_name="gemini-1.5-flash", language="Bahasa Indonesia"):
         self.api_key = api_key
         self.model_name = model_name
+        self.language = language
         if api_key:
             genai.configure(api_key=api_key)
             self.model = genai.GenerativeModel(model_name)
@@ -165,10 +166,12 @@ class AIAnalyzer:
             return "AI Analysis Disabled (No API Key)", []
 
         try:
+            inputs = []
+            # Language instruction
+            inputs.append(f"RESPONSE LANGUAGE: {self.language}")
+            
             # Main image
             main_image = Image.open(io.BytesIO(image_bytes))
-            
-            inputs = []
             
             # Add context about known people with their images
             if known_faces:
@@ -248,6 +251,7 @@ class AIAnalyzer:
         
         try:
             inputs = []
+            inputs.append(f"RESPONSE LANGUAGE: {self.language}")
 
             # Add known face references for person recognition
             if known_faces:
@@ -411,6 +415,8 @@ class AIAnalyzer:
 
         try:
             inputs = []
+            inputs.append(f"RESPONSE LANGUAGE: {self.language}")
+            
             target_names = [f['name'] for f in target_faces]
 
             # Add target person reference images
@@ -573,6 +579,7 @@ def init_analysis(api_key_env="GEMINI_API_KEY"):
     ai_config = config.get("ai", {})
     api_key = ai_config.get("api_key") or os.getenv(api_key_env)
     model_name = ai_config.get("model", "gemini-1.5-flash")
+    language = ai_config.get("language", "Bahasa Indonesia")
     
-    logger.info(f"Initializing AI Analyzer with model: {model_name}")
-    ai_analyzer = AIAnalyzer(api_key=api_key, model_name=model_name)
+    logger.info(f"Initializing AI Analyzer with model: {model_name} (Language: {language})")
+    ai_analyzer = AIAnalyzer(api_key=api_key, model_name=model_name, language=language)

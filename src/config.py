@@ -38,7 +38,8 @@ def get_default_config():
         "cameras": {},
         "ai": {
             "provider": "gemini",
-            "model": "gemini-1.5-flash"
+            "model": "gemini-1.5-flash",
+            "language": "Bahasa Indonesia"
         },
         "whatsapp": {
             "enabled": False,
