@@ -261,7 +261,7 @@
         <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
             <button onclick="saveAllConfigs()"
                 class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
-                & Close</button>
+                All Configs</button>
         </div>
     </div>
 </div>
@@ -384,7 +384,7 @@
         <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
             <button onclick="saveAllConfigs()"
                 class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all">Save
-                & Close</button>
+                All Configs</button>
         </div>
     </div>
 </div>
@@ -534,9 +534,9 @@
             </div>
         </div>
         <div class="p-6 border-t border-gray-700 flex justify-end gap-3">
-            <button onclick="saveAllConfigs(); document.getElementById('doorbell-modal').classList.add('hidden')"
+            <button onclick="saveAllConfigs()"
                 class="bg-white text-[#1a1a1a] px-8 py-2 rounded-xl font-bold hover:brightness-90 transition-all shadow-lg shadow-white/5">Save
-                Config</button>
+                All Configs</button>
         </div>
     </div>
 </div>
@@ -658,9 +658,9 @@
             </div>
         </div>
         <div id="meter-footer" class="p-6 border-t border-gray-700 flex justify-end bg-[#1e1e1e]/50">
-            <button onclick="saveAllConfigs(); document.getElementById('meter-modal').classList.add('hidden')"
-                class="bg-white/10 text-white px-8 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all border border-white/5">Close
-                & Finalize All</button>
+            <button onclick="saveAllConfigs()"
+                class="bg-white/10 text-white px-8 py-2.5 rounded-xl font-black uppercase text-[10px] tracking-widest hover:bg-white/20 transition-all border border-white/5">Save
+                All Configs</button>
         </div>
     </div>
 </div>
@@ -1109,9 +1109,16 @@
             if (res.ok) {
                 showToast("Vision AI configurations saved!");
                 document.getElementById('patrol-modal').classList.add('hidden');
+                document.getElementById('patrol-modal').classList.remove('flex');
+
                 document.getElementById('finder-modal').classList.add('hidden');
+                document.getElementById('finder-modal').classList.remove('flex');
+
                 document.getElementById('doorbell-modal').classList.add('hidden');
+                document.getElementById('doorbell-modal').classList.remove('flex');
+
                 document.getElementById('meter-modal').classList.add('hidden');
+                document.getElementById('meter-modal').classList.remove('flex');
             } else {
                 showToast("Failed to save configuration.");
             }
@@ -1258,7 +1265,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     names: Array.from(finderSelectedNames),
-                    prompt: document.getElementById('finder-prompt').value
+                    prompt: document.getElementById('finder-prompt').value,
+                    recipients: finderConfig.recipients
                 })
             });
             const data = await res.json();

@@ -523,6 +523,8 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
     # Send WhatsApp alert if recipients configured
     whatsapp_status = {"sent": False, "recipients": 0}
     
+    logger.info(f"Person Finder: Checking WhatsApp status. Client: {whatsapp.client is not None}, Recipients: {recipients}")
+    
     if whatsapp.client and recipients:
         # Build summary message
         lines = ["🔍 *Person Finder Results*\n"]
