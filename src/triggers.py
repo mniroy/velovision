@@ -267,7 +267,7 @@ def perform_analysis(camera_id="default"):
             
             if recipients:
                 name = cam_config.get("name", camera_id)
-                caption = f"🚨 *Velo Vision Alert: {name}*\n\n{analysis_result}"
+                caption = f"{analysis_result}"
                 results = whatsapp.client.send_alert(recipients, frame_bytes, caption)
                 
                 # Log notifications to DB
@@ -433,7 +433,7 @@ def perform_home_patrol():
             if all_unknown_count > 0:
                 people_line += f"\n⚠️ Unknown persons: {all_unknown_count}"
             
-            caption = f"🛡️ *Home Patrol Summary*{people_line}\n\n{summary}"
+            caption = f"{people_line}\n\n{summary}" if people_line else f"{summary}"
             
             results = whatsapp.client.send_alert(recipients, selected_image, caption)
             whatsapp_status["sent"] = True
@@ -601,8 +601,7 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
     logger.info(f"Person Finder: Checking WhatsApp status. Client: {whatsapp.client is not None}, Recipients: {recipients}")
     
     if whatsapp.client and recipients:
-        # Build summary message
-        lines = ["🔍 *Person Finder Results*\n"]
+        lines = []
         for name, locations in found_locations.items():
             for loc in locations:
                 conf_emoji = "🟢" if loc['confidence'] == 'high' else ("🟡" if loc['confidence'] == 'medium' else "🟠")
@@ -683,7 +682,7 @@ def perform_doorbell_analysis():
         whatsapp_status = {"sent": False, "recipients": 0}
         recipients_wa = doorbell_cfg.get("recipients_whatsapp", [])
         if whatsapp.client and recipients_wa:
-            caption = f"🔔 *Doorbell Alert*\n\n{analysis_result}"
+            caption = f"{analysis_result}"
             image_to_send = frame_bytes if doorbell_cfg.get("include_image", True) else None
             
             # If no image, we might need a different method or just send caption as message
@@ -791,7 +790,7 @@ def perform_meter_read(meter_id: str = None):
             # 3. Notify WhatsApp
             recipients = meter.get("recipients_whatsapp", [])
             if whatsapp.client and recipients:
-                caption = f"📊 *Utility Meter: {meter['name']}*\n\nRead Value: {analysis_result}\nType: {meter['type'].upper()}"
+                caption = f"Read Value: {analysis_result}\nType: {meter['type'].upper()}"
                 whatsapp.client.send_alert(recipients, frame_bytes, caption)
             
             # 4. Notify MQTT
