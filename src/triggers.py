@@ -716,20 +716,29 @@ def perform_doorbell_analysis():
                 logger.error(f"Doorbell IQ: Webhook failed: {e}")
 
         # 5. Notify MQTT
-        mqtt_target = doorbell_cfg.get("recipients_mqtt")
-        if mqtt.client and mqtt.client.connected and mqtt_target:
-            try:
-                import json
-                payload = {
-                    "analysis": analysis_result,
-                    "camera_id": camera_id,
-                    "recognized": recognized_names,
-                    "unknown_count": unknown_count
-                }
-                mqtt.client.client.publish(mqtt_target, json.dumps(payload))
-                logger.info(f"Doorbell IQ: MQTT result published to {mqtt_target}")
-            except Exception as e:
-                logger.error(f"Doorbell IQ: MQTT publish failed: {e}")
+        if mqtt.client and mqtt.client.connected:
+            # Publish to standard topic
+            face_label = ", ".join(recognized_names) if recognized_names else ("Unknown" if person_detected else "None")
+            mqtt.client.publish_doorbell_result(
+                summary=analysis_result,
+                package_detected=False, # standard analysis doesn't check this yet
+                face_detected=face_label
+            )
+
+            # Publish to custom target if configured
+            mqtt_target = doorbell_cfg.get("recipients_mqtt")
+            if mqtt_target:
+                try:
+                    payload = {
+                        "analysis": analysis_result,
+                        "camera_id": camera_id,
+                        "recognized": recognized_names,
+                        "unknown_count": unknown_count
+                    }
+                    mqtt.client.client.publish(mqtt_target, json.dumps(payload))
+                    logger.info(f"Doorbell IQ: MQTT result published to {mqtt_target}")
+                except Exception as e:
+                    logger.error(f"Doorbell IQ: MQTT publish failed: {e}")
 
         return {
             "status": "success",
@@ -785,6 +794,15 @@ def perform_meter_read(meter_id: str = None):
                 caption = f"📊 *Utility Meter: {meter['name']}*\n\nRead Value: {analysis_result}\nType: {meter['type'].upper()}"
                 whatsapp.client.send_alert(recipients, frame_bytes, caption)
             
+            # 4. Notify MQTT
+            if mqtt.client and mqtt.client.connected:
+                mqtt.client.publish_utility_result(
+                    meter_id=meter['id'],
+                    value=analysis_result,
+                    unit=meter.get('unit', ''),
+                    summary=f"Read {meter['name']}: {analysis_result}"
+                )
+
             results.append({
                 "meter_id": meter['id'],
                 "name": meter['name'],

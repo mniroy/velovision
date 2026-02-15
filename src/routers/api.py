@@ -576,8 +576,11 @@ def update_settings(settings: dict):
             analysis.init_analysis()
         if "whatsapp" in settings:
             triggers.whatsapp.init_whatsapp()
-        if "cameras" in settings or "person_finder" in settings:
+        if any(k in settings for k in ["cameras", "person_finder", "utility_meters", "patrol", "doorbell_iq"]):
             triggers.sync_schedules()
+            # Refresh MQTT discovery if devices changed
+            if mqtt.client and mqtt.client.connected:
+                mqtt.client.publish_discovery()
         if "mqtt" in settings:
             mqtt.init_mqtt()
         return {"status": "saved"}

@@ -66,6 +66,28 @@ TOPICS = {
         },
         "ha_discovery": "sensor"
     },
+    "velovision/doorbell_iq/result": {
+        "description": "Doorbell IQ analysis result (package detection, etc.)",
+        "type": "event",
+        "payload_example": {
+            "timestamp": "2026-02-15T05:00:00",
+            "summary": "Package delivered at front door",
+            "package_detected": True,
+            "face_detected": "Courier"
+        },
+        "ha_discovery": "sensor"
+    },
+    "velovision/utility_meter/result": {
+        "description": "Utility meter reading result",
+        "type": "event",
+        "payload_example": {
+            "timestamp": "2026-02-15T05:00:00",
+            "value": 1234.5,
+            "unit": "kWh",
+            "image_path": "/events/meter_123.jpg"
+        },
+        "ha_discovery": "sensor"
+    },
     "velovision/faces/detected": {
         "description": "New or known face detection event",
         "type": "event",
@@ -367,6 +389,27 @@ class MQTTClient:
             "summary": summary
         })
 
+    def publish_doorbell_result(self, summary, package_detected, face_detected, confidence=None):
+        """Publish Doorbell IQ result."""
+        self.publish("doorbell_iq/result", {
+            "timestamp": datetime.now().isoformat(),
+            "summary": summary,
+            "package_detected": package_detected,
+            "face_detected": face_detected,
+            "confidence": confidence
+        })
+
+    def publish_utility_result(self, meter_id, value, unit, summary, image_path=None):
+        """Publish Utility Meter result."""
+        self.publish(f"utility_meters/{meter_id}", {
+            "timestamp": datetime.now().isoformat(),
+            "meter_id": meter_id,
+            "value": value,
+            "unit": unit,
+            "summary": summary,
+            "image_path": image_path
+        })
+
     def publish_face_detected(self, camera_id, name, category="Uncategorized", is_new=False):
         """Publish face detection event."""
         self.publish("faces/detected", {
@@ -428,7 +471,35 @@ class MQTTClient:
             "unique_id": f"{node_id}_person_finder_result"
         })
 
-        # 4. Per-Camera Sensors & Cameras
+        # 4. Doorbell IQ (Sensor)
+        self._publish_ha_config(disc_prefix, "sensor", "doorbell_iq_result", {
+            "name": "VeloVision Doorbell IQ",
+            "state_topic": f"{self.base_topic}/doorbell_iq/result",
+            "value_template": "{{ value_json.summary }}",
+            "icon": "mdi:doorbell-video",
+            "json_attributes_topic": f"{self.base_topic}/doorbell_iq/result",
+            "device": device_info,
+            "unique_id": f"{node_id}_doorbell_iq_result"
+        })
+
+        # 5. Utility Meters (Dynamic Sensors)
+        for meter in config.get("utility_meters", []):
+            m_id = meter.get("id", "default")
+            m_name = meter.get("name", "Utility Meter")
+            m_unit = meter.get("unit", "")
+            
+            self._publish_ha_config(disc_prefix, "sensor", f"meter_{m_id}", {
+                "name": f"VeloVision {m_name}",
+                "state_topic": f"{self.base_topic}/utility_meters/{m_id}",
+                "value_template": "{{ value_json.value }}",
+                "unit_of_measurement": m_unit,
+                "icon": "mdi:counter",
+                "json_attributes_topic": f"{self.base_topic}/utility_meters/{m_id}",
+                "device": device_info,
+                "unique_id": f"{node_id}_meter_{m_id}"
+            })
+
+        # 6. Per-Camera Sensors & Cameras
         for cam_id, cam_cfg in config.get("cameras", {}).items():
             if not cam_cfg.get("enabled", True):
                 continue
