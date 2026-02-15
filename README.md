@@ -136,10 +136,6 @@ Advanced intelligence modules designed for specific home security and monitoring
 | `./data:/data` | Persistent storage for config, database, face data, event snapshots |
 | `./src:/app/src` | Application source (enables hot-reload in development) |
 
-#### Network
-
-The `extra_hosts` configuration maps `host.docker.internal` to the host gateway, allowing the container to reach services running on the host machine (e.g., GOWA gateway).
-
 ---
 
 ## Project Structure
