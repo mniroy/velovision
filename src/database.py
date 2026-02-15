@@ -53,6 +53,16 @@ class Notification(Base):
     status = Column(String) # "success", "failed"
     timestamp = Column(DateTime, default=datetime.now)
 
+class ActionLog(Base):
+    __tablename__ = "action_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    action_type = Column(String, index=True) # "home_patrol", "person_finder"
+    timestamp = Column(DateTime, default=datetime.now)
+    summary = Column(Text)
+    details = Column(Text) # JSON string of full results
+    image_path = Column(String, nullable=True) # Path to collage or primary image
+
 # Create tables
 def init_db():
     Base.metadata.create_all(bind=engine)

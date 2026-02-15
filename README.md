@@ -6,8 +6,6 @@
 
 A self-hosted, Docker-based surveillance platform with multi-camera management, AI-powered scene analysis, WhatsApp notifications, face recognition, and a premium dark-themed dashboard.
 
-![Dashboard](docs/screenshots/dashboard.png)
-
 </div>
 
 ---

@@ -4,10 +4,12 @@ import logging
 from src.streaming import camera_manager
 from src import analysis, whatsapp, mqtt
 from src.config import config
+from src.database import SessionLocal, ActionLog
 import cv2
 import numpy as np
 import time
 import os
+import json
 from datetime import datetime
 
 logger = logging.getLogger(__name__)
@@ -377,6 +379,45 @@ def perform_home_patrol():
     logger.info(f"Home Patrol Summary: primary_camera={primary_camera_id}, recognized={all_recognized}, unknown={all_unknown_count}")
     logger.info(f"Patrol Result: {summary}")
     
+    # Determine primary image for log and notification
+    selected_image = None
+    if primary_camera_id and primary_camera_id in images_by_cam_id:
+        selected_image = images_by_cam_id[primary_camera_id]
+        logger.info(f"Primary image: using primary activity camera '{primary_camera_id}'")
+    else:
+        selected_image = images_data[0]["image_bytes"]
+        logger.info(f"Primary image: fallback to first camera '{images_data[0]['camera_id']}'")
+
+    # Save ActionLog to DB
+    image_path = None
+    if selected_image:
+        try:
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"patrol_{timestamp_str}.jpg"
+            filepath = os.path.join("/data/events", filename)
+            # Ensure directory exists just in case
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, "wb") as f:
+                f.write(selected_image)
+            image_path = f"/events/{filename}"
+        except Exception as e:
+            logger.error(f"Failed to save patrol image: {e}")
+
+    db = SessionLocal()
+    try:
+        log = ActionLog(
+            action_type="home_patrol",
+            summary=summary,
+            details=json.dumps(detections_by_camera, default=str),
+            image_path=image_path
+        )
+        db.add(log)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save patrol log: {e}")
+    finally:
+        db.close()
+
     # Send to global recipients
     whatsapp_status = {"sent": False, "recipients": 0}
     
@@ -393,15 +434,6 @@ def perform_home_patrol():
                 people_line += f"\n⚠️ Unknown persons: {all_unknown_count}"
             
             caption = f"🛡️ *Home Patrol Summary*{people_line}\n\n{summary}"
-            
-            # Select image from primary activity camera, fallback to first camera
-            selected_image = None
-            if primary_camera_id and primary_camera_id in images_by_cam_id:
-                selected_image = images_by_cam_id[primary_camera_id]
-                logger.info(f"WhatsApp image: using primary activity camera '{primary_camera_id}'")
-            else:
-                selected_image = images_data[0]["image_bytes"]
-                logger.info(f"WhatsApp image: fallback to first camera '{images_data[0]['camera_id']}'")
             
             results = whatsapp.client.send_alert(recipients, selected_image, caption)
             whatsapp_status["sent"] = True
@@ -522,6 +554,47 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
     
     logger.info(f"Person Finder Results: found={list(found_locations.keys())}, not_found={list(not_found)}")
     
+    # Select primary image (first valid camera, or specific detection)
+    selected_image = None
+    if images_data:
+        selected_image = images_data[0]["image_bytes"]
+    
+    # Try to pick an image where someone was found
+    for cam_id in results_by_camera:
+        if results_by_camera[cam_id].get("found") and cam_id in images_by_cam_id:
+            selected_image = images_by_cam_id[cam_id]
+            break
+
+    # Save ActionLog to DB
+    image_path = None
+    if selected_image:
+        try:
+            timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"finder_{timestamp_str}.jpg"
+            filepath = os.path.join("/data/events", filename)
+            # Ensure directory exists just in case
+            os.makedirs(os.path.dirname(filepath), exist_ok=True)
+            with open(filepath, "wb") as f:
+                f.write(selected_image)
+            image_path = f"/events/{filename}"
+        except Exception as e:
+            logger.error(f"Failed to save finder image: {e}")
+
+    db = SessionLocal()
+    try:
+        log = ActionLog(
+            action_type="person_finder",
+            summary=summary,
+            details=json.dumps(results_by_camera, default=str),
+            image_path=image_path
+        )
+        db.add(log)
+        db.commit()
+    except Exception as e:
+        logger.error(f"Failed to save person finder log: {e}")
+    finally:
+        db.close()
+
     # Send WhatsApp alert if recipients configured
     whatsapp_status = {"sent": False, "recipients": 0}
     
@@ -540,13 +613,6 @@ def perform_person_finder(target_names, custom_prompt="", recipients=None):
         lines.append(f"\n📷 {len(images_data)} cameras scanned")
         
         caption = "\n".join(lines)
-        
-        # Pick image from first camera that found someone, or first camera
-        selected_image = images_data[0]["image_bytes"]
-        for cam_id in results_by_camera:
-            if results_by_camera[cam_id].get("found") and cam_id in images_by_cam_id:
-                selected_image = images_by_cam_id[cam_id]
-                break
         
         results = whatsapp.client.send_alert(recipients, selected_image, caption)
         whatsapp_status["sent"] = True

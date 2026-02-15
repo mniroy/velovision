@@ -43,23 +43,44 @@
         const dateFilter = document.getElementById('date-picker').value;
 
         try {
-            const url = new URL('/api/events', window.location.origin);
-            url.searchParams.append('limit', 30);
-            if (cameraFilter !== 'all') url.searchParams.append('camera_id', cameraFilter);
-            if (dateFilter) url.searchParams.append('date', dateFilter);
+            const eventUrl = new URL('/api/events', window.location.origin);
+            eventUrl.searchParams.append('limit', 30);
+            if (cameraFilter !== 'all') eventUrl.searchParams.append('camera_id', cameraFilter);
+            if (dateFilter) eventUrl.searchParams.append('date', dateFilter);
 
-            const response = await fetch(url);
-            const events = await response.json();
+            const logUrl = new URL('/api/action_logs', window.location.origin);
+            logUrl.searchParams.append('limit', 20);
+            // ActionLogs don't support camera filter strictly yet, but we could filter client side if needed
+            // For now, fetch all recent logs
+
+            const [eventsRes, logsRes] = await Promise.all([
+                fetch(eventUrl),
+                fetch(logUrl)
+            ]);
+
+            const events = await eventsRes.json();
+            const logs = await logsRes.json();
+
+            // Setup combined list
+            let combined = [...events];
+
+            // Only add logs if no camera filter is active (actions are global usually) or if we implement logic
+            // Actually Home Patrol is global.
+            if (cameraFilter === 'all') {
+                combined = [...combined, ...logs];
+            }
+
+            combined.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
             container.innerHTML = '';
-
-            if (events.length === 0) {
+            if (combined.length === 0) {
                 container.innerHTML = `<div class="text-center py-20 text-gray-600 font-black uppercase text-caption tracking-widest">No activity found matching filters</div>`;
                 return;
             }
 
             let lastDate = null;
-            events.forEach(event => {
-                const dateObj = new Date(event.timestamp);
+            combined.forEach(item => {
+                const dateObj = new Date(item.timestamp);
                 const dateStr = dateObj.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' });
                 const timeStr = dateObj.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 
@@ -72,31 +93,85 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'card rounded-[2rem] p-5 flex gap-8 hover:bg-[#2d2d2d] transition-all group border border-white/5 hover:border-[#dfffad]/20';
+                card.className = 'card rounded-[2rem] p-5 flex gap-8 hover:bg-[#2d2d2d] transition-all group border border-white/5 hover:border-[#dfffad]/20 cursor-pointer';
+                card.onclick = (e) => {
+                    // Verify click wasn't on a button/link
+                    if (e.target.closest('button') || e.target.closest('a')) return;
+                    toggleDetails(card);
+                };
+
+                // Logic for "Standard Event" vs "ActionLog"
+                const isAction = item.type !== undefined; // ActionLogs have 'type'
+
+                let title, badge, subtext, typeClass, detailsHTML;
+
+                if (isAction) {
+                    const typeDisplay = item.type === 'home_patrol' ? 'Home Patrol' : 'Person Finder';
+                    title = typeDisplay;
+                    badge = item.type === 'home_patrol' ? 'PATROL' : 'FINDER';
+                    typeClass = 'text-blue-400 bg-blue-500/10 border-blue-500/20';
+                    subtext = item.summary || 'Operation complete.';
+
+                    // Format details
+                    if (item.details && Object.keys(item.details).length > 0) {
+                        // Simple formatted JSON for now
+                        detailsHTML = `<pre class="text-caption text-gray-500 overflow-x-auto bg-black/20 p-2 rounded-lg mt-2">${JSON.stringify(item.details, null, 2)}</pre>`;
+                    } else {
+                        detailsHTML = '<p class="text-caption text-gray-600">No detailed data available.</p>';
+                    }
+                } else {
+                    // Standard Event
+                    title = `Event @ ${item.camera_id}`;
+                    badge = (item.faces && item.faces.length > 0) ? 'PERSON' : 'MOTION';
+                    typeClass = 'text-[#dfffad] bg-[#dfffad]/10 border-[#dfffad]/20';
+                    subtext = item.analysis_text || 'System capture: Motion detected and recorded.';
+                    detailsHTML = `<p class="text-body text-gray-300 mt-2">${item.analysis_text}</p>`;
+                    if (item.prompt) detailsHTML += `<p class="text-caption text-gray-600 mt-4 font-mono">Prompt: ${item.prompt}</p>`;
+                }
+
+                const facesHTML = !isAction && item.faces ?
+                    `<div id="faces-list-${item.id}" class="flex -space-x-2">
+                        ${(item.faces || []).map(f => `<img src="/api/faces/${f}/image" class="w-8 h-8 rounded-full border-2 border-[#262626] object-cover" title="${f}">`).join('')}
+                    </div>` : '';
+
+                const actionButtons = !isAction ?
+                    `<div class="flex gap-3">
+                        <a href="${item.image_url}" download class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-download"></i></a>
+                        <button onclick="deleteEvent(${item.id})" class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"><i class="fa-solid fa-trash"></i></button>
+                    </div>` : '';
+
+                // For ActionLogs, maybe just a download button if image exists?
+                const actionButtonsLog = isAction ?
+                    `<div class="flex gap-3">
+                        ${item.image_url ? `<a href="${item.image_url}" download class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-download"></i></a>` : ''}
+                    </div>` : '';
+
                 card.innerHTML = `
                     <div class="relative w-56 h-36 rounded-2xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]">
-                        <img src="${event.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" onerror="handleImageError(this)">
+                        <img src="${item.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" onerror="handleImageError(this)">
                         <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1 rounded-full text-caption font-black text-white uppercase tracking-widest border border-white/10">${timeStr}</div>
                     </div>
                     <div class="flex-1 flex flex-col justify-between py-1">
                         <div>
                             <div class="flex justify-between items-start mb-2">
-                                <h3 class="text-h2 font-black text-white uppercase tracking-tighter leading-tight">Event @ ${event.camera_id}</h3>
+                                <h3 class="text-h2 font-black text-white uppercase tracking-tighter leading-tight">${title}</h3>
                                 <div class="flex gap-2">
-                                    <span class="bg-[#dfffad]/10 text-[#dfffad] text-caption font-black px-3 py-1 rounded-full tracking-widest uppercase border border-[#dfffad]/20">
-                                        ${event.faces && event.faces.length > 0 ? 'PERSON' : 'MOTION'}
+                                    <span class="${typeClass} text-caption font-black px-3 py-1 rounded-full tracking-widest uppercase border">
+                                        ${badge}
                                     </span>
                                 </div>
                             </div>
-                            <p class="text-gray-400 text-body leading-relaxed line-clamp-2 italic">"${event.analysis_text || 'System capture: Motion detected and recorded.'}"</p>
+                            <p class="text-gray-400 text-body leading-relaxed line-clamp-2 italic">${subtext}</p>
+                            
+                            <!-- Hidden Details -->
+                            <div class="details-panel hidden mt-4 border-t border-white/5 pt-4">
+                                ${detailsHTML}
+                            </div>
                         </div>
                         <div class="flex items-center justify-between mt-4">
-                            <div id="faces-list-${event.id}" class="flex -space-x-2">
-                                ${(event.faces || []).map(f => `<img src="/api/faces/${f}/image" class="w-8 h-8 rounded-full border-2 border-[#262626] object-cover" title="${f}">`).join('')}
-                            </div>
-                            <div class="flex gap-3">
-                                <a href="${event.image_url}" download class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-white hover:bg-white/10 transition-all"><i class="fa-solid fa-download"></i></a>
-                                <button onclick="deleteEvent(${event.id})" class="w-10 h-10 bg-white/5 flex items-center justify-center rounded-xl text-gray-500 hover:text-red-400 hover:bg-red-500/10 transition-all"><i class="fa-solid fa-trash"></i></button>
+                            ${facesHTML}
+                            <div class="ml-auto">
+                                ${isAction ? actionButtonsLog : actionButtons}
                             </div>
                         </div>
                     </div>`;
@@ -106,6 +181,11 @@
             console.error(e);
             container.innerHTML = '<div class="text-center py-20 text-red-500 font-black uppercase text-caption tracking-widest">Connection Error: Check Network</div>';
         }
+    }
+
+    function toggleDetails(card) {
+        const pan = card.querySelector('.details-panel');
+        if (pan) pan.classList.toggle('hidden');
     }
 
     async function deleteEvent(id) {

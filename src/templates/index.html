@@ -167,15 +167,20 @@
 
     async function loadDashboard() {
         try {
-            const [sRes, cRes, eRes] = await Promise.all([
+            const [sRes, cRes, eRes, aRes] = await Promise.all([
                 fetch('/api/stats'),
                 fetch('/api/settings'),
-                fetch('/api/events?limit=5')
+                fetch('/api/events?limit=5'),
+                fetch('/api/action_logs?limit=5')
             ]);
 
             const stats = sRes.ok ? await sRes.json() : {};
             const config = cRes.ok ? await cRes.json() : {};
-            const recentEvents = eRes.ok ? await eRes.json() : [];
+            let recentEvents = eRes.ok ? await eRes.json() : [];
+            const actionLogs = aRes.ok ? await aRes.json() : [];
+
+            // Merge and sort
+            recentEvents = [...recentEvents, ...actionLogs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, 10);
 
             if (stats.total_events !== undefined) {
                 document.getElementById('camera-count').innerText = `${stats.active_cameras || 0} streams connected`;
@@ -186,14 +191,30 @@
             if (notifList && Array.isArray(recentEvents) && recentEvents.length > 0) {
                 notifList.innerHTML = '';
                 recentEvents.forEach(ev => {
+                    const isAction = ev.type !== undefined;
+                    let title, detail, image;
+
+                    if (isAction) {
+                        title = ev.type === 'home_patrol' ? 'Home Patrol' : 'Person Finder';
+                        detail = ev.summary;
+                        image = ev.image_url;
+                    } else {
+                        title = ev.camera_id;
+                        detail = ev.faces && ev.faces.length > 0 ? ev.faces.join(', ') : 'Motion Detected';
+                        image = ev.image_url;
+                    }
+
                     const item = document.createElement('div');
-                    item.className = "flex gap-4 p-4 rounded-2xl bg-[#262626] border border-gray-800 hover:border-gray-700 transition-colors";
+                    item.className = "flex gap-4 p-4 rounded-2xl bg-[#262626] border border-gray-800 hover:border-gray-700 transition-colors cursor-pointer group";
+                    // Link to timeline if clicked?
+                    item.onclick = () => window.location.href = '/timeline';
+
                     item.innerHTML = `
-                        <img src="${ev.image_url}" class="w-12 h-12 rounded-full object-cover border border-gray-700">
+                        <img src="${image}" class="w-12 h-12 rounded-full object-cover border border-gray-700 group-hover:border-gray-500 transition-colors" onerror="handleImageError(this)">
                         <div>
-                            <p class="text-caption font-bold text-white uppercase tracking-tighter">${ev.camera_id}</p>
+                            <p class="text-caption font-bold text-white uppercase tracking-tighter">${title}</p>
                             <p class="text-caption text-gray-500">${new Date(ev.timestamp).toLocaleTimeString()}</p>
-                            <p class="text-caption text-[#dfffad] mt-1 line-clamp-1">${ev.faces && ev.faces.length > 0 ? ev.faces.join(', ') : 'Motion Detected'}</p>
+                            <p class="text-caption ${isAction ? 'text-blue-400' : 'text-[#dfffad]'} mt-1 line-clamp-1">${detail}</p>
                         </div>
                     `;
                     notifList.appendChild(item);

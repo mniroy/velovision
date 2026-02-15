@@ -4,7 +4,7 @@ from src.streaming import camera_manager, generate_frames
 from src.config import config, save_config
 from src import analysis, triggers, whatsapp, mqtt
 from sqlalchemy.orm import Session
-from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson, engine
+from src.database import get_db, Event, Face, SessionLocal, UnlabeledPerson, engine, ActionLog
 import shutil
 import logging
 import os
@@ -81,6 +81,25 @@ def get_events(limit: int = 20, offset: int = 0, db: Session = Depends(get_db)):
             "analysis_text": event.analysis_text,
             "faces": event.faces_detected.split(",") if event.faces_detected else [],
             "prompt": event.prompt_used
+        })
+    return results
+
+@router.get("/action_logs")
+def get_action_logs(limit: int = 20, offset: int = 0, action_type: str = None, db: Session = Depends(get_db)):
+    query = db.query(ActionLog)
+    if action_type:
+        query = query.filter(ActionLog.action_type == action_type)
+    
+    logs = query.order_by(ActionLog.timestamp.desc()).limit(limit).offset(offset).all()
+    results = []
+    for log in logs:
+        results.append({
+            "id": log.id,
+            "type": log.action_type, # "home_patrol", "person_finder"
+            "timestamp": log.timestamp.isoformat(),
+            "summary": log.summary,
+            "details": json.loads(log.details) if log.details else {},
+            "image_url": log.image_path or ""
         })
     return results
 
@@ -310,19 +329,48 @@ def delete_event(event_id: int, db: Session = Depends(get_db)):
 def get_stats(db: Session = Depends(get_db)):
     active_cameras = len(camera_manager.cameras)
     total_events = db.query(Event).count()
+    
     latest_event = db.query(Event).order_by(Event.timestamp.desc()).first()
+    latest_log = db.query(ActionLog).order_by(ActionLog.timestamp.desc()).first()
+    
     latest_event_data = None
-    if latest_event:
-        image_url = f"/events/{os.path.basename(latest_event.image_path)}" if latest_event.image_path else None
-        faces = [f.strip() for f in latest_event.faces_detected.split(',')] if latest_event.faces_detected else []
-        latest_event_data = {
-            "id": latest_event.id,
-            "timestamp": latest_event.timestamp.isoformat(),
-            "image_url": image_url,
-            "faces": faces,
-            "camera_id": latest_event.camera_id,
-            "analysis_text": latest_event.analysis_text or ""
-        }
+    
+    # Determine which is latest
+    target = None
+    if latest_event and latest_log:
+        if latest_log.timestamp > latest_event.timestamp:
+            target = ('log', latest_log)
+        else:
+            target = ('event', latest_event)
+    elif latest_event:
+        target = ('event', latest_event)
+    elif latest_log:
+        target = ('log', latest_log)
+        
+    if target:
+        type_, item = target
+        if type_ == 'event':
+            image_url = f"/events/{os.path.basename(item.image_path)}" if item.image_path else None
+            faces = [f.strip() for f in item.faces_detected.split(',')] if item.faces_detected else []
+            latest_event_data = {
+                "id": item.id,
+                "timestamp": item.timestamp.isoformat(),
+                "image_url": image_url,
+                "faces": faces,
+                "camera_id": item.camera_id,
+                "analysis_text": item.analysis_text or ""
+            }
+        else:
+            # ActionLog stores the web path directly in image_path
+            latest_event_data = {
+                "id": item.id,
+                "timestamp": item.timestamp.isoformat(),
+                "image_url": item.image_path,
+                "faces": [item.action_type.replace('_', ' ').title()],
+                "camera_id": "System Action",
+                "analysis_text": item.summary or ""
+            }
+
     return {
         "active_cameras": active_cameras,
         "total_events": total_events,
