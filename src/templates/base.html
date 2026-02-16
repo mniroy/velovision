@@ -78,6 +78,15 @@
             border-radius: 10px;
         }
 
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
         .nav-link {
             display: flex;
             align-items: center;
@@ -104,6 +113,7 @@
             top: 0;
             right: 0;
             width: 20rem;
+            max-width: 100vw;
             height: 100%;
             background-color: #1a1a1a;
             border-left: 1px solid rgba(31, 41, 55, 0.5);
@@ -157,14 +167,25 @@
 
 <body class="flex h-screen overflow-hidden text-gray-200">
 
+    <!-- Mobile Header & Overlay -->
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/80 z-40 hidden md:hidden glass">
+    </div>
+
     <!-- Sidebar -->
-    <aside class="w-64 flex flex-col pt-8 px-6 bg-[#1a1a1a] h-full border-r border-gray-800/30 hidden md:flex">
-        <div class="mb-10 flex items-center gap-4">
-            <div
-                class="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-white/20 shadow-lg shadow-black/20">
-                <img src="/static/favicon-32x32.png" class="w-7 h-7 object-contain">
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-50 w-64 bg-[#1a1a1a]/95 backdrop-blur-xl md:bg-[#1a1a1a] md:backdrop-blur-none transform -translate-x-full md:translate-x-0 transition-transform duration-300 md:relative flex flex-col pt-8 px-6 h-full border-r border-gray-800/30 shadow-2xl md:shadow-none">
+        <div class="mb-10 flex items-center justify-between md:justify-start gap-4">
+            <div class="flex items-center gap-4">
+                <div
+                    class="w-10 h-10 bg-white rounded-xl flex items-center justify-center overflow-hidden border border-white/20 shadow-lg shadow-black/20">
+                    <img src="/static/favicon-32x32.png" class="w-7 h-7 object-contain">
+                </div>
+                <h1 class="text-h3 font-black tracking-tight text-white leading-tight">Velo<br>Vision</h1>
             </div>
-            <h1 class="text-h3 font-black tracking-tight text-white leading-tight">Velo<br>Vision</h1>
+            <!-- Close button for mobile -->
+            <button onclick="toggleSidebar()" class="md:hidden text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
         </div>
         <nav class="flex-1 space-y-2">
             <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
@@ -218,10 +239,33 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 overflow-y-auto bg-[#1a1a1a] relative">
-        {% block content %}{% endblock %}
-    </main>
+    <!-- Content Wrapper -->
+    <div class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Mobile Header -->
+        <header class="md:hidden flex items-center justify-between p-4 bg-[#1a1a1a] border-b border-gray-800/50 z-30">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()"
+                    class="w-10 h-10 flex items-center justify-center bg-[#262626] rounded-full text-white">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <span class="text-h3 font-black tracking-tight text-white">Velo Vision</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <!-- Mobile Notification Toggle could go here too -->
+                <button onclick="toggleNotifications()"
+                    class="w-10 h-10 rounded-full bg-[#262626] flex items-center justify-center text-white relative">
+                    <i class="fa-regular fa-bell"></i>
+                    <span id="mobile-notif-dot"
+                        class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-[#1a1a1a] relative scroll-smooth">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 
     <!-- Global Modal: Camera Enlarge -->
     <div id="enlargeModal"
@@ -269,14 +313,33 @@
                 closeEnlarge();
                 // Close other modals if they have standard close hooks
                 if (typeof closeModal === 'function') closeModal();
+
+                // Close sidebar if open on mobile
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar && !sidebar.classList.contains('-translate-x-full')) {
+                    toggleSidebar();
+                }
             }
         });
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (sidebar) {
+                sidebar.classList.toggle('-translate-x-full');
+            }
+            if (overlay) {
+                overlay.classList.toggle('hidden');
+            }
+        }
 
         function toggleNotifications() {
             const panel = document.getElementById('notifPanel');
             if (panel) panel.classList.toggle('open');
-            const dot = document.getElementById('notif-dot');
-            if (dot) dot.classList.add('hidden');
+
+            // Hide dots
+            const dots = document.querySelectorAll('#notif-dot, #mobile-notif-dot');
+            dots.forEach(d => d.classList.add('hidden'));
         }
 
         function enlargeCamera(id, name) {

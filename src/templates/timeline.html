@@ -3,25 +3,25 @@
 {% block title %}Timeline - Velo Vision{% endblock %}
 
 {% block content %}
-<div class="p-8 text-gray-200">
-    <header class="flex justify-between items-center mb-10">
+<div class="p-4 md:p-8 text-gray-200">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 md:mb-10">
         <div>
             <h2 class="text-h1 font-black tracking-tight">Event Timeline</h2>
             <p class="text-gray-400 text-body mt-1">Review activity history</p>
         </div>
-        <div class="flex gap-3">
-            <div class="relative">
+        <div class="flex flex-wrap gap-3 w-full md:w-auto">
+            <div class="relative flex-1 md:flex-none">
                 <select id="camera-select" onchange="loadEvents()"
-                    class="appearance-none bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 pr-8 rounded-xl focus:outline-none focus:border-[#dfffad]">
+                    class="w-full appearance-none bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 pr-8 rounded-xl focus:outline-none focus:border-[#dfffad]">
                     <option value="all">All Cameras</option>
                 </select>
                 <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                     <i class="fa-solid fa-chevron-down text-xs"></i>
                 </div>
             </div>
-            <div class="relative">
+            <div class="relative flex-1 md:flex-none">
                 <input type="date" id="date-picker" onchange="loadEvents()"
-                    class="bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 rounded-xl focus:outline-none focus:border-[#dfffad]">
+                    class="w-full bg-[#262626] border border-gray-700 text-caption font-black uppercase tracking-widest text-white py-2 px-4 rounded-xl focus:outline-none focus:border-[#dfffad]">
             </div>
         </div>
     </header>
@@ -93,7 +93,7 @@
                 }
 
                 const card = document.createElement('div');
-                card.className = 'card rounded-[2rem] p-5 flex gap-8 hover:bg-[#2d2d2d] transition-all group border border-white/5 hover:border-[#dfffad]/20 cursor-pointer';
+                card.className = 'card rounded-[2rem] p-5 flex flex-col sm:flex-row gap-4 sm:gap-8 hover:bg-[#2d2d2d] transition-all group border border-white/5 hover:border-[#dfffad]/20 cursor-pointer';
                 card.onclick = (e) => {
                     // Verify click wasn't on a button/link
                     if (e.target.closest('button') || e.target.closest('a')) return;
@@ -147,7 +147,7 @@
                     </div>` : '';
 
                 card.innerHTML = `
-                    <div class="relative w-56 h-36 rounded-2xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]" onclick="event.stopPropagation(); enlargeImage('${item.image_url}', '${title}')">
+                    <div class="relative w-full sm:w-56 h-48 sm:h-36 rounded-2xl overflow-hidden flex-shrink-0 bg-[#1a1a1a]" onclick="event.stopPropagation(); enlargeImage('${item.image_url}', '${title}')">
                         <img src="${item.image_url}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" onerror="handleImageError(this)">
                         <div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 flex items-center justify-center transition-all">
                             <i class="fa-solid fa-expand text-white opacity-0 group-hover:opacity-100 transition-opacity"></i>
