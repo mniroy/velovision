@@ -41,88 +41,150 @@ def shutdown_scheduler():
 
 def sync_schedules():
     """Sync all camera schedules from config to the scheduler."""
-    for cam_id, cam_config in config.get("cameras", {}).items():
-        if cam_config.get("enabled", True) and cam_config.get("schedule_enabled"):
-            hrs = int(cam_config.get("schedule_interval_hrs", 1))
-            mins = int(cam_config.get("schedule_interval_mins", 0))
-            
-            # Skip if interval is 0
-            if hrs == 0 and mins == 0:
-                continue
+    
+    def _add_schedule_job(func, job_id, config_item, name_for_log, args=None):
+        if not config_item.get("schedule_enabled"):
+            if scheduler.get_job(job_id):
+                scheduler.remove_job(job_id)
+            return
+
+        # defaults
+        sched_type = config_item.get("schedule_type", "interval") # interval, daily, weekly
+        
+        # Remove existing if any
+        if scheduler.get_job(job_id):
+            scheduler.remove_job(job_id)
+
+        try:
+            if sched_type == "daily":
+                # specific time, e.g. "08:00"
+                time_str = config_item.get("schedule_time", "08:00")
+                try:
+                    parts = time_str.split(':')
+                    if len(parts) >= 2:
+                        h = int(parts[0])
+                        m = int(parts[1])
+                        scheduler.add_job(func, 'cron', hour=h, minute=m, args=args, id=job_id)
+                        logger.info(f"Scheduled {name_for_log} DAILY at {time_str}")
+                    else:
+                        logger.warning(f"Invalid time format for {name_for_log}: {time_str}")
+                except ValueError:
+                    logger.error(f"Invalid time format for {name_for_log}: {time_str}")
+
+            elif sched_type == "weekly":
+                # specific time + days
+                time_str = config_item.get("schedule_time", "08:00")
+                days = config_item.get("schedule_days", []) # ["mon", "tue", ...]
+                if not days:
+                    logger.warning(f"No days selected for weekly schedule of {name_for_log}")
+                    return
+
+                try:
+                    parts = time_str.split(':')
+                    if len(parts) >= 2:
+                        h = int(parts[0])
+                        m = int(parts[1])
+                        day_str = ",".join(days)
+                        scheduler.add_job(func, 'cron', day_of_week=day_str, hour=h, minute=m, args=args, id=job_id)
+                        logger.info(f"Scheduled {name_for_log} WEEKLY on {day_str} at {time_str}")
+                    else:
+                        logger.warning(f"Invalid time format for {name_for_log}: {time_str}")
+                except ValueError:
+                    logger.error(f"Invalid time format for {name_for_log}: {time_str}")
+
+            else: # interval (default)
+                hrs = int(config_item.get("schedule_interval_hrs", 0))
+                mins = int(config_item.get("schedule_interval_mins", 0))
                 
-            job_id = f"analysis_{cam_id}"
-            if scheduler.get_job(job_id):
-                scheduler.remove_job(job_id)
-            
-            scheduler.add_job(
-                perform_analysis,
-                'interval',
-                hours=hrs,
-                minutes=mins,
-                args=[cam_id],
-                id=job_id
+                if hrs == 0 and mins == 0:
+                     # Fallback if unconfigured but enabled, default to 1 hour
+                     hrs = 1
+
+                scheduler.add_job(func, 'interval', hours=hrs, minutes=mins, args=args, id=job_id)
+                logger.info(f"Scheduled {name_for_log} INTERVAL every {hrs}h {mins}m")
+
+        except Exception as e:
+            logger.error(f"Failed to schedule {name_for_log}: {e}")
+
+    # 1. Camera Schedules
+    for cam_id, cam_config in config.get("cameras", {}).items():
+        if cam_config.get("enabled", True):
+            _add_schedule_job(
+                perform_analysis, 
+                f"analysis_{cam_id}", 
+                cam_config, 
+                f"Camera {cam_id}", 
+                args=[cam_id]
             )
-            logger.info(f"Scheduled analysis for {cam_id} every {hrs}h {mins}m")
         else:
-            # Remove job if disabled
+            # If camera disabled, remove job
             job_id = f"analysis_{cam_id}"
             if scheduler.get_job(job_id):
                 scheduler.remove_job(job_id)
 
-    # Global Patrol Schedule
+    # 2. Global Patrol Schedule
     patrol_config = config.get("patrol", {})
-    job_id = "patrol_global"
-    if patrol_config.get("schedule_enabled"):
-        hrs = int(patrol_config.get("schedule_interval_hrs", 6))
-        if hrs > 0:
-            if scheduler.get_job(job_id):
-                scheduler.remove_job(job_id)
-            scheduler.add_job(
-                perform_home_patrol,
-                'interval',
-                hours=hrs,
-                id=job_id
-            )
-            logger.info(f"Scheduled GLOBAL PATROL every {hrs}h")
-    else:
-        if scheduler.get_job(job_id):
-            scheduler.remove_job(job_id)
+    # For backward compatibility, if schedule_type is missing but interval_hrs is present, default to interval
+    if "schedule_type" not in patrol_config and patrol_config.get("schedule_interval_hrs"):
+        patrol_config["schedule_type"] = "interval"
+    
+    _add_schedule_job(
+        perform_home_patrol,
+        "patrol_global",
+        patrol_config,
+        "GLOBAL PATROL"
+    )
 
-    # Utility Meter Schedules
+    # 3. Utility Meter Schedules
     for meter in config.get("utility_meters", []):
-        job_id = f"meter_{meter['id']}"
-        if scheduler.get_job(job_id):
-            scheduler.remove_job(job_id)
-            
-        if meter.get("schedule_enabled") and meter.get("camera_id"):
-            interval = meter.get("schedule_interval", "daily")
-            if interval == "hourly":
-                scheduler.add_job(perform_meter_read, 'interval', hours=1, args=[meter['id']], id=job_id)
-                logger.info(f"Scheduled HOURLY meter read for {meter['name']}")
-            else: # daily
-                # Default to 08:00 AM for daily reads
-                scheduler.add_job(perform_meter_read, 'cron', hour=8, minute=0, args=[meter['id']], id=job_id)
-                logger.info(f"Scheduled DAILY meter read for {meter['name']} at 08:00")
+         job_id = f"meter_{meter['id']}"
+         if scheduler.get_job(job_id):
+             scheduler.remove_job(job_id)
 
-    # Person Finder Schedule
+         if meter.get("camera_id"):
+             # Adapter for old meter config which might just have 'schedule_interval' string like 'daily' or 'hourly'
+             # If it has the new structure, use it. If not, map old values.
+             # Old format: schedule_interval="hourly" or "daily"
+             
+             meter_cfg = meter.copy()
+             old_interval = meter.get("schedule_interval")
+             
+             if "schedule_type" not in meter_cfg:
+                 if old_interval == "hourly":
+                     meter_cfg["schedule_type"] = "interval"
+                     meter_cfg["schedule_interval_hrs"] = 1
+                 elif old_interval == "daily":
+                     meter_cfg["schedule_type"] = "daily"
+                     meter_cfg["schedule_time"] = "08:00"
+                 else:
+                     meter_cfg["schedule_type"] = "interval"
+                     meter_cfg["schedule_interval_hrs"] = 12 
+
+             _add_schedule_job(
+                perform_meter_read,
+                job_id,
+                meter_cfg,
+                f"Meter {meter['name']}",
+                args=[meter['id']]
+             )
+
+    # 4. Person Finder Schedule
     finder_config = config.get("person_finder", {})
-    finder_job_id = "person_finder_scheduled"
-    if finder_config.get("schedule_enabled") and finder_config.get("names"):
-        hrs = int(finder_config.get("schedule_interval_hrs", 4))
-        if hrs > 0:
-            if scheduler.get_job(finder_job_id):
-                scheduler.remove_job(finder_job_id)
-            scheduler.add_job(
-                perform_person_finder,
-                'interval',
-                hours=hrs,
-                args=[finder_config.get("names", []), finder_config.get("prompt", ""), finder_config.get("recipients", [])],
-                id=finder_job_id
-            )
-            logger.info(f"Scheduled PERSON FINDER every {hrs}h for {finder_config['names']}")
-    else:
-        if scheduler.get_job(finder_job_id):
-            scheduler.remove_job(finder_job_id)
+    job_id = "person_finder_scheduled"
+    if scheduler.get_job(job_id):
+        scheduler.remove_job(job_id)
+        
+    if finder_config.get("names") and finder_config.get("schedule_enabled"):
+         if "schedule_type" not in finder_config and finder_config.get("schedule_interval_hrs"):
+            finder_config["schedule_type"] = "interval"
+
+         _add_schedule_job(
+            perform_person_finder,
+            job_id,
+            finder_config,
+            f"PERSON FINDER ({finder_config.get('names')})",
+            args=[finder_config.get("names", []), finder_config.get("prompt", ""), finder_config.get("recipients", [])]
+         )
 
 def perform_analysis(camera_id="default"):
     logger.info(f"Starting analysis for camera: {camera_id}")

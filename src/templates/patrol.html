@@ -210,13 +210,62 @@
                     <div class="flex items-center justify-between">
                         <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
                             Schedule</label>
-                        <input type="checkbox" id="patrol-schedEnable"
+                        <input type="checkbox" id="patrol-schedEnable" onchange="toggleScheduleUI('patrol')"
                             class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="patrol-schedHrs" value="6"
-                            class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
-                        <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+
+                    <div id="patrol-schedOptions" class="space-y-3 hidden">
+                        <!-- Type Selection -->
+                        <select id="patrol-schedType" onchange="toggleScheduleUI('patrol')"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                            <option value="interval">Every X Hours</option>
+                            <option value="daily">Daily at Specific Time</option>
+                            <option value="weekly">Weekly on Days</option>
+                        </select>
+
+                        <!-- Interval Input -->
+                        <div id="patrol-schedIntervalBox" class="flex items-center gap-2">
+                            <input type="number" id="patrol-schedHrs" value="6"
+                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                            <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                        </div>
+
+                        <!-- Time Input (Daily/Weekly) -->
+                        <div id="patrol-schedTimeBox" class="hidden">
+                            <label
+                                class="block text-[9px] text-gray-500 mb-1 uppercase font-black tracking-widest">Time</label>
+                            <input type="time" id="patrol-schedTime" value="08:00"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none font-mono">
+                        </div>
+
+                        <!-- Days Input (Weekly) -->
+                        <div id="patrol-schedDaysBox" class="hidden">
+                            <label
+                                class="block text-[9px] text-gray-500 mb-2 uppercase font-black tracking-widest">Days</label>
+                            <div class="flex justify-between gap-1">
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="mon"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">M</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="tue"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="wed"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">W</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="thu"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="fri"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">F</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="sat"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="patrol-days" value="sun"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -353,13 +402,62 @@
                     <div class="flex items-center justify-between">
                         <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
                             Schedule</label>
-                        <input type="checkbox" id="finder-schedEnable"
+                        <input type="checkbox" id="finder-schedEnable" onchange="toggleScheduleUI('finder')"
                             class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                     </div>
-                    <div class="flex items-center gap-2">
-                        <input type="number" id="finder-schedHrs" value="4"
-                            class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
-                        <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+
+                    <div id="finder-schedOptions" class="space-y-3 hidden">
+                        <!-- Type Selection -->
+                        <select id="finder-schedType" onchange="toggleScheduleUI('finder')"
+                            class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                            <option value="interval">Every X Hours</option>
+                            <option value="daily">Daily at Specific Time</option>
+                            <option value="weekly">Weekly on Days</option>
+                        </select>
+
+                        <!-- Interval Input -->
+                        <div id="finder-schedIntervalBox" class="flex items-center gap-2">
+                            <input type="number" id="finder-schedHrs" value="4"
+                                class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                            <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                        </div>
+
+                        <!-- Time Input (Daily/Weekly) -->
+                        <div id="finder-schedTimeBox" class="hidden">
+                            <label
+                                class="block text-[9px] text-gray-500 mb-1 uppercase font-black tracking-widest">Time</label>
+                            <input type="time" id="finder-schedTime" value="08:00"
+                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none font-mono">
+                        </div>
+
+                        <!-- Days Input (Weekly) -->
+                        <div id="finder-schedDaysBox" class="hidden">
+                            <label
+                                class="block text-[9px] text-gray-500 mb-2 uppercase font-black tracking-widest">Days</label>
+                            <div class="flex justify-between gap-1">
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="mon"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">M</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="tue"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="wed"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">W</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="thu"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="fri"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">F</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="sat"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                                <label class="cursor-pointer"><input type="checkbox" name="finder-days" value="sun"
+                                        class="hidden peer"><span
+                                        class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -719,21 +817,72 @@
                             placeholder="Read the physical utility meter numbers."></textarea>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-6 pt-2">
-                        <div class="space-y-4">
+                    <div class="grid grid-cols-1 gap-6 pt-2">
+                        <div class="space-y-4 border-t border-white/5 pt-4">
                             <div class="flex items-center justify-between">
-                                <label
-                                    class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Schedule</label>
-                                <input type="checkbox" id="meter-schedEnable"
+                                <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic
+                                    Schedule</label>
+                                <input type="checkbox" id="meter-schedEnable" onchange="toggleScheduleUI('meter')"
                                     class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                             </div>
-                            <select id="meter-interval"
-                                class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
-                                <option value="hourly">Every Hour</option>
-                                <option value="daily">Once Daily</option>
-                            </select>
+
+                            <div id="meter-schedOptions" class="space-y-3 hidden">
+                                <!-- Type Selection -->
+                                <select id="meter-schedType" onchange="toggleScheduleUI('meter')"
+                                    class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                                    <option value="interval">Every X Hours</option>
+                                    <option value="daily">Daily at Specific Time</option>
+                                    <option value="weekly">Weekly on Days</option>
+                                </select>
+
+                                <!-- Interval Input -->
+                                <div id="meter-schedIntervalBox" class="flex items-center gap-2">
+                                    <input type="number" id="meter-schedHrs" value="24"
+                                        class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                                    <span
+                                        class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                                </div>
+
+                                <!-- Time Input (Daily/Weekly) -->
+                                <div id="meter-schedTimeBox" class="hidden">
+                                    <label
+                                        class="block text-[9px] text-gray-500 mb-1 uppercase font-black tracking-widest">Time</label>
+                                    <input type="time" id="meter-schedTime" value="08:00"
+                                        class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none font-mono">
+                                </div>
+
+                                <!-- Days Input (Weekly) -->
+                                <div id="meter-schedDaysBox" class="hidden">
+                                    <label
+                                        class="block text-[9px] text-gray-500 mb-2 uppercase font-black tracking-widest">Days</label>
+                                    <div class="flex justify-between gap-1">
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="mon" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">M</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="tue" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="wed" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">W</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="thu" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">T</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="fri" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">F</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="sat" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                                        <label class="cursor-pointer"><input type="checkbox" name="meter-days"
+                                                value="sun" class="hidden peer"><span
+                                                class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">S</span></label>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="space-y-3">
+
+                        <div class="space-y-3 pt-2">
                             <div class="flex items-center justify-between">
                                 <label
                                     class="text-[9px] text-gray-500 font-black uppercase tracking-widest">Recipients</label>
@@ -874,6 +1023,90 @@
         } catch (e) { console.error(e); }
     }
 
+    function toggleScheduleUI(prefix) {
+        const checkEl = document.getElementById(`${prefix}-schedEnable`);
+        if (!checkEl) return;
+
+        const enabled = checkEl.checked;
+        const optionsDiv = document.getElementById(`${prefix}-schedOptions`);
+
+        if (enabled) {
+            optionsDiv.classList.remove('hidden');
+        } else {
+            optionsDiv.classList.add('hidden');
+            return;
+        }
+
+        const type = document.getElementById(`${prefix}-schedType`).value;
+        const intervalBox = document.getElementById(`${prefix}-schedIntervalBox`);
+        const timeBox = document.getElementById(`${prefix}-schedTimeBox`);
+        const daysBox = document.getElementById(`${prefix}-schedDaysBox`);
+
+        if (type === 'interval') {
+            intervalBox.classList.remove('hidden');
+            timeBox.classList.add('hidden');
+            daysBox.classList.add('hidden');
+        } else if (type === 'daily') {
+            intervalBox.classList.add('hidden');
+            timeBox.classList.remove('hidden');
+            daysBox.classList.add('hidden');
+        } else if (type === 'weekly') {
+            intervalBox.classList.add('hidden');
+            timeBox.classList.remove('hidden');
+            daysBox.classList.remove('hidden');
+        }
+    }
+
+    function setScheduleValues(prefix, config) {
+        let type = config.schedule_type;
+
+        // Handle legacy meter config
+        if (!type) {
+            if (config.schedule_interval === 'daily') type = 'daily';
+            else if (config.schedule_interval === 'hourly') type = 'interval';
+            else if (config.schedule_interval_hrs) type = 'interval';
+            else type = 'interval';
+        }
+
+        document.getElementById(`${prefix}-schedType`).value = type;
+
+        let hrs = config.schedule_interval_hrs || 6;
+        if (!config.schedule_interval_hrs && config.schedule_interval === 'hourly') hrs = 1;
+
+        document.getElementById(`${prefix}-schedHrs`).value = hrs;
+        document.getElementById(`${prefix}-schedTime`).value = config.schedule_time || '08:00';
+
+        // Days
+        const boxes = document.getElementsByName(`${prefix}-days`);
+        const savedDays = new Set(config.schedule_days || []);
+        boxes.forEach(b => {
+            b.checked = savedDays.has(b.value);
+        });
+
+        // Trigger UI update
+        toggleScheduleUI(prefix);
+    }
+
+    function getScheduleValues(prefix) {
+        const enabled = document.getElementById(`${prefix}-schedEnable`).checked;
+        const type = document.getElementById(`${prefix}-schedType`).value;
+        const hrs = document.getElementById(`${prefix}-schedHrs`).value;
+        const time = document.getElementById(`${prefix}-schedTime`).value;
+
+        const days = [];
+        document.getElementsByName(`${prefix}-days`).forEach(b => {
+            if (b.checked) days.push(b.value);
+        });
+
+        return {
+            schedule_enabled: enabled,
+            schedule_type: type,
+            schedule_interval_hrs: hrs,
+            schedule_time: time,
+            schedule_days: days
+        };
+    }
+
     function updatePatrolUI() {
         const count = document.getElementById('active-cams-count');
         const activeCount = Object.values(allCameras).filter(c => c.enabled !== false).length;
@@ -883,7 +1116,9 @@
         document.getElementById('patrol-msg').value = patrolConfig.message_instruction || '';
 
         document.getElementById('patrol-schedEnable').checked = !!patrolConfig.schedule_enabled;
-        document.getElementById('patrol-schedHrs').value = patrolConfig.schedule_interval_hrs || 6;
+
+        setScheduleValues('patrol', patrolConfig);
+
         document.getElementById('patrol-webEnable').checked = !!patrolConfig.webhook_enabled;
         document.getElementById('patrol-mqttEnable').checked = !!patrolConfig.mqtt_enabled;
 
@@ -894,7 +1129,9 @@
     function updateFinderUI() {
         document.getElementById('finder-prompt').value = finderConfig.prompt || '';
         document.getElementById('finder-schedEnable').checked = !!finderConfig.schedule_enabled;
-        document.getElementById('finder-schedHrs').value = finderConfig.schedule_interval_hrs || 4;
+
+        setScheduleValues('finder', finderConfig);
+
         document.getElementById('finder-webEnable').checked = !!finderConfig.webhook_enabled;
         document.getElementById('finder-mqttEnable').checked = !!finderConfig.mqtt_enabled;
 
@@ -930,7 +1167,7 @@
                     </div>
                     <div>
                         <p class="text-xs font-bold text-white">${m.name}</p>
-                        <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">${m.type} • ${m.schedule_enabled ? (m.schedule_interval || 'daily') : 'Manual'}</p>
+                        <p class="text-[9px] text-gray-500 uppercase tracking-widest font-black">${m.type} • ${m.schedule_enabled ? (m.schedule_type || 'interval') : 'Manual'}</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -948,8 +1185,9 @@
         document.getElementById('meter-type').value = 'electricity';
         document.getElementById('meter-camera').value = '';
         document.getElementById('meter-prompt').value = 'Read the physical utility meter numbers. Return only the numeric digits shown on the display.';
+
         document.getElementById('meter-schedEnable').checked = true;
-        document.getElementById('meter-interval').value = 'daily';
+        setScheduleValues('meter', { schedule_enabled: true, schedule_type: 'daily', schedule_time: '08:00' });
 
         tempMeterRecipients = [];
         document.getElementById('meter-recipients-label').innerText = getRecipientNames([]);
@@ -966,8 +1204,9 @@
         document.getElementById('meter-type').value = m.type;
         document.getElementById('meter-camera').value = m.camera_id;
         document.getElementById('meter-prompt').value = m.analysis_prompt;
+
         document.getElementById('meter-schedEnable').checked = !!m.schedule_enabled;
-        document.getElementById('meter-interval').value = m.schedule_interval || 'daily';
+        setScheduleValues('meter', m);
 
         tempMeterRecipients = m.recipients_whatsapp || [];
         document.getElementById('meter-recipients-label').innerText = getRecipientNames(tempMeterRecipients);
@@ -989,16 +1228,18 @@
         const name = document.getElementById('meter-name').value;
         if (!name) return showToast("Name is required");
 
+        const sched = getScheduleValues('meter');
+
         const m = {
             id: (editingMeterId && editingMeterId.startsWith('new_')) ? 'm_' + Date.now() : editingMeterId,
             name: name,
             type: document.getElementById('meter-type').value,
             camera_id: document.getElementById('meter-camera').value,
             analysis_prompt: document.getElementById('meter-prompt').value,
-            schedule_enabled: document.getElementById('meter-schedEnable').checked,
-            schedule_interval: document.getElementById('meter-interval').value,
             recipients_whatsapp: tempMeterRecipients
         };
+
+        Object.assign(m, sched);
 
         const idx = utilityMeters.findIndex(x => x.id === m.id);
         if (idx > -1) utilityMeters[idx] = m;
@@ -1040,6 +1281,23 @@
 
             const camRecipients = cam.recipients || [];
             const recipientLabel = getRecipientNames(camRecipients);
+
+            // Schedule Config
+            const prefix = `cam-${id}`;
+            const schedType = cam.schedule_type || 'interval';
+            const schedHrs = cam.schedule_interval_hrs || 1;
+            const schedTime = cam.schedule_time || '08:00';
+            const schedDays = new Set(cam.schedule_days || []);
+
+            const isInterval = schedType === 'interval';
+            const isDaily = schedType === 'daily';
+            const isWeekly = schedType === 'weekly';
+
+            // Helper to generate days checkboxes
+            const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+            const daysHtml = days.map(d => `
+                <label class="cursor-pointer"><input type="checkbox" name="${prefix}-days" value="${d}" ${schedDays.has(d) ? 'checked' : ''} class="hidden peer"><span class="block w-6 h-6 rounded-full bg-white/5 text-[9px] text-gray-400 flex items-center justify-center peer-checked:bg-white peer-checked:text-black transition-all">${d[0].toUpperCase()}</span></label>
+            `).join('');
 
             card.innerHTML = `
                 <div class="w-full xl:w-72 shrink-0 space-y-4">
@@ -1113,14 +1371,36 @@
                                     <i onclick="navigator.clipboard.writeText('velovision/trigger/analyze/${id}'); showToast('Copied!')" class="fa-regular fa-copy text-gray-400 hover:text-white cursor-pointer ml-2"></i>
                                 </div>
                             </div>
-                            <div class="space-y-2">
+
+                            <!-- Camera Schedule UI -->
+                            <div class="space-y-2 pt-2 border-t border-white/5 mt-2">
                                 <div class="flex items-center justify-between">
-                                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Auto-Check</label>
-                                    <input type="checkbox" id="schedEnable-${id}" ${cam.schedule_enabled ? 'checked' : ''} class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
+                                    <label class="text-[10px] text-gray-500 font-black uppercase tracking-widest">Periodic Schedule</label>
+                                    <input type="checkbox" id="${prefix}-schedEnable" ${cam.schedule_enabled ? 'checked' : ''} onchange="toggleScheduleUI('${prefix}')" class="w-4 h-4 rounded border-gray-700 bg-gray-800 checked:bg-white">
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <input type="number" id="schedHrs-${id}" value="${cam.schedule_interval_hrs || 1}" class="w-20 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none font-mono">
-                                    <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest text-right">Hour Interval</span>
+                                <div id="${prefix}-schedOptions" class="space-y-3 ${cam.schedule_enabled ? '' : 'hidden'}">
+                                     <select id="${prefix}-schedType" onchange="toggleScheduleUI('${prefix}')" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none appearance-none">
+                                        <option value="interval" ${isInterval ? 'selected' : ''}>Every X Hours</option>
+                                        <option value="daily" ${isDaily ? 'selected' : ''}>Daily at Specific Time</option>
+                                        <option value="weekly" ${isWeekly ? 'selected' : ''}>Weekly on Days</option>
+                                    </select>
+                                    
+                                    <div id="${prefix}-schedIntervalBox" class="flex items-center gap-2 ${isInterval ? '' : 'hidden'}">
+                                        <input type="number" id="${prefix}-schedHrs" value="${schedHrs}" class="flex-1 bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white text-center focus:border-white focus:outline-none placeholder-gray-600 font-mono">
+                                        <span class="text-[10px] text-gray-500 uppercase font-black tracking-widest">Hours</span>
+                                    </div>
+                                    
+                                    <div id="${prefix}-schedTimeBox" class="${isInterval ? 'hidden' : ''}">
+                                        <label class="block text-[9px] text-gray-500 mb-1 uppercase font-black tracking-widest">Time</label>
+                                        <input type="time" id="${prefix}-schedTime" value="${schedTime}" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-xl px-4 py-2 text-xs text-white focus:border-white focus:outline-none font-mono">
+                                    </div>
+
+                                    <div id="${prefix}-schedDaysBox" class="${isWeekly ? '' : 'hidden'}">
+                                        <label class="block text-[9px] text-gray-500 mb-2 uppercase font-black tracking-widest">Days</label>
+                                        <div class="flex justify-between gap-1">
+                                            ${daysHtml}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -1215,21 +1495,25 @@
                 allCameras[id].room = document.getElementById(`room-${id}`).value;
                 allCameras[id].webhook_enabled = document.getElementById(`webEnable-${id}`).checked;
                 allCameras[id].mqtt_enabled = document.getElementById(`mqttEnable-${id}`).checked;
-                allCameras[id].schedule_enabled = document.getElementById(`schedEnable-${id}`).checked;
-                allCameras[id].schedule_interval_hrs = document.getElementById(`schedHrs-${id}`).value;
+
+                // Get Schedule
+                // Note: renderIntelligenceList must be updated to use 'cam-' prefix
+                const sched = getScheduleValues(`cam-${id}`);
+                Object.assign(allCameras[id], sched);
             });
 
             patrolConfig.prompt = document.getElementById('patrol-prompt').value;
             patrolConfig.message_instruction = document.getElementById('patrol-msg').value;
 
-            patrolConfig.schedule_enabled = document.getElementById('patrol-schedEnable').checked;
-            patrolConfig.schedule_interval_hrs = document.getElementById('patrol-schedHrs').value;
+            Object.assign(patrolConfig, getScheduleValues('patrol'));
+
             patrolConfig.webhook_enabled = document.getElementById('patrol-webEnable').checked;
             patrolConfig.mqtt_enabled = document.getElementById('patrol-mqttEnable').checked;
 
             finderConfig.prompt = document.getElementById('finder-prompt').value;
-            finderConfig.schedule_enabled = document.getElementById('finder-schedEnable').checked;
-            finderConfig.schedule_interval_hrs = document.getElementById('finder-schedHrs').value;
+
+            Object.assign(finderConfig, getScheduleValues('finder'));
+
             finderConfig.webhook_enabled = document.getElementById('finder-webEnable').checked;
             finderConfig.mqtt_enabled = document.getElementById('finder-mqttEnable').checked;
             finderConfig.names = Array.from(finderSelectedNames);
