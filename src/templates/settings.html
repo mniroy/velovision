@@ -364,7 +364,8 @@ background: rgba(223, 255, 173, 0.05);
         btn.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i>';
         btn.disabled = true;
         try {
-            const res = await fetch('/api/ai/models');
+            const apiKey = document.getElementById('apiKey').value;
+            const res = await fetch(`/api/ai/models?api_key=${encodeURIComponent(apiKey)}`);
             const data = await res.json();
             const select = document.getElementById('modelName');
             const currentVal = select.value;
@@ -464,7 +465,25 @@ background: rgba(223, 255, 173, 0.05);
             const config = await res.json();
             if (config.ai) {
                 document.getElementById('apiKey').value = config.ai.api_key || '';
-                document.getElementById('modelName').value = config.ai.model || 'gemini-1.5-flash';
+
+                const savedModel = config.ai.model || 'gemini-1.5-flash';
+                const modelSelect = document.getElementById('modelName');
+                // Check if option exists, if not add it
+                let modelExists = false;
+                for (let i = 0; i < modelSelect.options.length; i++) {
+                    if (modelSelect.options[i].value === savedModel) {
+                        modelExists = true;
+                        break;
+                    }
+                }
+                if (!modelExists) {
+                    const opt = document.createElement('option');
+                    opt.value = savedModel;
+                    opt.innerText = savedModel;
+                    modelSelect.appendChild(opt);
+                }
+                modelSelect.value = savedModel;
+
                 document.getElementById('aiLanguage').value = config.ai.language || 'Bahasa Indonesia';
                 document.getElementById('maxTokens').value = config.ai.max_tokens || 512;
                 document.getElementById('temperature').value = config.ai.temperature || 0.7;

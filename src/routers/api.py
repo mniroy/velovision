@@ -644,8 +644,8 @@ def get_whatsapp_history(recipient_id: str, db: Session = Depends(get_db)):
     return results
 
 @router.get("/ai/models")
-def get_ai_models():
-    models = analysis.list_models()
+def get_ai_models(api_key: str = None):
+    models = analysis.list_models(api_key=api_key)
     return {"models": models}
 
 @router.post("/cameras/test")
@@ -739,8 +739,8 @@ def test_camera_connection(data: dict):
         os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;tcp'
 
         cap = cv2.VideoCapture(cap_source, cv2.CAP_FFMPEG)
-        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 15000)
-        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 15000)
+        cap.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 5000)
+        cap.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 5000)
         
         if cap.isOpened():
             success, _ = cap.read()

@@ -16,15 +16,45 @@ def deep_merge(target, source):
 
 def load_config():
     defaults = get_default_config()
+
     if not os.path.exists(CONFIG_PATH):
-        logger.warning(f"Config file not found at {CONFIG_PATH}. Using defaults.")
-        return defaults
+        # Try finding a backup if main is missing
+        backup_path = CONFIG_PATH + ".bak"
+        if os.path.exists(backup_path):
+             logger.warning(f"Main config missing, but found backup at {backup_path}. Restoring...")
+             import shutil
+             try:
+                 shutil.copy2(backup_path, CONFIG_PATH)
+             except Exception as e:
+                 logger.error(f"Failed to restore backup: {e}")
+                 return defaults
+        else:
+            logger.warning(f"Config file not found at {CONFIG_PATH}. Using defaults.")
+            return defaults
     
     try:
         with open(CONFIG_PATH, 'r') as f:
             user_config = yaml.safe_load(f)
+            
+            # Check for empty or invalid config (corruption)
+            if not user_config:
+                logger.error(f"Config file at {CONFIG_PATH} is empty or invalid.")
+                # Try restoration from backup
+                backup_path = CONFIG_PATH + ".bak"
+                if os.path.exists(backup_path):
+                    logger.warning("Attempting to restore from .bak file...")
+                    with open(backup_path, 'r') as bf:
+                        backup_config = yaml.safe_load(bf)
+                        if backup_config:
+                            # Restore successful-ish
+                            logger.info("Backup loaded successfully. Using values from backup.")
+                            user_config = backup_config
+                            # We don't overwrite the corrupt main file immediately to avoid data loss loops, 
+                            # but the next save will fix it.
+                
             if not user_config:
                 return defaults
+                
             # Ensure all default keys exist
             deep_merge(defaults, user_config)
             logger.info(f"Loaded config from {CONFIG_PATH}. MQTT Enabled: {defaults.get('mqtt', {}).get('enabled')}")
@@ -133,10 +163,29 @@ def save_config(updates):
         # Apply any general setting changes (like timezone)
         apply_timezone()
         
-        with open(CONFIG_PATH, 'w') as f:
+        # Atomic Write Strategy to prevent corruption
+        temp_path = CONFIG_PATH + ".tmp"
+        backup_path = CONFIG_PATH + ".bak"
+        
+        # 1. Write to temp file first
+        with open(temp_path, 'w') as f:
             yaml.dump(config, f, default_flow_style=False)
+            f.flush()
+            os.fsync(f.fileno()) # Force write to disk
             
-        logger.info("Configuration saved.")
+        # 2. Key Step: Create/Update backup of current valid config before replacing
+        # getting here means temp write succeeded.
+        if os.path.exists(CONFIG_PATH):
+             import shutil
+             try:
+                 shutil.copy2(CONFIG_PATH, backup_path)
+             except Exception as be:
+                 logger.warning(f"Failed to create backup copy: {be}")
+
+        # 3. Atomic Rename (overwrites CONFIG_PATH)
+        os.replace(temp_path, CONFIG_PATH)
+            
+        logger.info("Configuration saved safely.")
         return True
     except Exception as e:
         logger.error(f"Error saving config: {e}")

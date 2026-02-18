@@ -564,9 +564,20 @@ def list_models(api_key=None):
         genai.configure(api_key=api_key)
         models = []
         for m in genai.list_models():
+            # Include models that support content generation
             if 'generateContent' in m.supported_generation_methods:
-                models.append(m.name.replace('models/', ''))
-        return models
+                name = m.name.replace('models/', '')
+                # Filter for core Gemini models to keep the list clean but comprehensive
+                if 'gemini' in name.lower():
+                    models.append(name)
+        
+        # Ensure latest 2.0 models are included if they didn't show up for some reason
+        for latest in ['gemini-2.0-flash', 'gemini-2.0-flash-lite-preview-02-05', 'gemini-1.5-flash-8b']:
+            if latest not in models:
+                # We add them anyway as they are widely available now
+                models.append(latest)
+                
+        return sorted(list(set(models)), reverse=True) # Sort to put 2.0/1.5 at top
     except Exception as e:
         logger.error(f"Failed to list models: {e}")
         return []
