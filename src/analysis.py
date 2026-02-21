@@ -1,5 +1,4 @@
 import cv2
-# import face_recognition  # Deferred to lazy loading for low-RAM stability
 import numpy as np
 import os
 import google.generativeai as genai
@@ -77,35 +76,23 @@ class FaceManager:
             with open(filepath, "wb") as f:
                 f.write(image_bytes)
             
-            # Load and encode
-            import face_recognition
-            image = face_recognition.load_image_file(filepath)
-            encodings = face_recognition.face_encodings(image)
-            
-            if encodings:
-                new_encoding = encodings[0]
-                
-                if name in self.known_face_names:
-                    # Update existing face (remove old encoding, add new)
-                    idx = self.known_face_names.index(name)
-                    self.known_face_encodings[idx] = new_encoding
-                    logger.info(f"Updated face encoding: {name}")
-                else:
-                    # Add new face
-                    self.known_face_encodings.append(new_encoding)
-                    self.known_face_names.append(name)
-                    logger.info(f"Added new face: {name}")
-                    
-                return True, "Face added successfully."
+            # Verify image is valid using PIL
+            try:
+                with Image.open(io.BytesIO(image_bytes)) as img:
+                    img.verify()
+            except Exception as e:
+                if os.path.exists(filepath):
+                    os.remove(filepath)
+                return False, f"Invalid image file: {e}"
+
+            # Register naming in list
+            if name not in self.known_face_names:
+                self.known_face_names.append(name)
+                logger.info(f"Added new face reference: {name}")
             else:
-                # No face encoding found, but the image file is still valid.
-                # Keep the file on disk and register the name so Gemini can still
-                # use it as a reference image for recognition.
-                if name not in self.known_face_names:
-                    self.known_face_names.append(name)
-                    logger.info(f"Added face without encoding (no face detected by face_recognition): {name}")
+                logger.info(f"Updated face reference image: {name}")
                 
-                return True, "Face image saved (no local encoding, AI will handle recognition)."
+            return True, "Face reference added successfully (AI will handle recognition)."
         except Exception as e:
             logger.error(f"Error adding face: {e}")
             return False, str(e)

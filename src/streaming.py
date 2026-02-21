@@ -18,19 +18,23 @@ class Camera:
             
         self.source = source
         self.name = name
+        self.last_raw_frame = None
         self.last_encoded_frame = None
+        self.last_frame_id = 0
+        self.last_encoded_id = -1
         self.lock = threading.Lock()
         self.running = True
         self.error_count = 0
-        self.max_errors = 50  # Stop retrying after this many consecutive failures
+        self.max_errors = 50 
         self.video = None
         self.last_update_time = 0
+        self.last_request_time = time.time()
         
-        # Start background thread immediately; it will handle the first connection
+        # Start background thread
         self.thread = threading.Thread(target=self._update, args=())
         self.thread.daemon = True
         self.thread.start()
-        logger.info(f"Camera {self.name}: Background thread started for source {source}")
+        logger.info(f"Camera {self.name}: Background thread started.")
 
     def __del__(self):
         self.stop()
@@ -41,80 +45,59 @@ class Camera:
             self.video.release()
 
     def _update(self):
-        first_run = True
         while self.running:
             try:
                 if self.video is None or not self.video.isOpened():
-                    if not first_run:
-                        # Wait before retry, but not on the very first attempt
-                        sleep_time = min(5.0, 1.0 + (self.error_count * 0.5))
-                        time.sleep(sleep_time)
-                    
-                    first_run = False
-                    self.error_count += 1
-                    
-                    if self.error_count > self.max_errors:
-                        logger.error(f"Camera {self.name}: Max errors reached ({self.max_errors}). Stopping retry loop.")
-                        self.running = False
-                        break
-                    
-                    try:
-                        # Use FFMPEG backend for RTSP sources
-                        backend = cv2.CAP_FFMPEG if (isinstance(self.source, str) and "://" in self.source) else None
-                        self.video = cv2.VideoCapture(self.source, backend)
-                        
-                        if self.video.isOpened():
-                            # Optimize for low latency and fast connection
-                            self.video.set(cv2.CAP_PROP_BUFFERSIZE, 1)
-                            # Timeouts help prevent hangs with unresponsive cameras
-                            self.video.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000)
-                            self.video.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)
-                            logger.info(f"Camera {self.name}: Connection established.")
-                            self.error_count = 0 
-                        else:
-                            if self.error_count % 10 == 0:
-                                logger.warning(f"Camera {self.name}: Still attempting to connect (attempt {self.error_count})...")
-                    except Exception as connection_e:
-                        logger.debug(f"Camera {self.name} connection exception: {connection_e}")
-                    
+                    time.sleep(1.0)
+                    backend = cv2.CAP_FFMPEG if (isinstance(self.source, str) and "://" in self.source) else None
+                    self.video = cv2.VideoCapture(self.source, backend)
+                    if self.video.isOpened():
+                        self.video.set(cv2.CAP_PROP_BUFFERSIZE, 1)
+                        logger.info(f"Camera {self.name}: Connected.")
                     continue
                 
-                # GRAB the frame immediately to clear the buffer
-                # This ensures we are always looking at the newest data available in the socket
+                # GRAB the frame (lightweight, doesn't decode yet)
                 if not self.video.grab():
                     self.error_count += 1
-                    if self.error_count % 5 == 0:
-                        self.video.release()
-                    time.sleep(0.5)
+                    time.sleep(0.1)
                     continue
 
-                # RETRIEVE and encode
-                # We do this as fast as the grab succeeds
-                success, frame = self.video.retrieve()
-                if success:
-                    self.error_count = 0 
-                    # JPEG Quality 80 is a good balance for AI
-                    ret, jpeg = cv2.imencode('.jpg', frame, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
-                    if ret:
+                # Only RETRIEVE (decode) if someone has requested a frame in the last 10 seconds
+                if (time.time() - self.last_request_time) < 10.0:
+                    success, frame = self.video.retrieve()
+                    if success:
                         with self.lock:
-                            self.last_encoded_frame = jpeg.tobytes()
+                            self.last_raw_frame = frame
+                            self.last_frame_id += 1
                             self.last_update_time = time.time()
                 else:
-                    self.error_count += 1
-                    time.sleep(0.1)
+                    # Idle mode: still grab to keep buffer clean, but don't decode
+                    pass
                     
             except Exception as e:
                 logger.error(f"Camera {self.name} update error: {e}")
-                self.error_count += 1
                 time.sleep(1.0)
-                
-            # No sleep here, or a very tiny one, to keep the buffer drained
-            # grab() will naturally block if there's no new frame yet.
-            time.sleep(0.001) 
+            
+            time.sleep(0.01) # Small sleep to prevent CPU spinning
 
     def get_frame(self):
+        self.last_request_time = time.time()
         with self.lock:
-            return self.last_encoded_frame
+            if self.last_raw_frame is None:
+                return self.last_encoded_frame
+
+            # If we've already encoded this specific frame, return the cache
+            if self.last_encoded_id == self.last_frame_id:
+                return self.last_encoded_frame
+
+            # Otherwise, encode to JPEG now (on demand)
+            ret, jpeg = cv2.imencode('.jpg', self.last_raw_frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            if ret:
+                self.last_encoded_frame = jpeg.tobytes()
+                self.last_encoded_id = self.last_frame_id
+                return self.last_encoded_frame
+        return None
+
 
 async def generate_frames(camera, fps=20):
     empty_count = 0

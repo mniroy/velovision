@@ -202,14 +202,9 @@ def perform_analysis(camera_id="default"):
             logger.error("Failed to capture frame.")
             return {"status": "error", "message": "Failed to capture frame"}
 
-        # Decode for processing
-        nparr = np.frombuffer(frame_bytes, np.uint8)
-        frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
-        # 2. Face Recognition
-        face_names, locations = analysis.face_manager.identify_faces(rgb_frame)
-        logger.info(f"Detected faces: {face_names}")
+        # 2. Face Recognition (Bypassed: AI Analyzer handles recognition)
+        face_names, locations = [], []
+        recognized_names = []
 
         # 3. AI Analysis
         # Fetch camera config
